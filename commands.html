@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Creating and using automata</h2>
+
+<p>We're now going to see how automata are created and used. While we will focus here on how to do that in Cell, as opposed to doing it from the host language in mixed-language applications, all the commands we're going to describe have close equivalents in the interface of the generated code.</p>
+
+<p>Automata of either type can only be created inside procedures and not functions. A procedure can declare any number of automaton variables, but it cannot create automata dinamically: all automaton variables are instantiated when a procedure is called, and automatically destroyed when it returns. Automaton instances are also only visible inside the procedure they're declared in and they cannot be passed to other procedures.</p>
+
+
+<h3>Static automata</h3>
+
+<p>In order to see how to manipulate static automata, we'll write a tiny command line tool that is actually useful in practice. Our application will create a static automaton, read an initial state for it from a file and a list of messages from another, send each message to the automaton instance in the given order, and save its final state in another file. We'll make use of the <code class="inline-code-box"><span class="inline-code">Counter</span></code> automaton we saw in the previous chapters, but the code can be made to work with any automaton type with only trivial changes.</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> <span class='m'>Main</span>(<span class='m'>String</span>* args) {
+  instance : <span class='m'>Counter</span>;
+
+  <span class='c'>// Checking the argument list</span>
+  <span class='k'>if</span> |args| != <span class='n'>3</span>:
+    <span class='m'>Print</span>(<span class='s'>"Invalid arguments\n"</span>);
+    <span class='k'>return</span> <span class='n'>1</span>;
+  ;
+  init_state_fname, msg_list_fname, final_state_fname = args;
+
+  <span class='c'>// Reading and checking the initial state</span>
+  res = <span class='m'>ReadValueFromFile</span>(init_state_fname);
+  <span class='k'>return</span> <span class='n'>1</span> <span class='k'>if</span> res == nothing;
+  init_state = value(res);
+  <span class='k'>if</span> <span class='k'>not</span> init_state :: <span class='m'>Counter</span>:
+    <span class='m'>Print</span>(<span class='s'>"Invalid initial state\n"</span>);
+    <span class='k'>return</span> <span class='n'>1</span>;
+  ;
+
+  <span class='c'>// Setting the initial state of the automaton</span>
+  ok = <span class='k'>write</span> instance &lt;- init_state;
+  <span class='k'>if</span> <span class='k'>not</span> ok:
+    <span class='m'>Print</span>(<span class='s'>"Invalid initial state\n"</span>);
+    <span class='k'>return</span> <span class='n'>1</span>;
+  ;
+
+  <span class='c'>// Reading and checking the message list</span>
+  res = <span class='m'>ReadValueFromFile</span>(msg_list_fname);
+  <span class='k'>return</span> <span class='n'>1</span> <span class='k'>if</span> res == nothing;
+  msg_list = value(res);
+  <span class='k'>if</span> <span class='k'>not</span> msg_list :: <span class='m'>CounterMsg</span>*:
+    <span class='m'>Print</span>(<span class='s'>"Invalid message list\n"</span>);
+    <span class='k'>return</span> <span class='n'>1</span>;
+  ;
+
+  <span class='c'>// Sending all messages in the list</span>
+  <span class='k'>for</span> msg @ i &lt;- msg_list:
+    ok = instance &lt;- msg;
+    <span class='k'>if</span> <span class='k'>not</span> ok:
+      <span class='m'>Print</span>(<span class='s'>"Message number "</span> & _print_(i) & <span class='s'>" failed\n"</span>);
+    ;
+  ;
+
+  <span class='c'>// Saving the final state</span>
+  final_state = <span class='k'>read</span> instance;
+  ok = <span class='m'>FileWrite</span>(final_state_fname, untag(_print_(final_state)));
+  <span class='k'>if</span> <span class='k'>not</span> ok:
+    <span class='m'>Print</span>(<span class='s'>"Could not write to file "</span> & final_state_fname & <span class='s'>"\n"</span>);
+    <span class='k'>return</span> <span class='n'>1</span>;
+  ;
+
+  <span class='k'>return</span> <span class='n'>0</span>;
+}
+
+<span class='m'>Maybe</span>[<span class='m'>Any</span>] <span class='m'>ReadValueFromFile</span>(<span class='m'>String</span> fname) {
+  res = <span class='m'>FileRead</span>(fname);
+  <span class='k'>if</span> res == nothing:
+    <span class='m'>Print</span>(<span class='s'>"Cannot read file "</span> & fname & <span class='s'>"\n"</span>);
+    <span class='k'>return</span> nothing;
+  ;
+
+  res = _parse_(string(value(res)));
+  <span class='k'>if</span> failed(res):
+    <span class='m'>Print</span>(<span class='s'>"File "</span> & fname & <span class='s'>" does not contain a valid Cell value\n"</span>);
+    <span class='k'>return</span> nothing;
+  ;
+
+  <span class='k'>return</span> just(result(res));
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The first line in the body of <code class="inline-code-box"><span class="inline-code">Main(..)</span></code> is the declaration of the automaton variable <code class="inline-code-box"><span class="inline-code">instance</span></code>, which looks like an ordinary variable declaration. Automaton variables are instantiated and initialized as soon as the procedure that hosts them is called, and their initial state is the one that is provided with the schema declaration, which in the case of <code class="inline-code-box"><span class="inline-code">Counter</span></code> is just <code class="inline-code-box"><span class="inline-code">(value: 0, updates: 0)</span></code>.</p>
+
+<p>The first step is to load the initial state for <code class="inline-code-box"><span class="inline-code">counter</span></code> from the given file, check that it's a valid one using the runtime type check <code class="inline-code-box"><span class="inline-code">init_state :: Counter</span></code> and set the state of <code class="inline-code-box"><span class="inline-code">instance</span></code> with the command:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>ok = <span class='k'>write</span> instance &lt;- init_state;
+</section>
+</figure>
+</code></pre>
+
+<p><code class="inline-code-box"><span class="inline-code">ok</span></code> is a boolean variable that indicates whether the operation succeeded. Generally speaking, setting the state of an automaton instance can fail if the state that is provided is not a valid one. The typechecker tries to prevent you from using an invalid state in the first place, and that's why the <code class="inline-code-box"><span class="inline-code">init_state :: Counter</span></code> check is actually necessary, but it doesn't verify that integrity constraints (which just means mutable relation variables' keys at the moment) are actually met, since that's rather hard to do with just a static analysis of the code, so those constraints are checked only when you actually try to set the state of an automaton instance.</p>
+
+<p>The state of any automaton can be set at any time, any number of times. It's just like setting the value of a variable of an atomic type (like booleans, integers or floating point numbers) in any other language. The next step is to load the list of messages and send them in the given order to <code class="inline-code-box"><span class="inline-code">instance</span></code> with the instruction:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>ok = instance &lt;- msg;
+</section>
+</figure>
+</code></pre>
+
+<p>Here too the variable <code class="inline-code-box"><span class="inline-code">ok</span></code> indicates whether the message was processed successfully. Also note the <code class="inline-code-box"><span class="inline-code">msg_list :: CounterMsg*</span></code> check, which is required to verify that whatever data was loaded from the input file was indeed a valid sequence of messages for <code class="inline-code-box"><span class="inline-code">Counter</span></code>.</p>
+
+<p>The last instruction we have to manipulate static automata is used to take a snapshot of the state of an automaton instance:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>final_state = <span class='k'>read</span> instance;
+</section>
+</figure>
+</code></pre>
+
+<p>As already explained in the previous chapters the state of an automaton cannot be aliased in any way, so making a copy of it requires making a physical copy of at least some of the underlying data structures that are used to store it. How much data exactly has to be copied depends on the implementation and the target language, but it generally is a rather expensive operation, especially if the automaton contains mutable relation variables. In the worst case, the entirety of the data structures that encode its state will have to be physically copied.</p>
+
+
+<h3>Reactive automata</h3>
+
+<p>To see how to use reactive automata, we'll write some test cases for some of the automata we defined earlier. For our first example that we'll make use of <code class="inline-code-box"><span class="inline-code">Switch</span></code>, which only uses continuous signals and is not time-aware:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// The first two columns are the values of the <span class="inline-code">switch_on</span></span>
+<span class='c'>// and <span class="inline-code">switch_off</span> inputs respectively, and the third one</span>
+<span class='c'>// is the expected value of the <span class="inline-code">is_on</span> output, encoded as</span>
+<span class='c'>// <span class="inline-code">nothing</span> if the signal is expected to be undefined, or</span>
+<span class='c'>// <span class="inline-code">just(b)</span> if its value is expected to be <span class="inline-code">b</span></span>
+(<span class='m'>Bool</span>, <span class='m'>Bool</span>, <span class='m'>Maybe</span>[<span class='m'>Bool</span>])* switch_test_data = (
+  (<span class='k'>false</span>,  <span class='k'>false</span>,  just(<span class='k'>false</span>)),
+  (<span class='k'>true</span>,   <span class='k'>false</span>,  just(<span class='k'>true</span>)),
+  (<span class='k'>false</span>,  <span class='k'>true</span>,   just(<span class='k'>false</span>)),
+  (<span class='k'>true</span>,   <span class='k'>true</span>,   nothing),
+  (<span class='k'>true</span>,   <span class='k'>false</span>,  just(<span class='k'>true</span>)),
+  (<span class='k'>false</span>,  <span class='k'>false</span>,  just(<span class='k'>false</span>))
+);
+
+<span class='m'>Main</span>(<span class='m'>String</span>* args) {
+  switch : <span class='m'>Switch</span>;
+
+  <span class='k'>for</span> switch_on, switch_off, exp_is_on &lt;- switch_test_data:
+    <span class='c'>// Setting the new values of the inputs for the next</span>
+    <span class='c'>// propagation step. Internal state and outputs are</span>
+    <span class='c'>// not affected at this stage.</span>
+    switch.switch_on = switch_on;
+    switch.switch_off = switch_off;
+
+    <span class='c'>// Propagation step. The values of all outputs, state</span>
+    <span class='c'>// variables and other internal signals is updated here.</span>
+    done = <span class='k'>apply</span> switch;
+
+    <span class='c'>// Now checking that the state of the</span>
+    <span class='c'>// only output is the expected one</span>
+    <span class='k'>if</span> exp_is_on == nothing:
+      <span class='c'>// Here we expect <span class="inline-code">is_on</span> to be undefined</span>
+      <span class='k'>if</span> switch.is_on??:
+        <span class='m'>Print</span>(<span class='s'>"Error: output was supposed to be undefined\n"</span>);
+        <span class='k'>return</span>;
+      ;
+    <span class='k'>else</span>
+      <span class='c'>// First we check <span class="inline-code">is_on</span> is defined</span>
+      <span class='k'>if</span> <span class='k'>not</span> switch.is_on??:
+        <span class='m'>Print</span>(<span class='s'>"Error: output is not defined\n"</span>);
+        <span class='k'>return</span>;
+      ;
+      <span class='c'>// Now we check its value is what we expected</span>
+      <span class='k'>if</span> value(exp_is_on) != switch.is_on:
+        <span class='m'>Print</span>(<span class='s'>"Error: unexpected output value\n"</span>);
+        <span class='k'>return</span>;
+      ;
+    ;
+
+    <span class='m'>Print</span>(<span class='s'>"OK\n"</span>);
+  ;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The first thing you need to do with a new automaton instance is to set the value of all its continuous inputs. A failure to set any of them will be treated as a runtime error: the input will be left in an undefined state, which will be then propagated to all other signals that depend on it. At this stage, you should not try to set any discrete inputs, as that can be done only once the automaton has been initialized.</p>
+
+<p>Once the inputs are set it's time to initialize the instance. That's done with the <code class="inline-code-box"><span class="inline-code">apply</span></code> statement, whose parameter is the name of the automaton variable to initialize, and whose return value can be safely ignored here since it's meaningful only for time-aware automata. The same <code class="inline-code-box"><span class="inline-code">apply</span></code> statement is also used both to initialize the automaton and to propagate input changes, but there are significant differences between the two operations. As explained before, in the former case all continuous derived signals are initialized, state variables are set to the value provided with their declaration but their update rules are ignored, and discrete signals are ignored as well.</p>
+
+<p>Once the automaton instance has been initialized, you'll be able to check the state of the outputs. You can read them using the familiar <code class="inline-code-box"><span class="inline-code">instance.output</span></code> syntax, but keep in mind that trying to read the value of an undefined output will result in an exception that will terminate the program. Inside a reactive automaton you don't need to worry about that because errors are propagated automatically, but outside that particular context you need to explicitly check whether an output is defined before reading its value if you want to avoid errors. That's done using the <code class="inline-code-box"><span class="inline-code">instance.output??</span></code> expression, which returns true if the output is defined or false otherwise.</p>
+
+<p>Once the automaton is initialized its life becomes a cycle where you update its inputs when needed, propagate those updates throughout the automaton and then check how the outputs have changed and react accordingly. Keep in mind that just setting the values of the inputs does not trigger the update propagation process, which has to be done explicitly using the <code class="inline-code-box"><span class="inline-code">apply</span></code> statement.</p>
+
+<p>Taking a snapshot of and restoring the state of a reactive automaton is the same as doing it with a static one, using the <code class="inline-code-box"><span class="inline-code">read</span></code> and <code class="inline-code-box"><span class="inline-code">write</span></code> statements respectively. The first command saves the values of all continuous inputs and state variables, but not the timers. If the automaton that does not contain any timed rules its state can be reconstructed exactly later; otherwise timed rules will behave as if all signals have no previous history.</p>
+
+<p>Let's now see an example of how to deal with discrete signals using another automaton we've already seen before, <code class="inline-code-box"><span class="inline-code">Lines</span></code>, which splits a string of characters into lines. We'll use it to split a test strings, and we'll print the results:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Main</span>(<span class='m'>String</span>* args) {
+  lines : <span class='m'>Lines</span>;
+
+  <span class='c'>// Initializing the automaton variable <span class="inline-code">lines</span></span>
+  done = <span class='k'>apply</span> lines;
+
+  <span class='c'>// Multiline string used as a test input</span>
+  str = <span class='s'>"line 1\nline 2\nline 3\nline4\n"</span>;
+
+  <span class='c'>// Feeding the input characters into the automaton</span>
+  <span class='k'>for</span> ch &lt;- untag(str):
+    lines.char = ch;
+    done = <span class='k'>apply</span> lines;
+    <span class='c'>// If the output <span class="inline-code">line</span> is active, we just print it</span>
+    <span class='k'>if</span> lines.line?:
+      <span class='m'>Print</span>(lines.line & <span class='s'>"\n"</span>);
+    ;
+  ;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Here the automaton instance is initialized before any input is set. That's because only continuous inputs should be set before initialization, and <code class="inline-code-box"><span class="inline-code">Lines</span></code> has none. Once initialized, the automaton is fed characters from a test string. That's done in the first two lines of the loop. After each input character is processed we check to see if the <code class="inline-code-box"><span class="inline-code">line</span></code> output is active and if it is we just print it. Checking whether a discrete output is active is syntactically similar to checking if it's defined, but with only one question mark at the end instead of two: <code class="inline-code-box"><span class="inline-code">instance.discrete_output?</span></code>. Trying to read the value of a discrete output that is dormant has the same effect as trying to read an output that is in an undefined state: it triggers an exception that terminates the program. So in general in order to safely read the value of a discrete output you first have to check whether it's defined with <code class="inline-code-box"><span class="inline-code">instance.discrete_output??</span></code> (this step was omitted in the example because we assumed <code class="inline-code-box"><span class="inline-code">line</span></code> could never be undefined), then check if it's set with <code class="inline-code-box"><span class="inline-code">instance.discrete_output?</span></code> and only after that you can safely read its value (with continuous outputs the second step is of course not necessary).</p>
+
+
+<h3>Time-aware reactive automata</h3>
+
+<p>The process of updating an instance of a reactive automaton is a bit more complex for reactive automata that contains timed rules or contains other automata that use timed rules. Here's an example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// The first field is the reading from the sensor</span>
+<span class='c'>// The second one is the time that has passed since the last</span>
+<span class='c'>// reading, or since initialization for the first reading</span>
+<span class='c'>// The third one is the sequence of values <span class="inline-code">sensor_state</span> is</span>
+<span class='c'>// expected to have after each update step</span>
+(<span class='m'>Maybe</span>[<span class='m'>Bool</span>], <span class='m'>Nat</span>, <span class='m'>WaterSensorState</span>+)* water_sensor_test_data = (
+  (just(<span class='k'>false</span>), <span class='n'>40000</span>, (<span class='a'>:unknown</span>, <span class='a'>:submerged</span>(<span class='k'>false</span>))),
+  (nothing,     <span class='n'>10000</span>, (<span class='a'>:submerged</span>(<span class='k'>false</span>))),
+  (nothing,     <span class='n'>10000</span>, (<span class='a'>:submerged</span>(<span class='k'>false</span>))),
+  (nothing,     <span class='n'>10000</span>, (<span class='a'>:unknown</span>)),
+  (just(<span class='k'>true</span>),  <span class='n'>10000</span>, (<span class='a'>:submerged</span>(<span class='k'>true</span>))),
+  (just(<span class='k'>false</span>), <span class='n'>50000</span>, (<span class='a'>:unknown</span>, <span class='a'>:submerged</span>(<span class='k'>false</span>)))
+);
+
+<span class='m'>Main</span>(<span class='m'>String</span>* args) {
+  water_sensor : <span class='m'>WaterSensor</span>;
+
+  <span class='c'>// Initialization</span>
+  done = <span class='k'>apply</span> water_sensor;
+
+  <span class='k'>for</span> reading, time, exp_states &lt;- water_sensor_test_data:
+    <span class='c'>// Setting the value of the only input</span>
+    water_sensor.raw_reading = reading;
+
+    <span class='c'>// Setting the amount of time that has passed since</span>
+    <span class='c'>// the last update, or since the automaton was started</span>
+    <span class='k'>elapsed</span> water_sensor time;
+
+    <span class='c'>// Updating <span class="inline-code">water_sensor</span> and recording all</span>
+    <span class='c'>// the intermediate values of the only output</span>
+    states = ();
+    <span class='k'>loop</span>
+      done = <span class='k'>apply</span> water_sensor;
+      states = (states | water_sensor.sensor_state);
+    <span class='k'>while</span> <span class='k'>not</span> done;
+
+    <span class='c'>// Checking that the states of the sensor are</span>
+    <span class='c'>// the expected ones</span>
+    <span class='k'>if</span> states != exp_states:
+      <span class='m'>Print</span>(<span class='s'>"Error\n"</span>);
+      <span class='k'>return</span>;
+    <span class='k'>else</span>
+      <span class='m'>Print</span>(<span class='s'>"OK\n"</span>);
+    ;
+  ;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The <code class="inline-code-box"><span class="inline-code">elapsed</span></code> command is used to provide the time information. Reactive automata don't actively try to keep track of time: instead, time is treated more like a sort of implicit input (albeit one with very special characteristics) that the client has to explicitly set before updating an automaton instance with <code class="inline-code-box"><span class="inline-code">apply</span></code>. The first argument of <code class="inline-code-box"><span class="inline-code">elapsed</span></code> is an automaton instance, and the second one is the number of milliseconds that have passed since the last time the instance was updated. If you don't explicitly provide that piece of information the internal clock of the automaton is not updated, and from the automaton perspective it's as if no time at all had passed since the last update. Note that you don't have to and actually cannot use the <code class="inline-code-box"><span class="inline-code">elapsed</span></code> command before an automaton instance is initialized, as initialization is regarded as time zero.</p>
+
+<p>The other difference with automata that are not time-aware is that the <code class="inline-code-box"><span class="inline-code">apply</span></code> command has to be called repeatedly until it returns true. In order to understand why, consider what would happen when applying the test inputs defined by <code class="inline-code-box"><span class="inline-code">water_sensor_test_data</span></code>. The automaton receives the first sensor reading after 40 seconds of simulated time, but the rule that sets <code class="inline-code-box"><span class="inline-code">sensor_state</span></code> to <code class="inline-code-box"><span class="inline-code">unknown</span></code> is supposed to be triggered 10 seconds before that. So the first thing the automaton has to do when the <code class="inline-code-box"><span class="inline-code">apply</span></code> command is executed is to catch up on all the backlog. It sets the internal clock forward by 30 seconds, the time when the first (and only, in this case) timer expires, and sets <code class="inline-code-box"><span class="inline-code">sensor_state</span></code> to <code class="inline-code-box"><span class="inline-code">unknown</span></code>. At that point, that is, after 30 seconds of simulated time, before even processing the new input the <code class="inline-code-box"><span class="inline-code">apply</span></code> command finishes and returns <code class="inline-code-box"><span class="inline-code">false</span></code>. It does so in order to give its client a chance to react to the first time-triggered update. After that the client is expected to call the <code class="inline-code-box"><span class="inline-code">apply</span></code> command as many times as needed, until all expired timers have been processed. Once all timers have been taken care of the automaton processes the new inputs, which finally completes the update, and returns true.</p>
+
+<p>In a real application of course you're supposed to periodically update a time-aware automaton, even when no inputs have changed, in order to allow the timed rule to update its state in real time. But the behaviour of the automaton is always deterministic: whenever you give it a chance to update its state, it always completes all pending updates before processing the new inputs.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

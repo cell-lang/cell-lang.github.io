@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>The Cell Programming Language</h2>
+
+<p>Cell is a domain-specific programming language designed to integrate with your language of choice in order to provide a number of features that have no equivalent in more conventional languages.</p>
+
+<p>It offers, among other things, a very flexible, entirely structural type system; deterministic, repeatable execution; support for reactive programming; the ability to use relations to store data; transactions and propagation of undefined values for error handling; and ortogonal persistence.</p>
+
+<p>Cell's most important new language construct is automata, which come in two flavors: static automata and reactive ones. For a high-level description of them, head to the <a href='overview.html'>overview</a> section.</p>
+
+<p>Altough Cell is, in and of itself, a general-purpose language, that can be used to write entire applications (the Cell compiler, for example, is entirely written in Cell), that's not what it is designed for. It is, instead, meant to be used as a domain-specific language, much like, for example, tools like Lex and Yacc (or their more modern alternatives) are used for parsing: from Cell source code you can generate a set of classes in your language of choice, and use them in your existing projects. The only target language that is currently available is C++, but Java and C# are coming soon, and other languages will follow.</p>
+
+<p>If you have any question, there's the <a href='https://groups.google.com/d/forum/cell-lang'>cell-lang</a> Google Group. For announcements, there's <a href='https://twitter.com/cell_lang'>cell_lang</a> on Twitter.</p>
+
+<p>The Cell compiler is open source software, and all source code is available on <a href='https://github.com/cell-lang'>github</a>.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

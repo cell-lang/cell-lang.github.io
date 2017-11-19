@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Protocols</h2>
+
+<p>Variables or expressions of a generic type (i.e. one that is or contains a type variable) have to observe a number of restrictions in their usage, since they could end up taking any sort of value at runtime. Among other things, they cannot be used as arguments in a function call, unless that function is itself generic. Generic functions that cannot be implemented under those constraints need to use another language construct, protocols, which is more or less the equivalent of interfaces in object-oriented languages and type classes in functional ones. As an example, here's the definition of the two-argument <code class="inline-code-box"><span class="inline-code">min(..)</span></code> function and the <code class="inline-code-box"><span class="inline-code">Ord</span></code> protocol in the standard library:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>protocol</span> <span class='m'>Ord</span>:
+  (_&lt;_) : <span class='m'>Ord</span>, <span class='m'>Ord</span> -&gt; <span class='m'>Bool</span>;
+
+<span class='k'>typevar</span> <span class='u'>O</span> : <span class='m'>Ord</span>;
+
+<span class='u'>O</span> min(<span class='u'>O</span> x, <span class='u'>O</span> y) = <span class='k'>if</span> x &lt; y <span class='k'>then</span> x <span class='k'>else</span> y;
+</section>
+</figure>
+</code></pre>
+
+<p>Both arguments of <code class="inline-code-box"><span class="inline-code">min(..)</span></code> are of a generic type <code class="inline-code-box"><span class="inline-code">O</span></code>, but because of the <code class="inline-code-box"><span class="inline-code">typevar O : Ord;</span></code> declaration, a restriction is placed on whatever type is bound to it at the call site: it has to implement all methods defined in <code class="inline-code-box"><span class="inline-code">Ord</span></code> protocol. If, for example, <code class="inline-code-box"><span class="inline-code">min(..)</span></code> were called with arguments of type <code class="inline-code-box"><span class="inline-code">String</span></code>, there would have to be, somewhere in your code, a definition of the operator <code class="inline-code-box"><span class="inline-code">&lt;</span></code> that accepts arguments of type <code class="inline-code-box"><span class="inline-code">String</span></code> and whose return value belongs to <code class="inline-code-box"><span class="inline-code">Bool</span></code>. The scope of a typevar declaration is just the file it's declared in, and it doesn't affect functions that use the same type variable if they are defined in different files. Some syntactic sugar is provided for simple cases like this one: you can skip the typevar declaration altogether and use the <code class="inline-code-box"><span class="inline-code">Ord</span></code> protocol directly in the signature of <code class="inline-code-box"><span class="inline-code">min(..)</span></code> as if it were a normal type, and that's actually the recommended style:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Ord</span> min(<span class='m'>Ord</span> x, <span class='m'>Ord</span> y) = <span class='k'>if</span> x &lt; y <span class='k'>then</span> x <span class='k'>else</span> y;
+</section>
+</figure>
+</code></pre>
+
+<p>More complex cases still require the use of a typevar declaration, though. Here's an example, a function whose signature contains two distinct type variables, each of which has to implement the <code class="inline-code-box"><span class="inline-code">Ord</span></code> protocol:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>typevar</span> <span class='u'>O</span>, <span class='u'>P</span> : <span class='m'>Ord</span>;
+
+(<span class='u'>O</span>, <span class='u'>P</span>)* sort_pairs((<span class='u'>O</span>, <span class='u'>P</span>)* ps) =
+  sort(ps, {
+    a1, b1 = $a;
+    a2, b2 = $b;
+    <span class='k'>return</span> a1 &lt; a2 <span class='k'>or</span> (a1 == a2 <span class='k'>and</span> b1 &lt; b2);
+  });
+</section>
+</figure>
+</code></pre>
+
+<p>Using <code class="inline-code-box"><span class="inline-code">Ord</span></code> directly in the signature of <code class="inline-code-box"><span class="inline-code">sort_pairs(..)</span></code> would have been syntactic sugar for the following definition instead, which is clearly not what was intended:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>typevar</span> <span class='u'>O</span> : <span class='m'>Ord</span>;
+
+(<span class='u'>O</span>, <span class='u'>O</span>)* sort_pairs((<span class='u'>O</span>, <span class='u'>O</span>)* ps) =
+  sort(ps, {
+    a1, b1 = $a;
+    a2, b2 = $b;
+    <span class='k'>return</span> a1 &lt; a2 <span class='k'>or</span> (a1 == a2 <span class='k'>and</span> b1 &lt; b2);
+  });
+</section>
+</figure>
+</code></pre>
+
+<p>Protocols can of course have any number of methods. The (largely useless) <code class="inline-code-box"><span class="inline-code">Elem</span></code> protocol below for example is designed for types that can fit in any type of container, both ordered and unordered ones, while also allowing a custom notion of equality:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>protocol</span> <span class='m'>Elem</span>:
+  (_&lt;_) : <span class='m'>Ord</span>, <span class='m'>Ord</span> -&gt; <span class='m'>Bool</span>,
+  eq    : <span class='m'>Ord</span>, <span class='m'>Ord</span> -&gt; <span class='m'>Bool</span>,
+  hash  : <span class='m'>Ord</span>      -&gt; <span class='m'>Int</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>In keeping with Cell's low-ceremony approach, conformance to a specific protocol is purely structural, with no explicit instance declarations. In order to have a type <code class="inline-code-box"><span class="inline-code">MyType</span></code> conform to <code class="inline-code-box"><span class="inline-code">Elem</span></code> all you need to do is implement the corresponding functions:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> (_&lt;_)(<span class='m'>MyType</span>, <span class='m'>MyType</span>) = ...
+<span class='m'>Bool</span> eq(<span class='m'>MyType</span>, <span class='m'>MyType</span>)    = ...
+<span class='m'>Int</span>  hash(<span class='m'>MyType</span>)          = ...
+</section>
+</figure>
+</code></pre>
+
+<p>The same happens with the subtyping relation between protocols. <code class="inline-code-box"><span class="inline-code">Elem</span></code> for example is a subtype of <code class="inline-code-box"><span class="inline-code">Ord</span></code>, since the operations required by <code class="inline-code-box"><span class="inline-code">Ord</span></code> (only <code class="inline-code-box"><span class="inline-code">&lt;</span></code> in this case) are a subset of those required by <code class="inline-code-box"><span class="inline-code">Elem</span></code>, so a value of type <code class="inline-code-box"><span class="inline-code">Elem</span></code> can be used anywhere a value of type <code class="inline-code-box"><span class="inline-code">Ord</span></code> is required.</p>
+
+<p>Protocols can define more than one type. The protocol in the following example defines two abstract types, <code class="inline-code-box"><span class="inline-code">StateM</span></code> and <code class="inline-code-box"><span class="inline-code">Msg</span></code>, which are then used in <code class="inline-code-box"><span class="inline-code">run_all(..)</span></code> and implemented by the concrete types <code class="inline-code-box"><span class="inline-code">Counter</span></code> and <code class="inline-code-box"><span class="inline-code">CounterOp</span></code> respectively:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>protocol</span> <span class='m'>StateM</span>, <span class='m'>Msg</span>:
+  run : <span class='m'>StateM</span>, <span class='m'>Msg</span> -&gt; <span class='m'>StateM</span>;
+
+<span class='m'>StateM</span> run_all(<span class='m'>StateM</span> init_state, <span class='m'>Msg</span>* msgs) {
+  <span class='k'>state</span> = init_state;
+  <span class='k'>for</span> m &lt;- msgs:
+    <span class='k'>state</span> = run(state, m);
+  ;
+  <span class='k'>return</span> state;
+}
+
+<span class='k'>type</span> <span class='m'>Counter</span>   = counter(value: <span class='m'>Int</span>, updates: <span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>CounterOp</span> = incr, decr, reset;
+
+<span class='m'>Counter</span> counter(<span class='m'>Int</span> v, <span class='m'>Int</span> u) = counter(value: v, updates: u);
+
+<span class='m'>Counter</span> run(<span class='m'>Counter</span> c, <span class='m'>CounterOp</span> op) =
+  <span class='k'>match</span> (op)
+    incr  = counter(c.value + <span class='n'>1</span>, c.updates + <span class='n'>1</span>),
+    decr  = counter(c.value - <span class='n'>1</span>, c.updates + <span class='n'>1</span>),
+    reset = counter(<span class='n'>0</span>, c.updates + <span class='n'>1</span>);
+</section>
+</figure>
+</code></pre>
+
+
+
+<h2>Implicit arguments</h2>
+
+<p>It's rather common for functions to need arguments that they don't use directly, but that are just passed on to other functions. These other functions may in turn need these parameters only because they too have to pass them on to other functions and so on. So sometimes a piece of information that is required only in a very specific function deep down in the call stack has to be passed around by all functions that depend on it, either directly or indirectly. This can be especially annoying when the need for these extra parameters arises when the code is being modified (as opposed to being written in the first place) since that may involve modifying the signatures of, and calls to, a lot of functions all over the code base. It also tends to affect functional languages more severely than imperative ones, since the former lack the sort of escape hatches the latter can offer, like for example global variables. Cell has a feature specially designed to ease this problem: implicit arguments. Let's start with a toy example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Locale</span> = en_us, en_uk, es_es;
+
+<span class='k'>type</span> <span class='m'>Date</span> = date(day: <span class='m'>Nat</span>, month: <span class='m'>Nat</span>, year: <span class='m'>Nat</span>);
+
+<span class='k'>type</span> <span class='m'>PersonData</span> = (
+  name:           <span class='m'>String</span>,
+  surname:        <span class='m'>String</span>,
+  date_of_birth:  <span class='m'>Date</span>
+);
+
+<span class='k'>implicit</span> locale : <span class='m'>Locale</span> {
+  <span class='m'>String</span> format_date(<span class='m'>Date</span> date) {
+    fields = <span class='k'>match</span> (locale)
+      en_us         = (date.month, date.day, day.year),
+      en_uk | es_es = (date.day, date.month, day.year);
+    <span class='k'>return</span> append((_print_(f) : f &lt;- fields), <span class='s'>"/"</span>);
+  }
+
+  <span class='m'>String</span> format_person_data(<span class='m'>PersonData</span> p) {
+    fields = (p.name, p.surname, format_date(p.date_of_birth));
+    <span class='k'>return</span> append(fields, <span class='s'>" - "</span>);
+  }
+}
+
+<span class='m'>PrintRecords</span>(<span class='m'>PersonData</span>* ps) {
+  <span class='k'>for</span> p &lt;- ps:
+    str = format_person_data(p, locale=<span class='a'>:en_us</span>);
+    <span class='m'>Print</span>(str & <span class='s'>"\n"</span>);
+  ;
+}
+</section>
+</figure>
+</code></pre>
+
+<p><code class="inline-code-box"><span class="inline-code">format_date(..)</span></code> and <code class="inline-code-box"><span class="inline-code">format_person_data(..)</span></code> are defined inside an implicit block. All functions defined inside such a block acquire the implicit arguments that are declared after the <code class="inline-code-box"><span class="inline-code">implicit</span></code> keyword. In this case there's just one argument, <code class="inline-code-box"><span class="inline-code">locale</span></code>, of type <code class="inline-code-box"><span class="inline-code">Locale</span></code>, but an implicit block can have any number of arguments, separated by commas:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>implicit</span> impl_arg_1 : <span class='m'>Type1</span>, impl_arg_2 : <span class='m'>Type2</span>, ... {
+  <span class='c'>// Function definitions go here</span>
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Different implicit blocks can have the same arguments, and it makes no difference whether two functions are defined in the same block or not, as long as the arguments are the same. <code class="inline-code-box"><span class="inline-code">format_date(..)</span></code> and <code class="inline-code-box"><span class="inline-code">format_person_data(..)</span></code> could have been defined as follow, and it would have made no difference at all:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>implicit</span> locale : <span class='m'>Locale</span> {
+  <span class='m'>String</span> format_date(<span class='m'>Date</span> date) {
+    fields = <span class='k'>match</span> (locale)
+      en_us         = (date.month, date.day, day.year),
+      en_uk | es_es = (date.day, date.month, day.year);
+    <span class='k'>return</span> append((_print_(f) : f &lt;- fields), <span class='s'>"/"</span>);
+  }
+}
+
+<span class='k'>implicit</span> locale : <span class='m'>Locale</span> {
+  <span class='m'>String</span> format_person_data(<span class='m'>PersonData</span> p) {
+    fields = (p.name, p.surname, format_date(p.date_of_birth));
+    <span class='k'>return</span> append(fields, <span class='s'>" - "</span>);
+  }
+}
+</section>
+</figure>
+</code></pre>
+
+<p>When calling a function with implicit arguments you can always pass all of them explicitly by name, after the positional ones, as in <code class="inline-code-box"><span class="inline-code">format_person_data(p, locale=:en_us)</span></code> above. Their specific order doesn't matter. But if caller and callee share a specific implicit argument (or any number of them) and their types are compatible (that is, the type in the caller is a subtype of the type in the callee) you can just ommit the argument which will be passed on automatically without any changes. That's what happens with <code class="inline-code-box"><span class="inline-code">format_date(p.date_of_birth)</span></code> in <code class="inline-code-box"><span class="inline-code">format_person_data(..))</span></code>.</p>
+
+<p>This is somewhat reminiscent of what happens in object-oriented languages with the <code class="inline-code-box"><span class="inline-code">this</span></code>/<code class="inline-code-box"><span class="inline-code">self</span></code> parameter, which is implicitly passed around among methods of the same class unless otherwise specified. The main differences (apart from the syntax) are the facts that in Cell you can have any number of implicit arguments, not just one, and that there's no specific relation between a function and the type of its implicit arguments.</p>
+
+<p>In a block of procedural code where several function calls need the same implicit arguments you can set them once and for all using the <code class="inline-code-box"><span class="inline-code">let</span></code> statement. <code class="inline-code-box"><span class="inline-code">PrintRecords(..)</span></code>, for instance, can be rewritten as follow:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>PrintRecords</span>(<span class='m'>PersonData</span>* ps) {
+  <span class='k'>let</span> locale = <span class='a'>:en_us</span>:
+    <span class='k'>for</span> p &lt;- ps:
+      str = format_person_data(p);
+      <span class='m'>Print</span>(str & <span class='s'>"\n"</span>);
+    ;
+  ;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Here <code class="inline-code-box"><span class="inline-code">:en_us</span></code> is used as a default value for the implicit argument <code class="inline-code-box"><span class="inline-code">locale</span></code> in all function calls that need it inside the body of the let statement. Any number of implicit arguments can be set in a single let statement, and of course let statements can be nested:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>let</span> impl_arg_1 = value1, impl_arg_2 = value2:
+  ...
+  <span class='k'>let</span> impl_arg_3 = value3:
+    ...
+  ;
+  ...
+;
+</section>
+</figure>
+</code></pre>
+
+
+
+<h2>Memoization</h2>
+
+<p>Constants in Cell are automatically cached, even when they are the result of an arbitrary computation. Example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span>* const_ints = (
+  <span class='n'>925382</span>, <span class='n'>583997</span>, <span class='n'>741994</span>, <span class='n'>101512</span>, <span class='n'>74192</span>,
+  <span class='n'>336242</span>, <span class='n'>173835</span>, <span class='n'>234009</span>, <span class='n'>697170</span>, <span class='n'>123123</span>
+);
+
+<span class='m'>Int</span> const_ints_sum {
+  sum = <span class='n'>0</span>;
+  <span class='k'>for</span> x &lt;- const_ints:
+    sum = sum + x;
+  ;
+  <span class='k'>return</span> sum;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The first time the value of <code class="inline-code-box"><span class="inline-code">const_ints_sum</span></code> is read the corresponding block of code is run, and its result is cached before being returned. All subsequent reads will just return the cached value.</p>
+
+<p>Something similar happens with functions that have no positional arguments, only implicit ones. This is better explained with a (rather contrived) example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>implicit</span> xs : <span class='m'>Float</span>* {
+  <span class='m'>Float</span>* xs_sums = scanl(xs, $a+$b);
+
+  <span class='m'>Float</span> slice_avg(<span class='m'>Int</span> start, <span class='m'>Int</span> len) {
+    sums = xs_sums;
+    right_sum = sums(start-len-<span class='n'>1</span>);
+    left_sum = <span class='k'>if</span> start &gt; <span class='n'>0</span> <span class='k'>then</span> sums(start-<span class='n'>1</span>) <span class='k'>else</span> <span class='n'>0</span>;
+    <span class='k'>return</span> {right_sum - left_sum} / len;
+  }
+
+  <span class='m'>Float</span>* block_avgs(<span class='m'>Int</span> size) = ({
+      idx = i * size;
+      len = min(size, |xs| - idx - <span class='n'>1</span>);
+      <span class='k'>return</span> slice_avg(idx, len);
+    } : i &lt; (|xs| + size - <span class='n'>1</span>) / size
+  );
+}
+</section>
+</figure>
+</code></pre>
+
+<p>In the above code computing the value of <code class="inline-code-box"><span class="inline-code">xs_sums</span></code> is relatively expensive, but during the entire execution of <code class="inline-code-box"><span class="inline-code">block_avgs(..)</span></code> the body of <code class="inline-code-box"><span class="inline-code">xs_sums</span></code> is run only once, and all subsequent calls to it just return its cached value. Memoization of the value of <code class="inline-code-box"><span class="inline-code">xs_sums</span></code> is made possible by the fact that it only depends on the implicit argument <code class="inline-code-box"><span class="inline-code">xs</span></code>, which never changes during the execution of <code class="inline-code-box"><span class="inline-code">block_avgs(..)</span></code>. It is only after <code class="inline-code-box"><span class="inline-code">xs</span></code> is either reassigned or goes out of scope that its memoized value is finally cleared from the cache. Without memoization it would be necessary to calculate <code class="inline-code-box"><span class="inline-code">xs_sums</span></code> once higher up in the call stack, and then pass it around either explicitly or implicitly.</p>
+
+<p>What this means in practice is that when a certain piece of information depends only on the implicit arguments, and those arguments do not change during the execution of a certain block of code, you don't need to pass those additional pieces of information (like <code class="inline-code-box"><span class="inline-code">xs_sums</span></code>) around, but you can just calculate them inside a function with no positional arguments. This has the effect of reducing the amount of data that needs to be passed around, thereby making implicit arguments more effective.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

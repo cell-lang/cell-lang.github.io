@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Functions</h2>
+
+<p>Functions in Cell have no side effects and are referentially transparent, but can be written in either a functional or a procedural style. We'll start with the functional style. Here are a few self-explanatory examples:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> max(<span class='m'>Int</span> x, <span class='m'>Int</span> y) = <span class='k'>if</span> x &gt;= y <span class='k'>then</span> x <span class='k'>else</span> y;
+
+<span class='m'>Int</span> factorial(<span class='m'>Int</span> n) = <span class='k'>if</span> n == <span class='n'>0</span> <span class='k'>then</span> <span class='n'>1</span> <span class='k'>else</span> n * factorial(n-<span class='n'>1</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>The signature of the function comes first, followed by the <code class="inline-code-box"><span class="inline-code">=</span></code> sign, then an expression that forms the body of the function and a semicolon that terminates the declaration. The type of the arguments and the return type are mandatory. To compare two values for equality just use the <code class="inline-code-box"><span class="inline-code">==</span></code> operator, and to check if they're different use <code class="inline-code-box"><span class="inline-code">!=</span></code>. The if/then/else is a conditional expression, and can have any number of branches (note the use of the <code class="inline-code-box"><span class="inline-code">elif</span></code> keyword):</p>
+
+<figure class="highlight">
+<section>
+<pre><code>&lt; -<span class='n'>1</span>..<span class='n'>1</span>&gt; sign(<span class='m'>Int</span> x) = <span class='k'>if</span>   x &gt; <span class='n'>0</span>  <span class='k'>then</span>  <span class='n'>1</span>
+                       <span class='k'>elif</span> x &lt; <span class='n'>0</span>  <span class='k'>then</span> -<span class='n'>1</span>
+                                   <span class='k'>else</span>  <span class='n'>0</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>Functions with no arguments in a referentially transparent language are of course just constants. They are declared and referenced without using parentheses:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Float</span> pi = <span class='n'>3.141592653589793</span>;
+
+<span class='m'>Float</span> circle_area(<span class='m'>Float</span> radius) = <span class='n'>2</span> * pi * radius ^ <span class='n'>2</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>Boolean expressions can be built using the standard logical connectors <code class="inline-code-box"><span class="inline-code">and</span></code>, <code class="inline-code-box"><span class="inline-code">or</span></code> and <code class="inline-code-box"><span class="inline-code">not</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> is_print(<span class='m'>Int</span> char) = char &gt;= <span class='n'>32</span> <span class='k'>and</span> char &lt;= <span class='n'>126</span>;
+<span class='m'>Bool</span> is_upper(<span class='m'>Int</span> char) = char &gt;= <span class='n'>65</span> <span class='k'>and</span> char &lt;= <span class='n'>90</span>;
+<span class='m'>Bool</span> is_lower(<span class='m'>Int</span> char) = char &gt;= <span class='n'>97</span> <span class='k'>and</span> char &lt;= <span class='n'>122</span>;
+<span class='m'>Bool</span> is_digit(<span class='m'>Int</span> char) = char &gt;= <span class='n'>48</span> <span class='k'>and</span> char &lt;= <span class='n'>57</span>;
+<span class='m'>Bool</span> is_alpha(<span class='m'>Int</span> char) = is_upper(char) <span class='k'>or</span> is_lower(char);
+<span class='m'>Bool</span> is_punct(<span class='m'>Int</span> char) = char != <span class='n'>32</span> <span class='k'>and</span> is_print(char) <span class='k'>and</span>
+                          <span class='k'>not</span> (is_alpha(char) <span class='k'>or</span> is_digit(char));
+</section>
+</figure>
+</code></pre>
+
+<p>If an expression is not defined for some combination of values for its variables, you can use the <code class="inline-code-box"><span class="inline-code">undefined</span></code> keyword:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> factorial(<span class='m'>Int</span> n)  = <span class='k'>if</span>   n == <span class='n'>0</span> <span class='k'>then</span> <span class='n'>1</span>
+                        <span class='k'>elif</span> n &gt; <span class='n'>0</span>  <span class='k'>then</span> n * factorial(n-<span class='n'>1</span>)
+                                    <span class='k'>else</span> <span class='k'>undefined</span>;
+</section>
+</figure>
+</code></pre>
+
+<p><code class="inline-code-box"><span class="inline-code">undefined</span></code> can be used in any context where an ordinary expression can go: but if it's ever evaluated, it throws an exception. Once an exception is thrown, there's no way to "catch" it inside functions, (only automata can recover from that) so if your program consists only of functional code the effect of evaluating <code class="inline-code-box"><span class="inline-code">undefined</span></code> is to simply terminate the program.</p>
+
+<p>Line comments begin with either <code class="inline-code-box"><span class="inline-code">//</span></code> or <code class="inline-code-box"><span class="inline-code">##</span></code>. The two are equivalent, but, by convention, the former should be used for explanations, the latter for comments that require some sort of action, like a todo item, or a bug warning:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// This is a comment that explains something about a piece of code</span>
+<span class='c'>// that works fine and does not require any action</span>
+
+<span class='c'>## TODO: Handle this case properly</span>
+<span class='c'>## BUG:  This code will fail if xs contains duplicates</span>
+</section>
+</figure>
+</code></pre>
+
+<p>Currently there's no support for multiline comments.</p>
+
+<p>When symbols or tagged values are used inside expressions they have to be written with a leading <code class="inline-code-box"><span class="inline-code">:</span></code> (save for <code class="inline-code-box"><span class="inline-code">true</span></code> and <code class="inline-code-box"><span class="inline-code">false</span></code> of course), so as to distinguish them from variables or constants in the case of symbols and function calls in the case of tagged values. That can be annoying especially when you're pasting inside your source code large chuncks of data that comes from somewhere else and which is usually written without the <code class="inline-code-box"><span class="inline-code">:</span></code>, so in that case you can make use of a literal block <code class="inline-code-box"><span class="inline-code">#{...}</span></code>. Inside it you don't have to write the leading <code class="inline-code-box"><span class="inline-code">:</span></code>, and you cannot access variables, constants, functions or use any other computational feature of the language. It's just data. As an example, the following two definitions of the constant <code class="inline-code-box"><span class="inline-code">a_large_value</span></code> are equivalent:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Any</span> a_large_value = (
+    <span class='a'>:alpha</span>,
+    <span class='a'>:bravo</span>,
+    <span class='a'>:meters</span>(<span class='n'>200</span>),
+    <span class='a'>:seconds</span>(<span class='n'>3600</span>),
+    [ <span class='a'>:charlie</span>,
+      <span class='a'>:delta</span>,
+      <span class='a'>:vector_3d</span>(<span class='n'>0.5</span>, <span class='n'>0.3</span>, <span class='n'>1.2</span>),
+      <span class='a'>:a_tag</span>(<span class='n'>10</span>, (<span class='a'>:a</span>, <span class='a'>:b</span>), [])
+    ]
+  );
+
+<span class='m'>Any</span> a_large_value = #{(
+    alpha,
+    bravo,
+    meters(<span class='n'>200</span>),
+    seconds(<span class='n'>3600</span>),
+    [ charlie,
+      delta,
+      vector_3d(<span class='n'>0.5</span>, <span class='n'>0.3</span>, <span class='n'>1.2</span>),
+      a_tag(<span class='n'>10</span>, (a, b), [])
+    ]
+  )};
+</section>
+</figure>
+</code></pre>
+
+<p>We've already seen the syntax for creating sequences. Their elements can of course be arbitrary expressions. The presence of some elements can also be made conditional. In the following example, the first element is included only if <code class="inline-code-box"><span class="inline-code">n</span></code> is greater than 0:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span>* nearby(<span class='m'>Nat</span> n) = (n - <span class='n'>1</span> <span class='k'>if</span> n &gt; <span class='n'>0</span>, n, n + <span class='n'>1</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>The following expressions all evaluate to true:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>nearby(<span class='n'>0</span>) == (<span class='n'>0</span>, <span class='n'>1</span>)
+nearby(<span class='n'>1</span>) == (<span class='n'>0</span>, <span class='n'>1</span>, <span class='n'>2</span>)
+nearby(<span class='n'>2</span>) == (<span class='n'>1</span>, <span class='n'>2</span>, <span class='n'>3</span>)
+</section>
+</figure>
+</code></pre>
+
+<p>The conditional inclusion notation applies to all collection types, in all of their syntactic forms: sequences, sets, relations, maps and records. A few examples:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='m'>Int</span>] nearby_set(<span class='m'>Nat</span> n) = [n - <span class='n'>1</span> <span class='k'>if</span> n &gt; <span class='n'>0</span>, n, n+<span class='n'>1</span>];
+
+[<span class='m'>Int</span> -&gt; <span class='m'>Int</span>] map_nearby(<span class='m'>Nat</span> n) = [
+  -<span class='n'>1</span> -&gt; n - <span class='n'>1</span> <span class='k'>if</span> n &gt; <span class='n'>0</span>,
+   <span class='n'>0</span> -&gt; n,
+   <span class='n'>1</span> -&gt; n + <span class='n'>1</span>
+];
+
+[<span class='m'>Int</span>, <span class='m'>Int</span>] bin_rel_nearby(<span class='m'>Nat</span> n)  = [
+  -<span class='n'>1</span>, n - <span class='n'>1</span> <span class='k'>if</span> n &gt; <span class='n'>0</span>;
+   <span class='n'>0</span>, n;
+   <span class='n'>1</span>, n + <span class='n'>1</span>
+];
+
+<span class='k'>type</span> <span class='m'>Point</span> = point(x: <span class='m'>Int</span>, y: <span class='m'>Int</span>, z: <span class='m'>Int</span>?);
+
+<span class='m'>Point</span> point(<span class='m'>Int</span> x, <span class='m'>Int</span> y, <span class='m'>Int</span> z) = point(x: x, y: y, z: z <span class='k'>if</span> z != <span class='n'>0</span>);
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Native collection values operations</h3>
+
+<p>Collection values have a number of built-in operators, in addition to the user-defined operators we'll see later. To get the size of a collection value, of any kind, just enclose the expression between pipes:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>|any_coll|
+</section>
+</figure>
+</code></pre>
+
+<p>If used on a sequence, the above expression will return its length; on a set, the number of (unique) elements it contains; and on a relation the number of unique entries.</p>
+
+<p>Sequences support also access by index:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>a_seq(i) <span class='c'>// Access by index</span>
+</section>
+</figure>
+</code></pre>
+
+<p>With sets, the same syntax is used for membership tests:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// True if "elt" is an element of "a_set", false otherwise</span>
+a_set(elt)
+</section>
+</figure>
+</code></pre>
+
+<p>Binary relations also support partial membership tests:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Checks whether "a_bin_rel" contains the entry "arg0, arg1"</span>
+a_bin_rel(arg0, arg1)
+
+<span class='c'>// True if there exists an entry whose first</span>
+<span class='c'>// element if arg0, false otherwise</span>
+a_bin_rel(arg0, *)
+
+<span class='c'>// True if "a_bin_rel" contains an entry whose</span>
+<span class='c'>// second element is "arg1", false otherwise</span>
+a_bin_rel(*, arg1)
+</section>
+</figure>
+</code></pre>
+
+<p>and lookups (but note that this syntax is temporary, it will change in a future version of the language):</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// If "a_bin_rel" contains one and only one entry</span>
+<span class='c'>// whose left element is equal to arg0, returns the</span>
+<span class='c'>// corresponding right element. Fails otherwise.</span>
+a_bin_rel(arg0, !!)
+
+<span class='c'>// If "a_bin_rel" contains one and only one entry</span>
+<span class='c'>// whose right element is equal to arg1, returns</span>
+<span class='c'>// the corresponding left element. Fails otherwise</span>
+a_bin_rel(!!, arg1)
+</section>
+</figure>
+</code></pre>
+
+<p>A future version of the compiler will provide a more compact notation for the first of the above two operations:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>a_map_or_bin_rel(<span class='k'>key</span>) <span class='c'>// Same as a_map_or_bin_rel(key, !!)</span>
+</section>
+</figure>
+</code></pre>
+
+<p>and this notation is already available for mutable relation variables defined inside static automata (we'll discuss them in the following chapters).</p>
+
+<p>Records support all binary relation and map operations, plus access by field and field membership test:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Returns the value of "a_field"</span>
+a_record.a_field
+
+<span class='c'>// Return true if "a_record" has field "a_field", false otherwise</span>
+a_record.a_field?
+</section>
+</figure>
+</code></pre>
+
+<p>The dot notation can also be used with tagged records. The following code is valid, since values of type <code class="inline-code-box"><span class="inline-code">Point</span></code> are actually tagged records:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Point</span> = point(x: <span class='m'>Int</span>, y: <span class='m'>Int</span>, z: <span class='m'>Int</span>?);
+
+<span class='m'>Int</span> x(<span class='m'>Point</span> p) = p.x;
+<span class='m'>Int</span> z(<span class='m'>Point</span> p) = <span class='k'>if</span> p.z? <span class='k'>then</span> p.z <span class='k'>else</span> <span class='n'>0</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>It can also be used with union types, as long as all types are records or tagged records and they all have the particular field that whose value is being looked up:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>MyUnionType</span> = (field1: <span class='m'>Int</span>, field2: <span class='m'>String</span>),
+                   tagged_rec(field1: <span class='m'>Float</span>, field3: <span class='m'>Int</span>);
+
+&lt;<span class='m'>Int</span>, <span class='m'>Float</span>&gt; get_field1(<span class='m'>MyUnionType</span> value) = value.field1;
+</section>
+</figure>
+</code></pre>
+
+<p>Ternary relations support the same native operations as binary relations, but with three arguments instead of two in the case of membership tests and lookups:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// True if "a_tern_rel" includes the triple</span>
+<span class='c'>// "arg0, arg1, arg2", false otherwise</span>
+a_tern_rel(arg0, arg1, arg2)
+
+<span class='c'>// Partial membership test, any value for</span>
+<span class='c'>// the middle argument will do</span>
+a_tern_rel(arg0, *, arg2)
+
+<span class='c'>// Partial membership test, any pair of values</span>
+<span class='c'>// for left and right arguments will do</span>
+a_tern_rel(*, arg1, *)
+
+<span class='c'>// Look up the corresponding values in the first, second</span>
+<span class='c'>// or third columns respectively, if those values exist</span>
+<span class='c'>// and are unique. Fail otherwise</span>
+a_tern_rel(!!, arg1, arg2)
+a_tern_rel(arg0, !!, arg2)
+a_tern_rel(arg0, arg1, !!)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Sequence comprehension</h3>
+
+<p>Say you want to apply a certain operation to all elements of a sequence:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// square_all(())              == ()</span>
+<span class='c'>// square_all((0, 1, 2, 3, 4)) == (0, 1, 4, 9, 16)</span>
+<span class='m'>Int</span>* square_all(<span class='m'>Int</span>* xs) = (x * x : x &lt;- xs);
+</section>
+</figure>
+</code></pre>
+
+<p>You can access not just the value of each element of the sequence, but also their indexes:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// elem_plus_index((10, 20, 30, 40)) == (10, 21, 32, 43);</span>
+<span class='m'>Int</span>* elem_plus_index(<span class='m'>Int</span>* xs) = (x + i : x @ i &lt;- xs);
+</section>
+</figure>
+</code></pre>
+
+<p>You can add a filter expression:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// only_nonzero_elements((2, 1, 0, 4, 0, 3)) == (2, 1, 4, 3)</span>
+<span class='m'>Int</span>* only_nonzero_elements(<span class='m'>Int</span>* xs) = (x : x &lt;- xs, x != <span class='n'>0</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>If the sequence contains tuples, you can destructure them:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// sum_triples(((1, 2, 3), (4, 5, 6), (7, 8, 9))) == (6, 15, 24)</span>
+<span class='m'>Int</span>* sum_triples((<span class='m'>Int</span>, <span class='m'>Int</span>, <span class='m'>Int</span>)* ts) = (x + y + z : x, y, z &lt;- ts);
+</section>
+</figure>
+</code></pre>
+
+<p>And you can of course combine all the above features:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// weird_function(((2, 4), (5, 2), (3, 1), (7, 4), (2, 6))</span>
+<span class='c'>//   ==</span>
+<span class='c'>// (8, 10, 14)</span>
+<span class='m'>Int</span>* weird_function((<span class='m'>Int</span>, <span class='m'>Int</span>)* ts) = (
+  <span class='n'>2</span> * max(x, y) : x, y @ i &lt;- ts, x &gt; i <span class='k'>and</span> y &gt; i
+);
+</section>
+</figure>
+</code></pre>
+
+<p>You can also build a sequence by iterating over a range of integers instead:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// rotate_left((100, 101, 102, 103, 104), 2)</span>
+<span class='c'>//   ==</span>
+<span class='c'>// (102, 103, 104, 100, 101)</span>
+<span class='m'>Int</span>* rotate_left(<span class='m'>Int</span>* seq, <span class='m'>Int</span> shift) = (
+  seq(mod(i+shift, |seq|)) : i &lt; |seq|
+);
+</section>
+</figure>
+</code></pre>
+
+<p>The index variable <code class="inline-code-box"><span class="inline-code">i</span></code> goes from 0 to <code class="inline-code-box"><span class="inline-code">|seq|-1</span></code>. You can include the last value by using <code class="inline-code-box"><span class="inline-code">&lt;=</span></code> instead of <code class="inline-code-box"><span class="inline-code">&lt;</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// insert_right((100, 101, 102), 103) == (100, 101, 102, 103)</span>
+<span class='m'>Int</span>* insert_right(<span class='m'>Int</span>* seq, <span class='m'>Int</span> elt) = (
+  <span class='k'>if</span> i == |seq| <span class='k'>then</span> elt <span class='k'>else</span> seq(i) : i &lt;= |seq|
+);
+</section>
+</figure>
+</code></pre>
+
+<p>Note that the above example (and many of those that follow) is just that, an example, and not the recommended way to write that function. The following implementation is logically equivalent, but a lot more efficient (when used properly, it runs in amortized O(1)):</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span>* insert_right(<span class='m'>Int</span>* seq, <span class='m'>Int</span> elt) = (seq | elt);
+</section>
+</figure>
+</code></pre>
+
+<p>(Of course, there's no point in defining such a function, since it's just easier to use the <code class="inline-code-box"><span class="inline-code">(xs | x)</span></code> notation directly). We'll say more about functional concatenation in the next chapter, when we talk about imperative programming.</p>
+
+
+<h3>Set/relation/map comprehension</h3>
+
+<p>Comprehension can be applied to sets and relations as well. It's similar but a bit more complex. You can have multiple source expressions, multiple filters and more. Let's start by creating functions that merge two sets of values:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='u'>T</span>] set_union([<span class='u'>T</span>] set1, [<span class='u'>T</span>] set2) = [x : x &lt;- set1 | x &lt;- set2];
+</section>
+</figure>
+</code></pre>
+
+<p>The source expression <code class="inline-code-box"><span class="inline-code">x &lt;- set1 | x &lt;- set2</span></code> iterates through all the elements of both <code class="inline-code-box"><span class="inline-code">set1</span></code> and <code class="inline-code-box"><span class="inline-code">set2</span></code>. The iteraction is done in an unspecified order (since sets and relations are unordered collections), and all duplicates in the result are of course eliminated. Any single-letter uppercase symbol like the <code class="inline-code-box"><span class="inline-code">T</span></code> that appears in the signature of <code class="inline-code-box"><span class="inline-code">set_union()</span></code> is a type variables that can represent any type. Type variables are used for generic programming, and they are needed to preserve type information: if the above function is used, for instance, to merge two sets of integers, the typechecker will be able to figure out that the result, too, will be a set of integers. We'll discuss them in detail in another chapter. Merging relations is very similar:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='u'>A</span>, <span class='u'>B</span>] bin_rel_union([<span class='u'>A</span>, <span class='u'>B</span>] r1, [<span class='u'>A</span>, <span class='u'>B</span>] r2) = [
+  x, y : x, y &lt;- r1 | x, y &lt;- r2
+];
+
+[<span class='u'>A</span>, <span class='u'>B</span>, <span class='u'>C</span>] tern_rel_union([<span class='u'>A</span>, <span class='u'>B</span>, <span class='u'>C</span>] r1, [<span class='u'>A</span>, <span class='u'>B</span>, <span class='u'>C</span>] r2) = [
+  x, y, z : x, y, z &lt;- r1 | x, y, z &lt;- r2
+];
+</section>
+</figure>
+</code></pre>
+
+<p>Maps have a specific form of comprehension, that works in exactly the same way as binary relation comprehension, but will refuse to produce values that are not maps: if the resulting relation has duplicate keys, the computation will just fail. The only syntactic difference is that the comma between the two expression before the <code class="inline-code-box"><span class="inline-code">:</span></code> is replaced with a <code class="inline-code-box"><span class="inline-code">-&gt;</span></code>. Here's how you define the map version of union:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='u'>A</span> -&gt; <span class='u'>B</span>] map_union([<span class='u'>A</span> -&gt; <span class='u'>B</span>] m1, [<span class='u'>A</span> -&gt; <span class='u'>B</span>] m2) = [
+  x -&gt; y : x, y &lt;- m1 | x, y &lt;- m2
+];
+</section>
+</figure>
+</code></pre>
+
+<p>You can also define a function that can merge any number of sets:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='u'>T</span>] sets_union([[<span class='u'>T</span>]] sets) = [x : s &lt;- sets, x &lt;- s];
+</section>
+</figure>
+</code></pre>
+
+<p>The above function iterates through all the sets in <code class="inline-code-box"><span class="inline-code">sets</span></code>, and for each set, it iterates through all the elements. You can of course define similar functions for relations or maps.</p>
+<p>This is a function that generates a binary relation that is the cartesian product of two sets:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='u'>A</span>, <span class='u'>B</span>] cartesian_product([<span class='u'>A</span>] s1, [<span class='u'>B</span>] s2) = [
+  x, y : x &lt;- s1, y &lt;- s2
+];
+</section>
+</figure>
+</code></pre>
+
+<p>The function iterates through all the elements in the first set and, for each of them, it iterates through the elements of the second set, and it ends up producing all the combinations.</p>
+
+<p>Set/relation comprehension expressions can iterate through sequences as well. The following function turns a sequence into a set:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='u'>T</span>] set(<span class='u'>T</span>* s) = [x : x &lt;~ s];
+</section>
+</figure>
+</code></pre>
+
+<p>When the source is a sequence, rather than a set or a relations, you need to use the <code class="inline-code-box"><span class="inline-code">&lt;~</span></code> arrow instead of <code class="inline-code-box"><span class="inline-code">&lt;-</span></code> and the same index variable and tuple destructuring functionalities that we saw for sequence comprehension are available. An example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='m'>Nat</span>, <span class='u'>A</span>, <span class='u'>B</span>] pair_seq_to_indexed_tern_rel((<span class='u'>A</span>, <span class='u'>B</span>)* seq) = [
+  i, x, y : x, y @ i &lt;~ seq
+];
+</section>
+</figure>
+</code></pre>
+
+<p>Just like with sequences we can have filter clauses, but here we can have more than one and they can be intermixed with generators. The following function produces the cartesian product of two sets of integers, but it filters out all negative integers from either set:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='m'>Int</span>, <span class='m'>Int</span>] cart_prod_non_neg([<span class='m'>Int</span>] xs, [<span class='m'>Int</span>] ys) = [
+  x, y : x &lt;- xs, x &gt;= <span class='n'>0</span>, y &lt;- ys, y &gt;=<span class='n'>0</span>
+];
+</section>
+</figure>
+</code></pre>
+
+<p>You can also calculate a new value and assign it to a variable inside the loop. The following expression iterates through all the elements of <code class="inline-code-box"><span class="inline-code">xs</span></code>, stores the value of <code class="inline-code-box"><span class="inline-code">f(x)</span></code> in <code class="inline-code-box"><span class="inline-code">y</span></code>, skips the iteraction when <code class="inline-code-box"><span class="inline-code">p(y)</span></code> is false, and finally inserts the value of <code class="inline-code-box"><span class="inline-code">g(x, y)</span></code> in the output set.</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[g(x, y) : x &lt;- xs, y = f(x), p(y)]
+</section>
+</figure>
+</code></pre>
+
+<p>There's one more type of clause that you can use in set/relation comprehension expression, but we'll defer its discussion until we've examined pattern matching.</p>
+
+<p>You can also iterate through a projection of a relation, that is, a subset of it obtained by filtering it based on the value of some of the arguments. The following pairs of expressions are all equivalent, but the ones that are not commented out are a lot faster, because they don't need to do a linear scan of the entire relation:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// [y : x, y &lt;- bin_rel, x == x0]</span>
+[y : y &lt;- bin_rel(x0, ?)]
+
+<span class='c'>// [x : x, y &lt;- bin_rel, y == y0]</span>
+[x : x &lt;- bin_rel(?, y0)]
+
+<span class='c'>// [y, z : x, y, z &lt;- tern_rel, x == x0]</span>
+[y, z : y, z &lt;- tern_rel(x0, ?, ?)]
+
+<span class='c'>// [x, z : x, y, z &lt;- tern_rel, y == y0]</span>
+[x, y : x, z &lt;- tern_rel(?, y0, ?)]
+
+<span class='c'>// [x, y : x, y, z &lt;- tern_rel, z == z0]</span>
+[x, y : x, y &lt;- tern_rel(?, ?, z0)]
+
+<span class='c'>// [x : x, y, z &lt;- tern_rel, y == y0, z == z0]</span>
+[x : x &lt;- tern_rel(?, y0, z0)]
+
+<span class='c'>// [y : x, y, z &lt;- tern_rel, x == x0, z == z0]</span>
+[y : y &lt;- tern_rel(x0, ?, z0)]
+
+<span class='c'>// [z : x, y, z &lt;- tern_rel, x == x0, y == x0]</span>
+[z : z &lt;- tern_rel(x0, y0, ?)]
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Existential checks</h3>
+
+<p>If you need to check whether a set contains an element that satisfies a given predicate, you can do it like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Returns true if and only if there's an</span>
+<span class='c'>// element <span class="inline-code">x</span> of <span class="inline-code">xs</span> such that <span class="inline-code">p(x)</span> is true</span>
+(x &lt;- xs : p(x))
+</section>
+</figure>
+</code></pre>
+
+<p>The above expressions iterates through the elements of <code class="inline-code-box"><span class="inline-code">xs</span></code>, and for each of them it evaluates the boolean expression on the right of the column (<code class="inline-code-box"><span class="inline-code">p(x)</span></code> in this case). If the expression evaluates to true, the loop is terminated and the overall expression evaluates to true. If no element in the set satisfies the predicate on the right, the overall expression evaluates to false.</p>
+
+<p>The clause on the left can contains anything that can appear on the right of the column in a set/relation comprehension expression. A few examples:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Evaluates to true if and only if the binary relation</span>
+<span class='c'>// <span class="inline-code">r</span> contains a pair <span class="inline-code">x, y</span> such that <span class="inline-code">p(x, y)</span> is true</span>
+(x, y &lt;- r : p(x, y))
+
+<span class='c'>// Evaluates to true if and only if there's an</span>
+<span class='c'>// element <span class="inline-code">x</span> of <span class="inline-code">xs</span> and an element <span class="inline-code">y</span> of <span class="inline-code">ys</span></span>
+<span class='c'>// such that <span class="inline-code">p(x)</span> and <span class="inline-code">q(x, y)</span> are both true</span>
+(x &lt;- xs, p(x), y &lt;- ys : q(x, y))
+
+<span class='c'>// Evaluates to true if and only if the sequence <span class="inline-code">xs</span> contains</span>
+<span class='c'>// an element <span class="inline-code">x</span> at index <span class="inline-code">i</span> such that <span class="inline-code">p(x, i)</span> is true</span>
+(x @ i &lt;~ xs : p(x, i))
+</section>
+</figure>
+</code></pre>
+
+<p>Note that the iteration order is specified only when the iterating through a sequence (it's the obvious one, from the first element to the last), while it's implementation-defined when iterating through the elements of an unordered collection (that is, a set or a relation), and this may introduce some nondeterminism in the language if the predicate on the right can fail and throw an exception, so even though the evaluation of this expression terminates as soon as the boolean expression on the right evaluates to true, you can rely on this behaviour only when dealing with sequences.</p>
+
+
+<h3>Operators</h3>
+
+<p>This is the list of all cell operators, in order of decreasing precedence:</p>
+
+<p><table class="types-table">
+  <tr><td><code>and or</code></td></tr>
+  <tr><td><code>not</code></td></tr>
+  <tr><td><code>== != ::</code></td></tr>
+  <tr><td><code>&lt; &gt; &lt;= &gt;=</code></td></tr>
+  <tr><td><code>+ &amp; - (binary)</code></td></tr>
+  <tr><td><code>* /</code></td></tr>
+  <tr><td><code>- (unary)</code></td></tr>
+  <tr><td><code>^</code></td></tr>
+  <tr><td><code>[] ()</code></td></tr>
+  <tr><td><code>.</code></td></tr>
+</table>
+</p>
+
+<p>Note that there are two versions of the <code class="inline-code-box"><span class="inline-code">-</span></code> operator, the unary and binary ones.</p>
+<p>All binary operators associate from left to right, except for those that don't associate at all: <code class="inline-code-box"><span class="inline-code">^</span></code>, <code class="inline-code-box"><span class="inline-code">==</span></code>, <code class="inline-code-box"><span class="inline-code">!=</span></code> and <code class="inline-code-box"><span class="inline-code">::</span></code>.</p>
+<p>The arithmetic and comparison operators <code class="inline-code-box"><span class="inline-code">+</span></code> <code class="inline-code-box"><span class="inline-code">-</span></code> <code class="inline-code-box"><span class="inline-code">*</span></code> <code class="inline-code-box"><span class="inline-code">/</span></code> <code class="inline-code-box"><span class="inline-code">&lt;</span></code> <code class="inline-code-box"><span class="inline-code">&gt;</span></code> <code class="inline-code-box"><span class="inline-code">&lt;=</span></code> <code class="inline-code-box"><span class="inline-code">&gt;=</span></code> have the obvious meanings, and are defined for any combination of integers and floating point numbers. The binary <code class="inline-code-box"><span class="inline-code">-</span></code> is also used to denote set difference. The exponentiation operator <code class="inline-code-box"><span class="inline-code">^</span></code> is too defined for any combination of integers and floating point numbers, but it always returns a floating point number.</p>
+<p>The <code class="inline-code-box"><span class="inline-code">::</span></code> operator is used to test if a value belongs to a type, and returns a boolean value:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// True if the value of "my_var" belongs to "MyType", false otherwise</span>
+my_var :: <span class='m'>MyType</span>
+</section>
+</figure>
+</code></pre>
+
+<p>The operator <code class="inline-code-box"><span class="inline-code">&</span></code> is defined as concatenation for sequences and strings, union for sets and merge for maps. In the case of maps it fails if the two maps have common keys (unless those duplicate keys map to the same values).</p>
+
+<p>The following operators can be overloaded: <code class="inline-code-box"><span class="inline-code">+</span></code>, <code class="inline-code-box"><span class="inline-code">-</span></code>, <code class="inline-code-box"><span class="inline-code">*</span></code>, <code class="inline-code-box"><span class="inline-code">/</span></code>, <code class="inline-code-box"><span class="inline-code">^</span></code>, <code class="inline-code-box"><span class="inline-code">&lt;</span></code>, <code class="inline-code-box"><span class="inline-code">&gt;</span></code>, <code class="inline-code-box"><span class="inline-code">&lt;=</span></code>, <code class="inline-code-box"><span class="inline-code">&gt;=</span></code>, <code class="inline-code-box"><span class="inline-code">&</span></code>, <code class="inline-code-box"><span class="inline-code">[]</span></code>. In order to overload them, they have to be treated like normal functions with the following names:</p>
+
+<p><table class="types-table">
+  <tr>
+    <th>Operator</th>
+    <th>Function name</th>
+    <th></th>
+  </tr>
+  <tr><td><code>-</code></td><td><code>(-_)</code></td><td>unary</td></tr>
+  <tr><td><code>+</code></td><td><code>(_+_)</code></td><td/></tr>
+  <tr><td><code>- </code></td><td><code>(_-_)</code></td><td/>binary</tr>
+  <tr><td><code>* </code></td><td><code>(_*_)</code></td><td/></tr>
+  <tr><td><code>/ </code></td><td><code>(_/_)</code></td><td/></tr>
+  <tr><td><code>^ </code></td><td><code>(_^_)</code></td><td/></tr>
+  <tr><td><code>&lt; </code></td><td><code>(_&lt;_)</code></td><td/></tr>
+  <tr><td><code>> </code></td><td><code>(_>_)</code></td><td/></tr>
+  <tr><td><code>&lt;=</code></td><td><code>(_&lt;=_)</code></td><td/></tr>
+  <tr><td><code>>=</code></td><td><code>(_>=_)</code></td><td/></tr>
+  <tr><td><code>&amp; </code></td><td><code>(_&amp;_)</code></td><td/></tr>
+  <tr><td><code>[]</code></td><td><code>(_[_])</code></td><td/></tr>
+</table>
+</p>
+
+<p>The function names are formed by the operator itself, with underscores where the operands should be, all enclosed in parentheses. As an example, let's define the operators <code class="inline-code-box"><span class="inline-code">+</span></code>, <code class="inline-code-box"><span class="inline-code">*</span></code> and unary <code class="inline-code-box"><span class="inline-code">-</span></code> for boolean, as synonyms for <code class="inline-code-box"><span class="inline-code">or</span></code>, <code class="inline-code-box"><span class="inline-code">and</span></code> and <code class="inline-code-box"><span class="inline-code">not</span></code> respectively:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> (_+_) (<span class='m'>Bool</span> b1, <span class='m'>Bool</span> b2) = b1 <span class='k'>or</span> b2;
+<span class='m'>Bool</span> (_*_) (<span class='m'>Bool</span> b1, <span class='m'>Bool</span> b2) = b1 <span class='k'>and</span> b2;
+<span class='m'>Bool</span>  (-_) (<span class='m'>Bool</span> b)           = <span class='k'>not</span> b;
+</section>
+</figure>
+</code></pre>
+
+<p>Let's also define the operator <code class="inline-code-box"><span class="inline-code">[]</span></code> for sequences, as a synonym of <code class="inline-code-box"><span class="inline-code">()</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='u'>T</span> (_[_]) (<span class='u'>T</span>* xs, <span class='m'>Int</span> i) = xs(i);
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Closures</h3>
+
+<p>Cell has support for closures, although it is very limited compared to what truly functional languages like Haskell (or even some object-oriented languages) can offer. The only thing you can do with closures at the moment is pass them as parameters to a function. This is the definition of one staple of every functional programming language, the <code class="inline-code-box"><span class="inline-code">map()</span></code> function (note that it's just syntactic sugar for sequence comprehension, so it's not particularly useful in and of itself. It's just an example):</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='u'>B</span>* map(<span class='u'>A</span>* s, (<span class='u'>A</span> -&gt; <span class='u'>B</span>) f) = (f(x) : x &lt;- s);
+</section>
+</figure>
+</code></pre>
+
+<p>The second argument to the <code class="inline-code-box"><span class="inline-code">map(..)</span></code> function is a closure that takes an argument of a generic type <code class="inline-code-box"><span class="inline-code">A</span></code> and returns a value of another generic type <code class="inline-code-box"><span class="inline-code">B</span></code>. That closure is applied to each element of <code class="inline-code-box"><span class="inline-code">s</span></code> in turn. The type <code class="inline-code-box"><span class="inline-code">(A -&gt; B)</span></code> is a closure type. For a closure with multiple arguments, the general form of its type is:</p>
+
+<p><table class="types-table">
+  <tr><td><code>(A -> R)</code></td></tr>
+  <tr><td><code>(A1 A2 -> R)</code></td></tr>
+  <tr><td><code>(A1 A2 A3 -> R)</code></td></tr>
+  <tr><td><code>(A1 A2 A3 ... -> R)</code></td></tr>
+</table>
+</p>
+
+<p>where <code class="inline-code-box"><span class="inline-code">A</span></code>, <code class="inline-code-box"><span class="inline-code">A1</span></code>, <code class="inline-code-box"><span class="inline-code">A2</span></code>, ... <code class="inline-code-box"><span class="inline-code">An</span></code> are the types of the argument(s), and <code class="inline-code-box"><span class="inline-code">R</span></code> is the type of the result. The only place where closure types can appear is in the argument list of a function. A function cannot return a closure, and type definitions cannot make use of closure types, since regular data and closures cannot be mixed. Also, a closure cannot take other closures in turn as parameters: all of its arguments have to be regular values.</p>
+<p>Here are a few examples of how you can call a function that takes a closure argument:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Int* increment_all(Int* xs) = (x + 1 : x &lt;- xs);</span>
+<span class='m'>Int</span>* increment_all(<span class='m'>Int</span>* xs) = map(xs, $ + <span class='n'>1</span>);
+
+<span class='c'>// Int* multiply_all(Int* xs, Int y) = (x * y : x &lt;- xs);</span>
+<span class='m'>Int</span>* multiply_all(<span class='m'>Int</span>* xs, <span class='m'>Int</span> y) = map(xs, $ * y);
+
+<span class='c'>// Int* square_all(Int* xs) = (square(x) : x &lt;- xs);</span>
+<span class='m'>Int</span>* square_all(<span class='m'>Int</span>* xs) = map(xs, square);
+
+<span class='m'>Int</span> square(<span class='m'>Int</span> x) = x * x;
+
+<span class='c'>// [B*] map2([A*] ss, (A -&gt; B) f) = [(f(x) : x &lt;- s) : s &lt;- ss];</span>
+[<span class='u'>B</span>*] map2([<span class='u'>A</span>*] ss, (<span class='u'>A</span> -&gt; <span class='u'>B</span>) f) = [map(s, f) : s &lt;- ss];
+</section>
+</figure>
+</code></pre>
+
+<p>The are two ways to provide a closure argument in a function call. The first option, if you don't need to capture any local variable, is to just pass the name of an existing function or closure. That's what <code class="inline-code-box"><span class="inline-code">square_all(..)</span></code> and <code class="inline-code-box"><span class="inline-code">map2(..)</span></code> do. The other option is to simply write the expression that constitutes the body of the closure, like in <code class="inline-code-box"><span class="inline-code">increment_all(..)</span></code> and <code class="inline-code-box"><span class="inline-code">multiply_all(..)</span></code>. Inside that expression you can use local variables (which will be captured by the closure) and you can refer to the argument of the closure with the symbol <code class="inline-code-box"><span class="inline-code">$</span></code>, or <code class="inline-code-box"><span class="inline-code">$a</span></code>, <code class="inline-code-box"><span class="inline-code">$b</span></code>, <code class="inline-code-box"><span class="inline-code">$c</span></code>... if the closure has more than one argument.</p>
+
+
+<h3>Pattern matching</h3>
+
+<p>When writing a function over a union type, you may want to provide a different implementation for each of the cases in the union. There are two ways to do that: one is to write a set of polymorphic functions, the other is to use pattern matching. We'll postpone a discussion of the former until later, and describe the latter here. One of the simplest examples of a type union is the <code class="inline-code-box"><span class="inline-code">Maybe</span></code> type. Let's say we want to write a function that applies a closure to the value contained inside, or do nothing is there's no value at all:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// type Maybe[T]  = nothing, just(T);</span>
+
+<span class='m'>Maybe</span>[<span class='u'>B</span>] apply(<span class='m'>Maybe</span>[<span class='u'>A</span>] m, (<span class='u'>A</span> -&gt; <span class='u'>B</span>) f) =
+  <span class='k'>match</span> (m)
+    nothing   = <span class='a'>:nothing</span>,
+    just(x?)  = <span class='a'>:just</span>(f(x));
+</section>
+</figure>
+</code></pre>
+
+<p>The match expression takes a value and compares it sequentially to any number of patterns. In the above expression, both <code class="inline-code-box"><span class="inline-code">nothing</span></code> (the one on the left) and <code class="inline-code-box"><span class="inline-code">just(x?)</span></code> are patterns. During evaluation the value being inspected (in this case <code class="inline-code-box"><span class="inline-code">m</span></code>) is matched against each pattern in the order in which they appear, until a match is found: when that happens the corresponding expression on the right is evaluated, and its value becomes the value of the whole match expression. If no match is found, the execution fails, just like with <code class="inline-code-box"><span class="inline-code">undefined</span></code> . Note that more than one pattern may be able to match a given value, but the search stops at the first one: the other ones are ignored.</p>
+<p>Every pattern matches a (possibly infinite) set of values, and may bind new variables. The pattern <code class="inline-code-box"><span class="inline-code">nothing</span></code>, for example, matches one and only one value, the symbol <code class="inline-code-box"><span class="inline-code">nothing</span></code>. This is true in general: every symbol is also a pattern, that matches itself. The second pattern, <code class="inline-code-box"><span class="inline-code">just(x?)</span></code> on the other hand matches any value tagged with the symbol <code class="inline-code-box"><span class="inline-code">just</span></code>. It matches, for example, the values <code class="inline-code-box"><span class="inline-code">just(0)</span></code>, <code class="inline-code-box"><span class="inline-code">just("Hello world!")</span></code>, <code class="inline-code-box"><span class="inline-code">just(day: 27, month: 4, year: 2017)</span></code> or <code class="inline-code-box"><span class="inline-code">just(point(x: 2.5, y: 0.3))</span></code>. The <code class="inline-code-box"><span class="inline-code">x?</span></code> is a pattern variable: if the match succeeds, the value of <code class="inline-code-box"><span class="inline-code">x</span></code> is the value of <code class="inline-code-box"><span class="inline-code">m</span></code> without the tag. In the previous examples, <code class="inline-code-box"><span class="inline-code">x</span></code> would end up having values <code class="inline-code-box"><span class="inline-code">0</span></code>, <code class="inline-code-box"><span class="inline-code">"Hello world"</span></code>, <code class="inline-code-box"><span class="inline-code">(day: 27, month: 4, year: 2017)</span></code> and <code class="inline-code-box"><span class="inline-code">point(x: 2.5, y: 0.3)</span></code> respectively.</p>
+<p>A match expression can match any number of values, not just one: the following function, for example, applies a two-argument function to the content of two <code class="inline-code-box"><span class="inline-code">Maybe</span></code> values if neither is <code class="inline-code-box"><span class="inline-code">nothing</span></code> and returns the tagged result, or <code class="inline-code-box"><span class="inline-code">nothing</span></code> otherwise:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Maybe</span>[<span class='u'>C</span>] apply(<span class='m'>Maybe</span>[<span class='u'>A</span>] ma, <span class='m'>Maybe</span>[<span class='u'>B</span>] mb, (<span class='u'>A</span> <span class='u'>B</span> -&gt; <span class='u'>C</span>) f) =
+  <span class='k'>match</span> (ma, mb)
+    just(a?), just(b?)  = <span class='a'>:just</span>(f(a, b)),
+    _,        _         = <span class='a'>:nothing</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>The <code class="inline-code-box"><span class="inline-code">_</span></code> pattern is the catch-all pattern: it matches any value.</p>
+<p>When match expressions are the topmost expression in a function definition, and when the value that is being matched is the first argument of that function (or the first arguments, if the matching involves more than one value) you can omit the <code class="inline-code-box"><span class="inline-code">match (..)</span></code> part of the expression. The two functions above can be rewritten as follow:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Maybe</span>[<span class='u'>B</span>] apply(<span class='m'>Maybe</span>[<span class='u'>A</span>] m, (<span class='u'>A</span> -&gt; <span class='u'>B</span>) f) =
+  nothing   = <span class='a'>:nothing</span>,
+  just(x?)  = <span class='a'>:just</span>(f(x));
+
+<span class='m'>Maybe</span>[<span class='u'>C</span>] apply(<span class='m'>Maybe</span>[<span class='u'>A</span>] ma, <span class='m'>Maybe</span>[<span class='u'>B</span>] mb, (<span class='u'>A</span> <span class='u'>B</span> -&gt; <span class='u'>C</span>) f) =
+  just(a?), just(b?)  = <span class='a'>:just</span>(f(a, b)),
+  _,        _         = <span class='a'>:nothing</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>Patterns can also match tuples (that is, fixed length sequences):</p>
+
+<figure class="highlight">
+<section>
+<pre><code>(<span class='u'>B</span>, <span class='u'>A</span>) swap_pair((<span class='u'>A</span>, <span class='u'>B</span>)) =
+  (a?, b?)  = (b, a);
+
+(<span class='u'>C</span>, <span class='u'>A</span>, <span class='u'>B</span>) rotate_right_once((<span class='u'>A</span>, <span class='u'>B</span>, <span class='u'>C</span>)) =
+  (a?, b?, c?)  = (c, a, b);
+</section>
+</figure>
+</code></pre>
+
+<p>and tagged values with any tag. The following two functions accept as input any tagged value, and return the untagged value or the tag itself, respectively:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='u'>T</span> untag(&lt;+&gt;(<span class='u'>T</span>)) =
+  t?(v?) = v;
+
+<span class='m'>Symbol</span> tag(&lt;+&gt;(<span class='m'>Any</span>)) =
+  t?(v?)  = t;
+</section>
+</figure>
+</code></pre>
+
+<p>Union types often include related but different sets of values, each of which is tagged with a different symbol, and in this case pattern matching may be used not to break up a value, but simply to provide a different implementation for each type in the union:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Shape</span> = square(side: <span class='m'>Float</span>),
+             rectangle(width: <span class='m'>Float</span>, height: <span class='m'>Float</span>),
+             circle(radius: <span class='m'>Float</span>);
+
+<span class='m'>Float</span> pi = <span class='n'>3.141592653589793</span>;
+
+<span class='m'>Float</span> area(<span class='m'>Shape</span> s) =
+  square(_)     = s.side ^ <span class='n'>2</span>,
+  rectangle(_)  = s.width * s.height,
+  circle(_)     = pi * s.radius ^ <span class='n'>2</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>In patterns like the one above, you can just omit the catch-all pattern <code class="inline-code-box"><span class="inline-code">_</span></code> inside the parentheses. The <code class="inline-code-box"><span class="inline-code">area(..)</span></code> function can be rewritten as follows:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Float</span> area(<span class='m'>Shape</span> s) =
+  square()    = s.side ^ <span class='n'>2</span>,
+  rectangle() = s.width * s.height,
+  circle()    = pi * s.radius ^ <span class='n'>2</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>Patterns can also be nested. An example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Point</span> = point(<span class='m'>Int</span>, <span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>Rect</span>  = rect(<span class='m'>Point</span>, <span class='m'>Point</span>);
+
+<span class='m'>Int</span> area(<span class='m'>Rect</span>) =
+  rect(
+    point(x1?, y1?),
+    point(x2?, y2?)
+  ) = abs({x1 - x2} * {y1 - y2});
+</section>
+</figure>
+</code></pre>
+
+<p>You can also break up a value according to a pattern, and still bind the entire value to a variable, like the following function does: it binds both elements of <code class="inline-code-box"><span class="inline-code">ps</span></code> to a variable, <code class="inline-code-box"><span class="inline-code">p1</span></code> and <code class="inline-code-box"><span class="inline-code">p2</span></code> respectively, and then further breaks up each of them in turn, finally binding the values <code class="inline-code-box"><span class="inline-code">x1</span></code>, <code class="inline-code-box"><span class="inline-code">y1</span></code>, <code class="inline-code-box"><span class="inline-code">x2</span></code>, <code class="inline-code-box"><span class="inline-code">y2</span></code>.</p>
+
+<figure class="highlight">
+<section>
+<pre><code>((<span class='m'>Int</span>, <span class='m'>Int</span>), (<span class='m'>Int</span>, <span class='m'>Int</span>))
+sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<span class='m'>Int</span>, <span class='m'>Int</span>)) ps) =
+  ((x1?, y1?) p1?, (x2?, y2?) p2?) = (
+    <span class='k'>if</span> x1 &gt; y1 <span class='k'>then</span> (y1, x1) <span class='k'>else</span> p1,
+    <span class='k'>if</span> x2 &gt; y2 <span class='k'>then</span> (y2, x2) <span class='k'>else</span> p2
+  );
+</section>
+</figure>
+</code></pre>
+
+<p>Patterns can be used not only with the match expression, but also inside set/relation comprehension (but not sequence comprehension) expressions, like in this example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[(<span class='m'>Int</span>, <span class='m'>Int</span>)] sort_pairs([(<span class='m'>Int</span>, <span class='m'>Int</span>)] ps) = [
+  <span class='k'>if</span> x &lt; y <span class='k'>then</span> p <span class='k'>else</span> (y, x) : p &lt;- ps, (x?, y?) ?= p
+];
+</section>
+</figure>
+</code></pre>
+
+<p>The above function iterates through all pairs in the set, and for each of them it pattern matches it in order to bind the two variables <code class="inline-code-box"><span class="inline-code">x</span></code> and <code class="inline-code-box"><span class="inline-code">y</span></code>, and finally produces a result using those variables. If the match fails, then that particular iteraction of the loop is cut short. The following <code class="inline-code-box"><span class="inline-code">radii(..)</span></code> function, for example, takes a set of <code class="inline-code-box"><span class="inline-code">Shape</span></code> values, and for each circle among them it returns its radius, skipping squares and rectangles in the process:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='m'>Float</span>] radii([<span class='m'>Shape</span>] shapes) = [
+  s.radius : s &lt;- shapes, circle() ?= s
+];
+</section>
+</figure>
+</code></pre>
+
+<p>There's also pattern unions, formed by joining any number of patterns with the <code class="inline-code-box"><span class="inline-code">|</span></code> symbol.</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> is_polygon(<span class='m'>Shape</span>) =
+  square()    |
+  rectangle() = <span class='k'>true</span>,
+  circle()    = <span class='k'>false</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>Patterns in a union are free to bind variables, but they all have to bind the same set of variables.</p>
+
+<p>There are other patterns in addition to the ones we've seen so far. Here's a complete list, with the set of values each of them matches:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>&lt;+&gt;     <span class='c'>// symbols</span>
+&lt;*..*&gt;  <span class='c'>// integers</span>
+&lt;!&gt;     <span class='c'>// floating point numbers</span>
+()      <span class='c'>// sequences, both empty and non-empty</span>
+[]      <span class='c'>// sets, both empty and non-empty</span>
+[,]     <span class='c'>// binary relations (including maps and records, of course)</span>
+[-&gt;]    <span class='c'>// maps (including records)</span>
+[,,]    <span class='c'>// ternary relations</span>
+</section>
+</figure>
+</code></pre>
+
+<p>The combination of all the above patterns allow us to write universal functions, that is, function that can work on any value, without any prior knowledge about its structure. The following, for example, is a universal function for computing 32-bit hash codes (it's a pretty lame hash function, but never mind that, it's just an example):</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> pow_2_32 = <span class='n'>4294967296</span>;
+
+<span class='m'>Int</span> mod_2_32(<span class='m'>Int</span> n) = mod(n, pow_2_32);
+
+<span class='m'>Int</span> hashcode(<span class='m'>Any</span> value) =
+  &lt;+&gt;     = hashcode(_print_(value)),
+  &lt;*..*&gt;  = xor(value / pow_2_32, mod_2_32(value)),
+  &lt;!&gt;     = hashcode(_bits_(value)),
+  ()      = mod_2_32(sum((hashcode(e) : e &lt;- value))),
+  []      = mod_2_32(sum((hashcode(e) : e &lt;- isort(value)))),
+  [,]     = mod_2_32(sum((hashcode(a) + hashcode(b) : a, b &lt;- isort(value)))),
+  [,,]    = mod_2_32(sum((hashcode(a) + hashcode(b) + hashcode(c) : a, b, c &lt;- isort(value)))),
+  t?(v?)  = mod_2_32(hashcode(t) + hashcode(v));
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Builtin functions</h3>
+
+<p>In the above example, <code class="inline-code-box"><span class="inline-code">isort(..)</span></code> is a family of polymorphic functions defined in the standard library that take as argument either a set or a relation and return a sequence containing its entries sorted in an implementation-defined order. Functions whose names start and end with an underscore (like <code class="inline-code-box"><span class="inline-code">_print_(..)</span></code> and <code class="inline-code-box"><span class="inline-code">_bits_(..)</span></code> above) are builtin functions. Builtin functions provide functionalities that are either impossible to implement directly in Cell, or that cannot be implemented efficiently, or that are just convenient to have as builtins for whatever reason. Some of them have aliases in the standard library. The <code class="inline-code-box"><span class="inline-code">&</span></code> operator for sequences, for example, is defined in terms of <code class="inline-code-box"><span class="inline-code">_cat_(..)</span></code> builtin function (doing so will enable an O(1) implementation of sequence concatenation that uses ropes instead of arrays as the underlying physical data structure). Here's the most useful ones among those that don't have aliases:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Returns a string containing the textual</span>
+<span class='c'>// representation of any value</span>
+<span class='m'>String</span> _print_(<span class='m'>Any</span>)
+
+<span class='c'>// Given the textual representation of a value returns either the</span>
+<span class='c'>// parsed value or the position of the error if parsing fails</span>
+<span class='m'>Result</span>[<span class='m'>Any</span>, <span class='m'>Nat</span>] _parse_(<span class='m'>String</span>)
+
+<span class='c'>// Converts an integer number into a floating point one</span>
+<span class='m'>Float</span> _float_(<span class='m'>Int</span>);
+
+<span class='c'>// Given a 64-bit floating point number, returns the</span>
+<span class='c'>// same bit pattern reinterpreted as a 64-bit integer</span>
+<span class='m'>Int</span> _bits_(<span class='m'>Float</span>)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Polymorphic functions</h3>
+
+<p>Functions in Cell can be polymorphic, that is, you can declare multiple functions with the same name and arity, as long as they differ in the types of their arguments. For instance, you can split up the function <code class="inline-code-box"><span class="inline-code">area</span></code> defined earlier in three different ones:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Square</span>     = square(side: <span class='m'>Float</span>);
+<span class='k'>type</span> <span class='m'>Rectangle</span>  = rectangle(width: <span class='m'>Float</span>, height: <span class='m'>Float</span>);
+<span class='k'>type</span> <span class='m'>Circle</span>     = circle(radius: <span class='m'>Float</span>);
+
+<span class='m'>Float</span> area(<span class='m'>Square</span> s)    = s.side ^ <span class='n'>2</span>;
+<span class='m'>Float</span> area(<span class='m'>Rectangle</span> r) = r.width * r.height;
+<span class='m'>Float</span> area(<span class='m'>Circle</span> c)    = pi * c.radius ^ <span class='n'>2</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>The three specialized <code class="inline-code-box"><span class="inline-code">area(..)</span></code> functions just defined are completely equivalent to the previously defined single function that used a match statement. For polymorphic unary functions (i.e. function that only take one argument) to be compatible, the obvious requirement is that the types of their single argument are disjoint, so for every possible value the compiler knows which one to dispatch at runtime. In practice though, the current version of the compiler is more restrictive than that, in that it requires the types of the argument to be not just disjoint, but also "different enough". Consider for example the following polymorphic functions:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Neg</span> = &lt;*..-<span class='n'>1</span>&gt;;
+
+&lt;<span class='n'>1</span>..<span class='n'>1</span>&gt;    sign(<span class='m'>NzNat</span>)   = <span class='n'>1</span>;
+&lt;<span class='n'>0</span>..<span class='n'>0</span>&gt;    sign(&lt;<span class='n'>0</span>..<span class='n'>0</span>&gt;)  = <span class='n'>0</span>;
+&lt; -<span class='n'>1</span>..-<span class='n'>1</span>&gt;  sign(<span class='m'>Neg</span>)     = -<span class='n'>1</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>These three definitions of <code class="inline-code-box"><span class="inline-code">sign(..)</span></code> seem reasonable enough. Their arguments are certainly disjoint: the first one only apply to positive integers, the second one to just 0 and the third one to negative integers. But the current version of the compiler won't accept two polymorphic functions if the types of their argument both contain integers, even if they contain disjoint subsets of the set of all integers. If this limitation only applied to integers, it wouldn't be much of a problem, but unfortunately it applies to other data types as well: sequences, sets, relations of the same arity (including maps and records, which are just binary relations) and values tagged with the same tag. The following polymorphic functions, for example, are rejected by the current version of the compiler, as the types of their arguments both contain sequence values, even though they are disjoint, as the first only accepts non-empty sequences of integers, and the second only non-empty sequences of floating point numbers:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span>   sum(<span class='m'>Int</span>+ xs)    = fold(xs, $a + $b);
+<span class='m'>Float</span> sum(<span class='m'>Float</span>+ xs)  = fold(xs, $a + $b);
+</section>
+</figure>
+</code></pre>
+
+<p>By the way, a <code class="inline-code-box"><span class="inline-code">sum(..)</span></code> function that works on both sequences of integer and floating point numbers (and any other type for which a <code class="inline-code-box"><span class="inline-code">+</span></code> operator has been defined) can still be written using generic programming and protocols (we'll talk about that in a later chapter), but it would have to be restricted to non-empty sequences, as you would bump into a different problem if you tried to extend it so that it works on empty sequences as well. More on that in a minute.</p>
+
+<p>Here's another example of incompatible polymorphic functions:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Square2</span>    = (side: <span class='m'>Float</span>);
+<span class='k'>type</span> <span class='m'>Rectangle2</span> = (width: <span class='m'>Float</span>, height: <span class='m'>Float</span>);
+<span class='k'>type</span> <span class='m'>Circle2</span>    = (radius: <span class='m'>Float</span>);
+
+<span class='m'>Float</span> area(<span class='m'>Square2</span> s)    = s.side ^ <span class='n'>2</span>;
+<span class='m'>Float</span> area(<span class='m'>Rectangle2</span> r) = r.width * r.height;
+<span class='m'>Float</span> area(<span class='m'>Circle2</span> c)    = pi * c.radius ^ <span class='n'>2</span>;
+</section>
+</figure>
+</code></pre>
+
+<p><code class="inline-code-box"><span class="inline-code">Square2</span></code>, <code class="inline-code-box"><span class="inline-code">Rectangle2</span></code> and <code class="inline-code-box"><span class="inline-code">Circle2</span></code>, are almost identical to <code class="inline-code-box"><span class="inline-code">Square</span></code>, <code class="inline-code-box"><span class="inline-code">Rectangle</span></code> and <code class="inline-code-box"><span class="inline-code">Circle</span></code>, the only difference being that they are not tagged. Though clearly disjoint, they are all record types, which are just a special case of binary relations, and the compiler will reject polymorphic functions if more than one of them accepts any binary relation value as argument. This is the reason user-defined types have to be tagged if polymorphic behaviour is expected, so as to make them "different enough" to be accepted by the compiler.</p>
+
+<p>For functions that take more than one argument, it's sufficient that at least one of the arguments is "different enough", even if that argument alone is not enough to decide which function will be dispatched at runtime. Consider the following functions:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> covers(<span class='m'>Square</span> s1,     <span class='m'>Square</span> s2)      = s1.side &gt;= s2.side;
+<span class='m'>Bool</span> covers(<span class='m'>Square</span> s,      <span class='m'>Rectangle</span> r)    = s.side &gt;= max(r.width, r.height);
+<span class='m'>Bool</span> covers(<span class='m'>Square</span> s,      <span class='m'>Circle</span> c)       = s.side &gt;= <span class='n'>2</span> * c.radius;
+<span class='m'>Bool</span> covers(<span class='m'>Rectangle</span> r,   <span class='m'>Square</span> s)       = min(r.width, r.height) &gt;= s.side;
+<span class='m'>Bool</span> covers(<span class='m'>Rectangle</span> r1,  <span class='m'>Rectangle</span> r2)   = r1.width &gt;= r2.width <span class='k'>and</span> r1.height &gt;= r2.height;
+<span class='m'>Bool</span> covers(<span class='m'>Rectangle</span> r,   <span class='m'>Circle</span> c)       = min(r.width, r.height) &gt;= <span class='n'>2</span> * c.radius;
+<span class='m'>Bool</span> covers(<span class='m'>Circle</span> c,      <span class='m'>Square</span> s)       = c.radius &gt;= s.side / sqrt(<span class='n'>2.0</span>);
+<span class='m'>Bool</span> covers(<span class='m'>Circle</span> c,      <span class='m'>Rectangle</span> r)    = c.radius &gt;= sqrt(r.width^<span class='n'>2</span> + r.height^<span class='n'>2</span>) / <span class='n'>2</span>;
+<span class='m'>Bool</span> covers(<span class='m'>Circle</span> c1,     <span class='m'>Circle</span> c2)      = c1.radius &gt;= c2.radius;
+</section>
+</figure>
+</code></pre>
+
+<p>When <code class="inline-code-box"><span class="inline-code">covers(..)</span></code> is invoked with arguments of type <code class="inline-code-box"><span class="inline-code">Shape</span></code> (defined before, it's the union of <code class="inline-code-box"><span class="inline-code">Square</span></code>, <code class="inline-code-box"><span class="inline-code">Rectangle</span></code> and <code class="inline-code-box"><span class="inline-code">Circle</span></code>) the value of both arguments has to be inspected in order to decide which of the nine polymorphic functions has to be dispatched. But for the purpose of polymorphic compatibility all that is required is that, for every possible pair of <code class="inline-code-box"><span class="inline-code">covers(..)</span></code> functions, the types of either argument are "different enough", in the above-defined sense.</p>
+
+<p>These stricter-than-necessary restrictions on the signatures of polymorphic functions are in place for two reason: first, they guarantee that the proper function can be dispatched quickly at runtime and second, they make the implementation easier. Future versions of the compiler will probably gradually relax them to some extent.</p>
+
+<p>When writing polymorphic functions that operate over collection types, remember that in Cell, the same <code class="inline-code-box"><span class="inline-code">[]</span></code> value is used to represent empty relations of any arity, and that includes the empty set, since sets are just relations of arity one. A consequence of that is that the compiler has no choice but to reject code like the this, because the types of both arguments overlap:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='u'>T</span>] (_&_)([<span class='u'>T</span>] s1, [<span class='u'>T</span>] s2) = [x : x &lt;- s1 | x &lt;- s2];
+
+[<span class='u'>A</span> -&gt; <span class='u'>B</span>]  (_&_)([<span class='u'>A</span> -&gt; <span class='u'>B</span>] m1, [<span class='u'>A</span> -&gt; <span class='u'>B</span>] m2) = [
+  k -&gt; v : k, v &lt;- m1 | k, v &lt;- m2
+];
+</section>
+</figure>
+</code></pre>
+
+<p>The <code class="inline-code-box"><span class="inline-code">&</span></code> operator is defined as union between sets, and merge between maps. But in an expression like <code class="inline-code-box"><span class="inline-code">[] & []</span></code> which of the two functions should be used, given that <code class="inline-code-box"><span class="inline-code">[]</span></code> is both the empty set and the empty binary relation? In order to avoid ambiguities, the definition of the operator <code class="inline-code-box"><span class="inline-code">&</span></code> has to be split further. Here's how it is defined in the standard library:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[] (_&_)([], []) = [];
+
+[+<span class='u'>T</span>] (_&_)([+<span class='u'>T</span>] s, []) = s;
+[+<span class='u'>T</span>] (_&_)([], [+<span class='u'>T</span>] s) = s;
+
+[+<span class='u'>T</span>] (_&_)([+<span class='u'>T</span>] s1, [+<span class='u'>T</span>] s2) = [x : x &lt;- s1 | x &lt;- s2];
+
+[+<span class='u'>A</span> -&gt; <span class='u'>B</span>] (_&_)([], [+<span class='u'>A</span> -&gt; <span class='u'>B</span>] map) = map;
+[+<span class='u'>A</span> -&gt; <span class='u'>B</span>] (_&_)([+<span class='u'>A</span> -&gt; <span class='u'>B</span>] map, []) = map;
+
+[+<span class='u'>A</span> -&gt; <span class='u'>B</span>] (_&_)([+<span class='u'>A</span> -&gt; <span class='u'>B</span>] map1, [+<span class='u'>A</span> -&gt; <span class='u'>B</span>] map2) = [
+  k -&gt; v : k, v &lt;- map1 | k, v &lt;- map2
+];
+</section>
+</figure>
+</code></pre>
+
+<p>All the possible combinations of empty set/map, non-empty set and non-empty map have to be dealt with individually, in order to get rid of any overlap among the types of the arguments.</p>
+
+<p>There's another distinct but vaguely similar problem that presents itself with both the empty sequence <code class="inline-code-box"><span class="inline-code">()</span></code> and the empty set/relation <code class="inline-code-box"><span class="inline-code">[]</span></code>, which was briefly mentioned when discussing the polymorphic <code class="inline-code-box"><span class="inline-code">sum(..)</span></code> functions. In most typed languages, the empty sequence of, say, integers is different from the empty sequence of floating point numbers, or strings. But in Cell there's just a single empty sequence (and a single empty set/relation), and that's a natural consequence of the fact that values in Cell don't have a type (in the usual sense), so it would make no sense to talk of an empty sequence of integers, since an empty sequence, by definition, does not contain anything. So in cases like that of the <code class="inline-code-box"><span class="inline-code">sum(..)</span></code> functions, which return different types (<code class="inline-code-box"><span class="inline-code">Int</span></code> and <code class="inline-code-box"><span class="inline-code">Float</span></code> respectively), that poses a problem: while such a function can be defined over non-empty sequences using protocols, if we were to extend it to the empty sequence <code class="inline-code-box"><span class="inline-code">()</span></code>, what should the expressions <code class="inline-code-box"><span class="inline-code">sum(())</span></code> return? Summing over an empty sequence of integers should return the integer zero <code class="inline-code-box"><span class="inline-code">0</span></code>, while summing over an empty sequence of floating point numbers should return the floating point zero <code class="inline-code-box"><span class="inline-code">0.0</span></code>, which is a different entity in Cell's data model. But since there's only one empty sequence, we can only have one return value, and neither <code class="inline-code-box"><span class="inline-code">0</span></code> nor <code class="inline-code-box"><span class="inline-code">0.0</span></code> is acceptable in both cases. So here it's probably better to just give up polymorphism, and rename one of the functions. Solving this class of issues would require a non-trivial upgrade of the type system, but there are much more pressing issues at the moment, so that's not going to happen anytime soon.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Reactive automata</h2>
+
+<p>In this chapter we'll examine the other type of automata provided by the language. As already mentioned in the overview reactive automata should be regarded as a niche feature and at this stage also as an experimental one, whose design may change radically in the future. In order to explain how they work we'll make use of a simple automation problem, that is illustrated in the following picture:</p>
+
+<p><!-- transform", "scale(2.0)" -->
+
+<svg width="640" height="480" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <defs>
+
+  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
+   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-B" x1="1" y1="1">
+   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-C" x1="1" y1="1">
+   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <marker
+    id="left-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
+   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
+  </marker>
+
+  <marker
+    id="right-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
+    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
+  </marker>
+
+  <marker
+    id="round-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
+   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
+  </marker>
+
+ </defs>
+ <g>
+  <title>Layer 1</title>
+  <g id="sump">
+
+   <rect
+     id="sump-water"
+     x="40" y="360" width="560" height="120"
+     fill="url(#gradient-A)" stroke="#59667f" stroke-width="0"/>
+
+   <path
+     id="sump-border"
+     fill="none" stroke="#59667f" stroke-width="2" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null"
+     d="M 40 320 V 479 H 600 V 320"/>
+
+  </g>
+
+  <rect
+    id="pump-box"
+    x="140" y="180" width="120" height="60"
+    ry="10" rx="10"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#9080B0"
+    fill="url(#gradient-B)"/>
+
+  <rect
+    id="controller-box"
+    x="340" y="100" width="120" height="60"
+    ry="10" rx="10"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#6080A0"
+    fill="url(#gradient-C)"/>
+
+  <rect
+    id="in-pipe"
+    x="197" y="240" width="6" height="180"
+    stroke-width="1" stroke="#6080a0"
+    fill="url(#gradient-A)"/>
+
+  <rect
+    id="out-pipe"
+    x="20" y="207" width="120" height="6"
+    stroke-width="1" stroke="#6080a0"
+    fill="url(#gradient-A)"/>
+
+  <path
+    id="low-water-sensor"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 466 116 H 560 V 400"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="high-water-sensor"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 466 144 H 520 V 330"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="sensor-methane"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 370 166 V 250"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="sensor-CO2"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 400 166 V 250"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="sensor-airflow"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 430 166 V 250"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="pump-control"
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 340 130 H 200 V 174"
+    stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="operator-feedback"
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 400 100 V 40"
+    stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <text
+    xml:space="preserve"
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18"
+    x="192" y="216"
+    fill="#304040">
+    pump
+  </text>
+
+  <text
+    xml:space="preserve"
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18"
+    x="394" y="136"
+    fill="#304040">
+    controller
+  </text>
+
+  <text
+    xml:space="preserve"
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18"
+    x="394" y="24"
+    fill="#304040">
+    operator
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="369" y="272"
+    fill="#304040">
+    C
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="400" y="272"
+    fill="#304040">
+    M
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="430" y="272"
+    fill="#304040">
+    A
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="502" y="336"
+    fill="#304040">
+    H
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="572" y="406"
+    fill="#304040">
+    L
+  </text>
+
+ </g>
+</svg>
+</p>
+
+<p>In this example we need to pump water out of a mine sump. In order to detect the level of the water we have two water sensors, <code class="inline-code-box"><span class="inline-code">L</span></code> and <code class="inline-code-box"><span class="inline-code">H</span></code>. We want to start pumping water out of the sump we the water reaches the higher sensor, <code class="inline-code-box"><span class="inline-code">H</span></code>, and continue until the level returns below the level of the lower sensor, <code class="inline-code-box"><span class="inline-code">L</span></code>. We also have three gas sensors to measure carbon monoxide (<code class="inline-code-box"><span class="inline-code">C</span></code>), methane (<code class="inline-code-box"><span class="inline-code">M</span></code>) and airflow (<code class="inline-code-box"><span class="inline-code">A</span></code>) levels. If any of them becomes critical the operator must be alerted. Finally, in order to prevent explosions, the pump cannot be operated when the methane level exceeds a certain critical threshold.</p>
+
+<p>Our task is to implement the controller logic, which reads the inputs signals from the various sensors and outputs the ones that control the pump and alert the operator. We'll proceed gradually, starting with something very simple and then gradually including additional features. Here's the first version of our code:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>MineController</span> {
+  <span class='k'>input</span>:
+    lower_sensor_submerged : <span class='m'>Bool</span>;
+    upper_sensor_submerged : <span class='m'>Bool</span>;
+
+    methane_level : <span class='m'>Int</span>;
+    co_level      : <span class='m'>Int</span>;
+    airflow_level : <span class='m'>Int</span>;
+
+  <span class='k'>output</span>:
+    pump_on           : <span class='m'>Bool</span>;
+    evacuation_needed : <span class='m'>Bool</span>;
+    error_detected    : <span class='m'>Bool</span>;
+
+  <span class='k'>state</span>:
+    needs_draining : <span class='m'>Bool</span> = upper_sensor_submerged;
+
+  <span class='k'>static</span>:
+    max_methane_level : <span class='m'>Nat</span> = <span class='n'>10</span>;
+    max_co_level      : <span class='m'>Nat</span> = <span class='n'>20</span>;
+    min_airflow_level : <span class='m'>Nat</span> = <span class='n'>100</span>;
+
+  <span class='k'>rules</span>:
+    <span class='c'>// Setting needs_draining when the water submerges the</span>
+    <span class='c'>// upper water sensor and resetting is when the water</span>
+    <span class='c'>// level falls below the level of the lower water sensor</span>
+    needs_draining = <span class='k'>true</span>  <span class='k'>when</span> upper_sensor_submerged;
+    needs_draining = <span class='k'>false</span> <span class='k'>when</span> <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
+                                <span class='k'>not</span> upper_sensor_submerged;
+
+    <span class='c'>// Checking whether methane, carbon monoxide</span>
+    <span class='c'>// and airflow levels are critical</span>
+    methane_level_critical = methane_level &gt; max_methane_level;
+    co_level_critical      = co_level &gt; max_co_level;
+    airflow_level_critical = airflow_level &lt; min_airflow_level;
+
+    <span class='c'>// The atmosphere is not safe if the readings of the</span>
+    <span class='c'>// gas sensors stay critical for more than 30 seconds</span>
+    atmosphere_critical = methane_level_critical <span class='k'>or</span>
+                          co_level_critical <span class='k'>or</span>
+                          airflow_level_critical;
+    unsafe_atmosphere = atmosphere_critical <span class='k'>for</span> <span class='n'>30s</span>;
+
+    <span class='c'>// The pump must be on if draining is needed and the</span>
+    <span class='c'>// level of methane is below some critical threshold</span>
+    pump_on = needs_draining <span class='k'>and</span> <span class='k'>not</span> methane_level_critical;
+
+    <span class='c'>// If the upper water sensor detects the presence</span>
+    <span class='c'>// of water but the lower one doesn't, then there's</span>
+    <span class='c'>// a problem with at least one of them</span>
+    error_detected = upper_sensor_submerged <span class='k'>and</span>
+                     <span class='k'>not</span> lower_sensor_submerged;
+
+    <span class='c'>// Once water reaches the upper sensor and the pump is</span>
+    <span class='c'>// switched on, we expect the water level to drop below</span>
+    <span class='c'>// the level of the sensor within 5 minutes. If it doesn't</span>
+    <span class='c'>// we conclude the pump is not working as expected.</span>
+    pump_not_working = upper_sensor_submerged <span class='k'>for</span> <span class='n'>300s</span>;
+
+    <span class='c'>// The mine must be evacuated if safety requirements are not met</span>
+    evacuation_needed = unsafe_atmosphere <span class='k'>or</span> pump_not_working;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The definition of a reactive automaton starts with the <code class="inline-code-box"><span class="inline-code">reactive</span></code> keyword and the name of the automaton which follows the same syntactic conventions as the names of types and schemas. The block that follows consists of five sections, <code class="inline-code-box"><span class="inline-code">input</span></code>, <code class="inline-code-box"><span class="inline-code">output</span></code>, <code class="inline-code-box"><span class="inline-code">state</span></code>, <code class="inline-code-box"><span class="inline-code">static</span></code> and <code class="inline-code-box"><span class="inline-code">rules</span></code>. Some of these sections may be missing, but if they appear at all they've to be in this exact order (if you write them down in the wrong order, the current version of the compiler will produce a very unhelpful and confusing error message, so beware).</p>
+
+<p>The first two blocks, <code class="inline-code-box"><span class="inline-code">input</span></code> and <code class="inline-code-box"><span class="inline-code">output</span></code>, declares all the input or output signals the automaton consumes or produces, with their respective types. The next one, <code class="inline-code-box"><span class="inline-code">state</span></code>, declares the variables that constitute the automaton state along with their types and initial values. <code class="inline-code-box"><span class="inline-code">static</span></code> only contains constant declarations. The last section, <code class="inline-code-box"><span class="inline-code">rules</span></code>, is the most interesting one, as it containts most of the logic of the automaton.</p>
+
+<p>The inputs are self-explanatory: each of them corresponds to one the the arrows that go into the <code class="inline-code-box"><span class="inline-code">controller</span></code> box in the picture. For simplicity we used basic types like booleans for the water sensors and integers for the gas ones. In a real application one would probably have to choose user-defined types, to account for things like read errors and so on. We also ignored the unit of measurement in the case of the gas sensors.</p>
+
+<p>The first output, <code class="inline-code-box"><span class="inline-code">pump_on</span></code>, is the signal that controls the pump. It's represented by the dashed line that goes from the <code class="inline-code-box"><span class="inline-code">controller</span></code> box to the <code class="inline-code-box"><span class="inline-code">pump</span></code>. The pump should be on whenever <code class="inline-code-box"><span class="inline-code">pump_on</span></code> is true, which means that if the pump is working properly it should be switched on every time <code class="inline-code-box"><span class="inline-code">pump_on</span></code> becomes true (that is, every time it goes from false to true) and when the system is started if its initial value is true, and it should be switched off when <code class="inline-code-box"><span class="inline-code">pump_on</span></code> becomes false, and of course when the whole system is switched off.</p>
+
+<p>The other two outputs, <code class="inline-code-box"><span class="inline-code">evacuation_needed</span></code> and <code class="inline-code-box"><span class="inline-code">error_detected</span></code> are represented by the other dashed line in the figure, and they are meant for the operator of the mine, or for the alarm system. <code class="inline-code-box"><span class="inline-code">evacuation_needed</span></code> becomes true whenever the atmosphere becomes unsafe or the pump is not draining the sump as expected. <code class="inline-code-box"><span class="inline-code">error_detected</span></code> is a diagnostic signal that is activated when the readings coming from the water level sensors are inconsistent.</p>
+
+
+<h3>Derived signals</h3>
+
+<p>The <code class="inline-code-box"><span class="inline-code">rules</span></code> section can contain several different types of rules, that can be classified in two main groups: those that define new derived signals, and those that update the automaton's state variables. Examples of the simplest way to define a derived signal are <code class="inline-code-box"><span class="inline-code">methane_level_critical</span></code>, <code class="inline-code-box"><span class="inline-code">pump_on</span></code> and <code class="inline-code-box"><span class="inline-code">evacuation_needed</span></code>, among others. The expression on the right of the equals sign, which defines the value of the signal, will normally reference other signals defined in the same automaton. Whenever the value of those source signals changes the derived signal is updated as well. Signals are updated in topological order: a signal is guaranteed to be updated only after all the signals it depends on have been updated as well. In order to make this work, there obviously cannot be circular dependencies among signals.</p>
+
+<p>It's important here to clarify what we mean when we say that a signal has "changed". Let's use <code class="inline-code-box"><span class="inline-code">methane_level_critical</span></code> as an example: if the value of <code class="inline-code-box"><span class="inline-code">methane_level</span></code> goes, say, from <code class="inline-code-box"><span class="inline-code">2</span></code> to <code class="inline-code-box"><span class="inline-code">5</span></code>, the value of <code class="inline-code-box"><span class="inline-code">methane_level_critical</span></code> is recalculated, but its new value will be the same as the old one. In Cell, this is not considered a change at all: the only thing that matters is whether the new value is equal to the old one or not. A recalculation that does not produce a different value is ignored, and does not trigger any other downstream update. For basic rules like <code class="inline-code-box"><span class="inline-code">methane_level_critical</span></code>, <code class="inline-code-box"><span class="inline-code">pump_on</span></code> and so on this only affects the efficiency of the code, but for other, more complex types of rules that we'll discuss later the semantics of the language is affected as well.</p>
+
+
+<h3>Timed boolean signals</h3>
+
+<p>Boolean signals can also be made aware of the passing of time. An example is the definition of <code class="inline-code-box"><span class="inline-code">pump_not_working</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>pump_not_working = upper_sensor_submerged <span class='k'>for</span> <span class='n'>300s</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>The definition of a time-aware boolean signal requires two things: a source boolean signal (which can be an arbitrary boolean expression) and a time expression (<code class="inline-code-box"><span class="inline-code">300s</span></code> in the example). The derived signal is true if and only if the source boolean signal is true now and has been true uninterruptedly for the amount of time specified by the time expression. In our example, for as long as <code class="inline-code-box"><span class="inline-code">upper_sensor_submerged</span></code> is false <code class="inline-code-box"><span class="inline-code">pump_not_working</span></code> is false as well. When <code class="inline-code-box"><span class="inline-code">upper_sensor_submerged</span></code> becomes true (or when the automaton is started, if the initial value of <code class="inline-code-box"><span class="inline-code">upper_sensor_submerged</span></code> is true), though, an internal timer is set, which in this case is set to expire after 300 seconds. If before the expiration of the timer the value of <code class="inline-code-box"><span class="inline-code">upper_sensor_submerged</span></code> goes back to false, the timer is just deleted and nothing happens. Otherwise, once the timer expires the value of <code class="inline-code-box"><span class="inline-code">pump_not_working</span></code> is switched to true, and it stays like that until <code class="inline-code-box"><span class="inline-code">upper_sensor_submerged</span></code> becomes false again.</p>
+
+<p>There's also another more general type of time-dependent signal definition:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>unchanged_for_30_seconds = a_signal <span class='k'>after</span> <span class='n'>30s</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>Here the derived signal (<code class="inline-code-box"><span class="inline-code">unchanged_for_30_seconds</span></code>) is true if and only if the value of source signal (<code class="inline-code-box"><span class="inline-code">a_signal</span></code>) has not changed for the specified amount of time. Here the source signal can be an expression of any type, not just boolean. And as we explained in the previous paragraph, in Cell a signal "changes" if and only if its value does, and recalculations that don't change the actual value are just ignored.</p>
+
+<p>Time spans can also be expressed in milliseconds. The following definitions, for example, are equivalent:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>s2 = s1 <span class='k'>for</span> <span class='n'>30s</span>;
+s2 = s1 <span class='k'>for</span> <span class='n'>30000ms</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>Time expressions can also be "flipped" with the use of the <code class="inline-code-box"><span class="inline-code">not</span></code> operator:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>s3 = s1 <span class='k'>for</span> <span class='k'>not</span> <span class='n'>30s</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>The <code class="inline-code-box"><span class="inline-code">not</span></code> operator should read "less then": <code class="inline-code-box"><span class="inline-code">s3</span></code> is true if and only if <code class="inline-code-box"><span class="inline-code">s1</span></code> is true now but it has been true for less than 30 seconds. Note that when <code class="inline-code-box"><span class="inline-code">s1</span></code> is true the values of <code class="inline-code-box"><span class="inline-code">s2</span></code> and <code class="inline-code-box"><span class="inline-code">s3</span></code> as defined above are at any given time the negation of each other, but they are both false when <code class="inline-code-box"><span class="inline-code">s1</span></code> is false. You can also combine time expressions with the <code class="inline-code-box"><span class="inline-code">and</span></code> and <code class="inline-code-box"><span class="inline-code">or</span></code> operators:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// <span class="inline-code">s4</span> is true if and only if <span class="inline-code">s1</span> is true now and has been</span>
+<span class='c'>// true for at least 2 seconds but less than 5</span>
+s4 = s1 <span class='k'>for</span> <span class='n'>2s</span> <span class='k'>and</span> <span class='k'>not</span> <span class='n'>5s</span>;
+
+<span class='c'>// <span class="inline-code">s5</span> is true if and only if <span class="inline-code">s1</span> is true now and has been</span>
+<span class='c'>// true for less then 1 second or for at least 4</span>
+s5 = s1 <span class='k'>for</span> <span class='k'>not</span> <span class='n'>1s</span> <span class='k'>or</span> <span class='n'>4s</span>;
+
+<span class='c'>// <span class="inline-code">s6</span> is true if and only if <span class="inline-code">s1</span> is true not and has been</span>
+<span class='c'>// true either for at least 1 second and less than 2</span>
+<span class='c'>// or for at least 3 seconds and less than 4</span>
+s6 = s1 <span class='k'>for</span> (<span class='n'>1s</span> <span class='k'>and</span> <span class='k'>not</span> <span class='n'>2s</span>) <span class='k'>or</span> (<span class='n'>3s</span> <span class='k'>and</span> <span class='k'>not</span> <span class='n'>4s</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>You can also repeat an activation pattern over time using the <code class="inline-code-box"><span class="inline-code">every</span></code> keyword. The following example generate a sort of "square wave" with the value of <code class="inline-code-box"><span class="inline-code">s7</span></code> starting at false and changing every second, and <code class="inline-code-box"><span class="inline-code">s1</span></code> acting as a switch:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>s7 = s1 <span class='k'>for</span> <span class='n'>1s</span> <span class='k'>every</span> <span class='n'>2s</span>;
+</section>
+</figure>
+</code></pre>
+
+
+<h3>State variable updates</h3>
+
+<p>The last and most complex type of rule used in <code class="inline-code-box"><span class="inline-code">MineController</span></code> is a state variable update, of the form:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>var = expr <span class='k'>when</span> cond;
+</section>
+</figure>
+</code></pre>
+
+<p>The assignment is executed only when <code class="inline-code-box"><span class="inline-code">cond</span></code> becomes true, that is, every time its value goes from false to true. This means that the rule is never executed when the automaton is initialized, even if the initial value of <code class="inline-code-box"><span class="inline-code">cond</span></code> is true, since there's no "previous" value to compare it to. Instead, the first time an automaton is updated, all state variables are initialized to the value provided with their declaration:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>needs_draining : <span class='m'>Bool</span> = upper_sensor_submerged;
+</section>
+</figure>
+</code></pre>
+
+<p>In the intialization expression you are allowed to reference other signals, as long as that does not create circular dependencies. Multiple rules can target the same state variable, and that's what actually happens with <code class="inline-code-box"><span class="inline-code">needs_draining</span></code> in our example. It's the programmer's responsibility to make sure that no two rules targeting the same state variable can fire at the same time. If that happens, it's treated as a runtime error and it's dealt with using the standard error-handling mechanism that we'll examine later.</p>
+
+<p>There's also a more general form of the update rule, shown here:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>var = expr <span class='k'>if</span> cond : signal;
+</section>
+</figure>
+</code></pre>
+
+<p>The above rule is triggered every time <code class="inline-code-box"><span class="inline-code">signal</span></code> changes: whenever it does <code class="inline-code-box"><span class="inline-code">cond</span></code> is first evaluated, and if it's true then the assignment is actually executed. Here <code class="inline-code-box"><span class="inline-code">signal</span></code> has to be the name of a signal, and cannot be an arbitrary expression. The condition that follows the <code class="inline-code-box"><span class="inline-code">if</span></code> keyword is called a guard, and you're allowed to omit it if you don't need it. The following two rules are equivalent:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>var = expr : signal;
+var = expr <span class='k'>if</span> <span class='k'>true</span> : signal;
+</section>
+</figure>
+</code></pre>
+
+<p>You can specify more than one signal to watch after the semicolon:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>var = expr <span class='k'>if</span> cond : signal_1, signal_2;
+</section>
+</figure>
+</code></pre>
+
+<p>The above rule will fire only when both <code class="inline-code-box"><span class="inline-code">signal_1</span></code> and <code class="inline-code-box"><span class="inline-code">signal_2</span></code> change at the same time. You can also use the <code class="inline-code-box"><span class="inline-code">not</span></code> operator when combining multiple signals:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Will fire only when <span class="inline-code">signal_1</span> and <span class="inline-code">signal_2</span> change simultaneously</span>
+var = expr : signal_1, signal_2;
+
+<span class='c'>// Will fire only when <span class="inline-code">signal_1</span> changes but <span class="inline-code">signal_2</span> doesn't</span>
+var = expr : signal_1, <span class='k'>not</span> signal_2;
+
+<span class='c'>// Will fire only when <span class="inline-code">signal_2</span> changes but <span class="inline-code">signal_1</span> doesn't</span>
+var = expr : signal_2, <span class='k'>not</span> signal_1;
+</section>
+</figure>
+</code></pre>
+
+<p>It goes without saying that a watch list containing only negated signals would make no sense, and is not accepted by the compiler, which also expects all unnegated signals to be specified before the negated ones.</p>
+
+<p>The first type of rule we examined is just syntactic sugar for the more general form:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>var = expr <span class='k'>when</span> cond;
+</section>
+</figure>
+</code></pre>
+
+<p>is rewritten by the compiler as</p>
+
+<figure class="highlight">
+<section>
+<pre><code>var = expr <span class='k'>if</span> cond : cond;
+</section>
+</figure>
+</code></pre>
+
+<p>if <code class="inline-code-box"><span class="inline-code">cond</span></code> is the name of a signal, or</p>
+
+<figure class="highlight">
+<section>
+<pre><code>hidden_signal = cond;
+var = expr <span class='k'>if</span> hidden_signal : hidden_signal;
+</section>
+</figure>
+</code></pre>
+
+<p>if <code class="inline-code-box"><span class="inline-code">cond</span></code> is a more complex expression. All types of state variable updates never fire during initialization, they only respond to changes in the value of the signal, and as already explained during initialization there's no previous value to compare it to.</p>
+
+
+<h3>Error handling</h3>
+
+<p>Unlike static ones, reactive automata have no support for transactions, and once you work through a few examples, it's easy to see why. Instead, if the evaluation of an expression fails during the execution of a rule, the target signal simply enters a special "undefined" state, which is then propagated to all the signals that depend on it, either directly of indirectly. If for example in the following code the evaluation of <code class="inline-code-box"><span class="inline-code">f(s0)</span></code> failed, not only <code class="inline-code-box"><span class="inline-code">s1</span></code> but also <code class="inline-code-box"><span class="inline-code">s2</span></code>, <code class="inline-code-box"><span class="inline-code">c</span></code> and <code class="inline-code-box"><span class="inline-code">v</span></code> would become undefined:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>s1 = f(s0);
+s2 = g(s1);
+c = s2 <span class='k'>after</span> <span class='n'>5ms</span>;
+v = h(s0, s1) <span class='k'>if</span> p(s0) : s1;
+</section>
+</figure>
+</code></pre>
+
+<p>A state variable in particular becomes undefined if any of the signals being watched by any of the rules that update it become undefined. If all watched signals are defined, and a rule is triggered, the target variable becomes again undefined if the evaluation of the guard fails, or otherwise if the guard is true (or if there's no guard at all), and the evaluation of the expression that defines the new value of the variable fails. Finally, a state variable becomes undefined if two different rules fire at the same time.</p>
+
+<p>Once a derived signal enters an undefined state, it stays there until it's successfully recalculated, as a consequence of an input changing its value or a timer being triggered. Once that happens, the signal resumes its normal functioning, until of course another error occurs. For a state variable (and all signals that depend on it), though, a recovery is not always possible. Here's an example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>ChangeCounter</span> {
+  <span class='k'>input</span>:
+    signal : <span class='m'>Any</span>;
+
+  <span class='k'>output</span>:
+    changes : <span class='m'>Int</span>;
+
+  <span class='k'>state</span>:
+    changes : <span class='m'>Int</span> = <span class='n'>0</span>;
+
+  <span class='k'>rules</span>:
+    changes = changes + <span class='n'>1</span> : signal;
+}
+</section>
+</figure>
+</code></pre>
+
+<p><code class="inline-code-box"><span class="inline-code">ChangeCounter</span></code> simply counts how many times its only input signal has changed since the automaton instance was created. If <code class="inline-code-box"><span class="inline-code">signal</span></code> becomes undefined, obviously <code class="inline-code-box"><span class="inline-code">changes</span></code> has to become undefined as well, and that's unfortunately irreversible. Even if later <code class="inline-code-box"><span class="inline-code">signal</span></code> returns to a normal state, it's impossible for <code class="inline-code-box"><span class="inline-code">changes</span></code> to ever recover, because the expression that calculates the new value depends on the previous undefined one.</p>
+
+<p>This error propagation process is entirely automatic and cannot be controlled by the programmer in any way. You cannot even check, inside a reactive automaton, whether a signal is defined or not: only the client of the automaton can check whether any of its outputs are undefined. An important consequence is that this error handling mechanism is only good for dealing with programming errors, not with missing input values. In the case of the mine controller, for instance, if you get an error when trying to read the state of a water level sensor, it might be tempting to set the corresponding input (either <code class="inline-code-box"><span class="inline-code">upper_sensor_submerged</span></code> or <code class="inline-code-box"><span class="inline-code">lower_sensor_submerged</span></code>) in an undefined state and rely on the language built-in error propagation, but doing so would prevent you from implementing your own error handling policy: it might for example be the case that an occasional bad reading is nothing to worry about and can be safely ignored. In order to do that, you would have to use a <code class="inline-code-box"><span class="inline-code">Maybe</span></code> type for the input (with <code class="inline-code-box"><span class="inline-code">nothing</span></code> indicating a bad read), or even better to define your own type for sensor readings, which could encapsulate some of the error-handling logic.</p>
+
+
+<h3>Nested automata</h3>
+
+<p>Reactive automata can of course be nested inside one another. Using <code class="inline-code-box"><span class="inline-code">needs_draining</span></code> in <code class="inline-code-box"><span class="inline-code">MineController</span></code> as an example, you might want to encapsulate both that particular piece of state and the logic that updates it in its own automaton. <code class="inline-code-box"><span class="inline-code">needs_draining</span></code> is essentially a switch, that is turned on when the level of the water reaches the upper sensor, and off when it drops below the lower one. So we could start by writing a <code class="inline-code-box"><span class="inline-code">Switch</span></code> automaton:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>Switch</span> {
+  <span class='k'>input</span>:
+    switch_on  : <span class='m'>Bool</span>;
+    switch_off : <span class='m'>Bool</span>;
+
+  <span class='k'>output</span>:
+    is_on : <span class='m'>Bool</span>;
+
+  <span class='k'>state</span>:
+    is_on : <span class='m'>Bool</span> = switch_on;
+
+  <span class='k'>rules</span>:
+    is_on = <span class='k'>true</span>  <span class='k'>when</span> switch_on;
+    is_on = <span class='k'>false</span> <span class='k'>when</span> switch_off;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The two input signals <code class="inline-code-box"><span class="inline-code">switch_on</span></code> and <code class="inline-code-box"><span class="inline-code">switch_off</span></code> control the activation/deactivation of the switch, whose state is stored in <code class="inline-code-box"><span class="inline-code">is_on</span></code>. Note that the input signals are not supposed to ever be true at the same time: if that happens the state of the switch becomes undefined. Now the following lines of code in <code class="inline-code-box"><span class="inline-code">MineController</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>state</span>:
+  needs_draining : <span class='m'>Bool</span> = upper_sensor_submerged;
+
+<span class='k'>rules</span>:
+  needs_draining = <span class='k'>true</span>  <span class='k'>when</span> upper_sensor_submerged;
+  needs_draining = <span class='k'>false</span> <span class='k'>when</span> <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
+                              <span class='k'>not</span> upper_sensor_submerged;
+</section>
+</figure>
+</code></pre>
+
+<p>could be replaced by:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>rules</span>:
+  draining_switch = <span class='m'>Switch</span>(
+    switch_on  = upper_sensor_submerged,
+    switch_off = <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
+                 <span class='k'>not</span> upper_sensor_submerged
+  );
+  needs_draining = draining_switch.is_on;
+</section>
+</figure>
+</code></pre>
+
+<p>As you can see, the definition of a nested automaton looks a bit like a function call with named arguments, and here the instance of <code class="inline-code-box"><span class="inline-code">Switch</span></code> is bound to the name <code class="inline-code-box"><span class="inline-code">draining_switch</span></code>. You can read its outputs using the same syntax you would be using for accessing the fields of a record: <code class="inline-code-box"><span class="inline-code">draining_switch.is_on</span></code>.</p>
+
+<p>For simple cases like this one, with only a few inputs and a single output, there's also a bit of syntactic sugar, and <code class="inline-code-box"><span class="inline-code">Switch</span></code> can be rewritten as follow (the part between the braces is unchanged):</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>Switch</span> switch_on, switch_off -&gt; is_on {
+  ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Now <code class="inline-code-box"><span class="inline-code">needs_draining</span></code> can be defined like this, with no semantics differences:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>needs_draining = <span class='m'>Switch</span>(
+  upper_sensor_submerged,
+  <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span> <span class='k'>not</span> upper_sensor_submerged
+);
+</section>
+</figure>
+</code></pre>
+
+<p>The <code class="inline-code-box"><span class="inline-code">switch_on, switch_off -&gt; is_on</span></code> text basically states that the inputs of <code class="inline-code-box"><span class="inline-code">Switch</span></code> can be provided positionally in the specified order, and that the name <code class="inline-code-box"><span class="inline-code">needs_draining</span></code> is bound not to the automaton instance itself, but rather to its only output. You can also choose to have just the positional inputs, or just the default output:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Just the positional inputs</span>
+<span class='k'>reactive</span> <span class='m'>Switch</span> switch_on, switch_off {
+  ...
+}
+
+<span class='c'>// Just the default output</span>
+<span class='k'>reactive</span> <span class='m'>Switch</span> -&gt; is_on {
+  ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Even when an automaton has positional inputs, you can always choose to provide them by name, if you think that makes the code more readable. The list of positional inputs does not have to include all inputs: you can have some of them provided positionally, and others by name. For instance, given the following automaton:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>MyAuto</span> input_1, input_2 {
+  <span class='k'>input</span>:
+    input_1 : <span class='m'>Type1</span>;
+    input_2 : <span class='m'>Type2</span>;
+    input_3 : <span class='m'>Type3</span>;
+    input_4 : <span class='m'>Type4</span>;
+
+  ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>that's how you would declare an instance of it:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>my_auto = <span class='m'>MyAuto</span>(expr_1, expr_2, input_3=expr_3, input_4=expr_4);
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Discrete signals</h3>
+
+<p>All the signals we've seen so far are continuous, that is, they are defined at any given point in time and the automaton reacts to changes in their value. But there's another type of signals, discrete signals. Discrete signals are usually dormant, and when they're in this state there's absolutely nothing you can do with them: you can't even read their value, because they don't have one. They only activate at specific points in time, and the automaton reacts to their activation. They are meant to represent streams of events and other inputs that continuous signals cannot model in a natural way. As an example we'll create an automaton that takes as input a stream of characters and breaks them into lines. It has a single discrete input, <code class="inline-code-box"><span class="inline-code">char</span></code>, and a single discrete output, <code class="inline-code-box"><span class="inline-code">line</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>Lines</span> char -&gt; line {
+  <span class='k'>input</span>:
+    char* : <span class='m'>Nat</span>;
+
+  <span class='k'>output</span>:
+    line* : <span class='m'>String</span>;
+
+  <span class='k'>state</span>:
+    buffer : <span class='m'>Nat</span>* = ();
+
+  <span class='k'>rules</span>:
+    <span class='c'>// The state variable buffer is updated every time <span class="inline-code">char</span> is active</span>
+    buffer = <span class='k'>if</span> char != new_line <span class='k'>then</span> (buffer | char) <span class='k'>else</span> () : char;
+
+    <span class='c'>// <span class="inline-code">line</span> is a derived discrete signal that is defined only</span>
+    <span class='c'>// when <span class="inline-code">char</span> is active and its value is 10 (new line)</span>
+    line := <span class='a'>:string</span>(@buffer) <span class='k'>if</span> char == new_line : char;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Discrete inputs and outputs are declared just like their continuous counterparts, except for the fact that their name is followed by an asterisk, <code class="inline-code-box"><span class="inline-code">a_signal* : Type</span></code> instead of <code class="inline-code-box"><span class="inline-code">a_signal : Type</span></code>. The first rule in <code class="inline-code-box"><span class="inline-code">Lines</span></code> prescribes how the state variable <code class="inline-code-box"><span class="inline-code">buffer</span></code> is to be updated every time the <code class="inline-code-box"><span class="inline-code">char</span></code> input is active. As you can see a state variable update that involves discrete signals is syntactically the same as one that makes use only of continuous ones, but the semantics is a bit different: if a continuous signal appears (without negation) in the list of watched signals on the right, that means the rule has to be triggered when the value of the signal changes, but if the signal is discrete the rule has instead to be triggered whenever it is active. Just like continuous ones, discrete signals can be negated, meaning that the rule is triggered only if the signal is not active, and you can freely mix discrete and continuous signals in a list of triggers.</p>
+
+<p>There's also a bit of syntactic sugar: if the list of watched signals contains only one signal, and this signal is discrete and also appears either in the guard or in the expression that calculates the new value of the state variable, then you can omit the list of watched signals entirely. The rule that updates <code class="inline-code-box"><span class="inline-code">buffer</span></code> in <code class="inline-code-box"><span class="inline-code">Lines</span></code>, for instance, can be written more coincisely like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>buffer = <span class='k'>if</span> char != new_line <span class='k'>then</span> (buffer | char) <span class='k'>else</span> ();
+</section>
+</figure>
+</code></pre>
+
+<p>Note that this syntactic sugar cannot be used if a rule references more than one discrete signal: there has to be exactly one. That's because rules that have more than one discrete trigger tend to be trickier to handle, and usually the various possibilities have to be handled separately:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>state_var = expr_1 : discrete_signal_1, discrete_signal_2;
+state_var = expr_2 : discrete_signal_1, <span class='k'>not</span> discrete_signal_2;
+state_var = expr_3 : discrete_signal_2, <span class='k'>not</span> discrete_signal_1;
+</section>
+</figure>
+</code></pre>
+
+<p>The second rule in <code class="inline-code-box"><span class="inline-code">Lines</span></code> shows how to define a derived discrete signal. It's very similar to updating state variables, with the only syntactic difference being the use of <code class="inline-code-box"><span class="inline-code">:=</span></code> instead of <code class="inline-code-box"><span class="inline-code">=</span></code>. The bit of syntactic sugar that allows you to omit a list of triggers that consists of a single discrete signal can be used here as well:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>line := <span class='a'>:string</span>(@buffer) <span class='k'>if</span> char == new_line;
+</section>
+</figure>
+</code></pre>
+
+<p>Note the use of <code class="inline-code-box"><span class="inline-code">@buffer</span></code> instead of just <code class="inline-code-box"><span class="inline-code">buffer</span></code>. The <code class="inline-code-box"><span class="inline-code">@signal</span></code> notation is used to access the pre-update value of the signal. When, during an update, you read the value of the signal you always get its updated value (note that this is exactly the opposite of what happens with static automata: inside message handler you can only read the initial state of the automaton). But that's not always what you want: in this case, for instance, whenever <code class="inline-code-box"><span class="inline-code">char</span></code> is active and equal to <code class="inline-code-box"><span class="inline-code">new_line</span></code>, <code class="inline-code-box"><span class="inline-code">buffer</span></code> is set to <code class="inline-code-box"><span class="inline-code">()</span></code>, so <code class="inline-code-box"><span class="inline-code">:string(buffer)</span></code> would just evaluate to the empty string <code class="inline-code-box"><span class="inline-code">""</span></code>. The <code class="inline-code-box"><span class="inline-code">@signal</span></code> notation can also be used to break circular dependencies between signals.</p>
+
+<p>The one above is an example of a discrete derived signal (<code class="inline-code-box"><span class="inline-code">line</span></code>) being activated when another discrete signal (<code class="inline-code-box"><span class="inline-code">char</span></code>) is active and a given condition (<code class="inline-code-box"><span class="inline-code">char == new_line</span></code>) is true. But a discrete signal can also be activated by a change in the value of a continuous signal, as shown in the following examples:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// <span class="inline-code">discrete_signal</span> is activated when <span class="inline-code">continuous_signal</span></span>
+<span class='c'>// changes and <span class="inline-code">cond</span> is true, and its value is defined by <span class="inline-code">expr</span></span>
+discrete_signal := expr <span class='k'>if</span> cond : continuous_signal;
+
+<span class='c'>// <span class="inline-code">discrete_signal</span> is activated whenever <span class="inline-code">continuous_signal</span> changes</span>
+discrete_signal := expr : continuous_signal;
+
+<span class='c'>// <span class="inline-code">discrete_signal</span> is activated when the boolean</span>
+<span class='c'>// signal <span class="inline-code">continuous_signal</span> becomes true</span>
+discrete_signal := expr <span class='k'>when</span> continuous_signal;
+</section>
+</figure>
+</code></pre>
+
+<p>Timed rules for discrete signals have a different syntax and come in two slightly different forms. Here's a few examples:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>bool_signal_1 = <span class='n'>30s</span> <span class='k'>sans</span>  discrete_signal;
+bool_signal_2 = <span class='n'>30s</span> <span class='k'>since</span> discrete_signal;
+
+bool_signal_3 = <span class='n'>30s</span> <span class='k'>sans</span>  discrete_signal_1, discrete_signal_2;
+bool_signal_4 = <span class='n'>30s</span> <span class='k'>since</span> discrete_signal_1, discrete_signal_2;
+
+bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class='k'>not</span> <span class='n'>10s</span> <span class='k'>since</span> discrete_signal;
+</section>
+</figure>
+</code></pre>
+
+<p><code class="inline-code-box"><span class="inline-code">bool_signal_1</span></code> here is true if and only if <code class="inline-code-box"><span class="inline-code">discrete_signal</span></code> has been dormant for the last 30 seconds, while <code class="inline-code-box"><span class="inline-code">bool_signal_2</span></code> is true if and only if at least 30 seconds have passed since the last time <code class="inline-code-box"><span class="inline-code">discrete_signal</span></code> was active. The difference is subtle: they only differ if at least 30 seconds have passed since the automaton was initialized, and <code class="inline-code-box"><span class="inline-code">discrete_signal</span></code> has never been active: in this case <code class="inline-code-box"><span class="inline-code">bool_signal_1</span></code> is true, while <code class="inline-code-box"><span class="inline-code">bool_signal_2</span></code> is false. In other words, every time <code class="inline-code-box"><span class="inline-code">discrete_signal</span></code> is active both rules start a timer that after 30 seconds changes the value of <code class="inline-code-box"><span class="inline-code">bool_signal_1</span></code> or <code class="inline-code-box"><span class="inline-code">bool_signal_2</span></code> unless <code class="inline-code-box"><span class="inline-code">discrete_signal</span></code> activates again in the meantime, but the first rule also starts it when the automaton is initialized, so <code class="inline-code-box"><span class="inline-code">bool_signal_1</span></code> can be true even if <code class="inline-code-box"><span class="inline-code">discrete_signal</span></code> has never been active. Both forms of the rule can track more than one signal: <code class="inline-code-box"><span class="inline-code">bool_signal_3</span></code> is true if and only if neither <code class="inline-code-box"><span class="inline-code">discrete_signal_1</span></code> nor <code class="inline-code-box"><span class="inline-code">discrete_signal_2</span></code> have been active in the last 30 seconds, and <code class="inline-code-box"><span class="inline-code">bool_signal_4</span></code> is true if and only if at least 30 seconds have passed since the last time either <code class="inline-code-box"><span class="inline-code">discrete_signal_1</span></code> or <code class="inline-code-box"><span class="inline-code">discrete_signal_2</span></code> was active. In both cases you're allowed to use any valid time expression, just like with continuous signals: <code class="inline-code-box"><span class="inline-code">bool_signal_5</span></code> is true if and only if the last time <code class="inline-code-box"><span class="inline-code">discrete_signal</span></code> was active was at least one second ago but no more than 10.</p>
+
+<p>We can now expand a little the mine sump example by implementing some logic to deal with failures of the water level sensors. We'll represent the result of an attempt to read the state of a sensor with a value of type <code class="inline-code-box"><span class="inline-code">Maybe[Bool]</span></code>, since such action may fail for whatever reason: <code class="inline-code-box"><span class="inline-code">nothing</span></code> will represent a failed read, <code class="inline-code-box"><span class="inline-code">just(true)</span></code> one that says the sensor is underwater, and <code class="inline-code-box"><span class="inline-code">just(false)</span></code> one that says it's not. The <code class="inline-code-box"><span class="inline-code">WaterSensor</span></code> automaton will take as input a stream of readings, and output a value of type <code class="inline-code-box"><span class="inline-code">WaterSensorState</span></code> that encodes our knowledge about the state of the sensor:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// <span class="inline-code">initializing</span> means that we're still waiting for the first reading,</span>
+<span class='c'>// and that the wait has not been exceedingly long</span>
+<span class='c'>// <span class="inline-code">unknown</span> means we've not received any information about the state of</span>
+<span class='c'>// the sensor in a while, and that it's time to start worring about it</span>
+<span class='c'>// <span class="inline-code">submerged(true/false)</span> indicates whether the sensor is submerged,</span>
+<span class='c'>// and that it seems to be working fine</span>
+<span class='k'>type</span> <span class='m'>WaterSensorState</span> = initializing, unknown, submerged(<span class='m'>Bool</span>);
+
+<span class='k'>reactive</span> <span class='m'>WaterSensor</span> raw_reading -&gt; sensor_state {
+  <span class='k'>input</span>:
+    raw_reading* : <span class='m'>Maybe</span>[<span class='m'>Bool</span>];
+
+  <span class='k'>output</span>:
+    sensor_state : <span class='m'>WaterSensorState</span>;
+
+  <span class='k'>state</span>:
+    sensor_state : <span class='m'>WaterSensorState</span> = <span class='a'>:initializing</span>;
+
+  <span class='k'>rules</span>:
+    <span class='c'>// <span class="inline-code">good_reading</span> is a discrete signal defined as the value</span>
+    <span class='c'>// carried by <span class="inline-code">raw_reading</span> when the latter is active and</span>
+    <span class='c'>// not equal to <span class="inline-code">:nothing</span></span>
+    good_reading := value(raw_reading) <span class='k'>if</span> raw_reading != <span class='a'>:nothing</span>;
+
+    <span class='c'>// <span class="inline-code">too_long_without_readings</span> is a continuous boolean</span>
+    <span class='c'>// signal that is true only if <span class="inline-code">good_reading</span> has been</span>
+    <span class='c'>// dormant for at least 30 seconds</span>
+    too_long_without_readings = <span class='n'>30s</span> <span class='k'>sans</span> good_reading;
+
+    <span class='c'>// The state variable <span class="inline-code">sensor_state</span> is set to <span class="inline-code">submerged(Bool)</span></span>
+    <span class='c'>// whenever a valid reading from the sensor comes in</span>
+    sensor_state = <span class='a'>:submerged</span>(good_reading);
+
+    <span class='c'>// The state variable <span class="inline-code">sensor_state</span> is set to <span class="inline-code">:unknown</span> if</span>
+    <span class='c'>// there hasn't been any valid reading in the last 30 seconds</span>
+    sensor_state = <span class='a'>:unknown</span> <span class='k'>when</span> too_long_without_readings;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>And here's our revised <code class="inline-code-box"><span class="inline-code">MineController</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// The water level is regarded as unsafe if either the</span>
+<span class='c'>// upper sensor is submerged or if it's not working properly</span>
+<span class='c'>// and the information from the lower sensor does not exclude</span>
+<span class='c'>// the possibility that the upper one is underwater</span>
+<span class='m'>Bool</span> is_critical(<span class='m'>WaterSensorState</span> lower, <span class='m'>WaterSensorState</span> upper) =
+  _,                submerged(<span class='k'>true</span>) = <span class='k'>true</span>,
+  submerged(<span class='k'>true</span>),  unknown         = <span class='k'>true</span>,
+  unknown,          unknown         = <span class='k'>true</span>,
+  _,                _               = <span class='k'>false</span>;
+
+<span class='c'>// We regard the water level as low (that is, safe)</span>
+<span class='c'>// if neither sensor is underwater</span>
+<span class='m'>Bool</span> is_low(<span class='m'>WaterSensorState</span> lower, <span class='m'>WaterSensorState</span> upper) =
+  lower == <span class='a'>:submerged</span>(<span class='k'>false</span>) <span class='k'>and</span> upper == <span class='a'>:submerged</span>(<span class='k'>false</span>);
+
+<span class='c'>// An error can be caused either by an inconsistent state of</span>
+<span class='c'>// the sensors, or by the state of either of them being unknown</span>
+<span class='m'>Bool</span> is_anomalous(<span class='m'>WaterSensorState</span> lower, <span class='m'>WaterSensorState</span> upper) =
+  submerged(<span class='k'>false</span>), submerged(<span class='k'>true</span>)   = <span class='k'>true</span>,
+  unknown,          _                 = <span class='k'>true</span>,
+  _,                unknown           = <span class='k'>true</span>,
+  _,                _                 = <span class='k'>false</span>;
+
+<span class='k'>reactive</span> <span class='m'>MineController</span> {
+  <span class='k'>input</span>:
+    lower_sensor_reading* : <span class='m'>Maybe</span>[<span class='m'>Bool</span>];
+    upper_sensor_reading* : <span class='m'>Maybe</span>[<span class='m'>Bool</span>];
+
+    methane_level : <span class='m'>Int</span>;
+    co_level      : <span class='m'>Int</span>;
+    airflow_level : <span class='m'>Int</span>;
+
+  <span class='k'>output</span>:
+    pump_on           : <span class='m'>Bool</span>;
+    evacuation_needed : <span class='m'>Bool</span>;
+    error_detected    : <span class='m'>Bool</span>;
+
+  <span class='k'>static</span>:
+    max_methane_level : <span class='m'>Nat</span> = <span class='n'>10</span>;
+    max_co_level      : <span class='m'>Nat</span> = <span class='n'>20</span>;
+    min_airflow_level : <span class='m'>Nat</span> = <span class='n'>100</span>;
+
+  <span class='k'>rules</span>:
+    <span class='c'>// Water level sensors</span>
+    lower_sensor_state = <span class='m'>WaterSensor</span>(lower_sensor_reading);
+    upper_sensor_state = <span class='m'>WaterSensor</span>(upper_sensor_reading);
+
+    <span class='c'>// Water level controller</span>
+    water_level_critical = is_critical(lower_sensor_state, upper_sensor_state);
+    water_level_low = is_low(lower_sensor_state, upper_sensor_state);
+
+    <span class='c'>// Draining switch</span>
+    needs_draining = <span class='m'>Switch</span>(water_level_critical, water_level_low);
+
+    <span class='c'>// Checking whether methane, carbon monoxide</span>
+    <span class='c'>// and airflow levels are critical</span>
+    methane_level_critical = methane_level &gt; max_methane_level;
+    co_level_critical      = co_level &gt; max_co_level;
+    airflow_level_critical = airflow_level &lt; min_airflow_level;
+
+    <span class='c'>// The atmosphere is not safe if the readings of the</span>
+    <span class='c'>// gas sensors stay critical for more than 30 seconds</span>
+    atmosphere_critical = methane_level_critical <span class='k'>or</span>
+                          co_level_critical <span class='k'>or</span>
+                          airflow_level_critical;
+    unsafe_atmosphere = atmosphere_critical <span class='k'>for</span> <span class='n'>30s</span>;
+
+    <span class='c'>// The pump must be on if draining is needed and the</span>
+    <span class='c'>// level of methane is below some critical threshold</span>
+    pump_on = needs_draining <span class='k'>and</span> <span class='k'>not</span> methane_level_critical;
+
+    <span class='c'>// Exposing errors in the water level control subsystem</span>
+    error_detected = is_anomalous(lower_sensor_state, upper_sensor_state);
+
+    <span class='c'>// Once water reaches the upper sensor and the pump is</span>
+    <span class='c'>// switched on, we expect the water level to drop below</span>
+    <span class='c'>// the level of the sensor within 5 minutes. If it doesn't</span>
+    <span class='c'>// we conclude that the pumping system is not working as expected.</span>
+    pumping_system_not_working = water_level_critical <span class='k'>for</span> <span class='n'>300s</span>;
+
+    <span class='c'>// The mine must be evacuated if safety requirements are not met</span>
+    evacuation_needed = unsafe_atmosphere <span class='k'>or</span> pumping_system_not_working;
+}
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Inheritance</h3>
+
+<p>Reactive automata can be defined incrementally using inheritance, similarly to classes in OOP. Unlike in OOP though, inheritance between reactive automata is just an implementation feature, invisible to the outside world, and the interfaces of base and derived automata need not be compatible in any way. A derived automaton can define new inputs, outputs and state variables; remove inputs; and redefine the relation between inputs and outputs. Before we start, just be aware of the fact that inheritance and mechanisms for incremental definition and composition of reactive automata in general are at this stage very tentative and experimental: the language is currently just aping the corresponding OOP features, which are in all likehood very suboptimal in this context. With all that in mind, let's see exactly what derived automata can do. We'll start from this very bizzare base automaton:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>Base</span> {
+  <span class='k'>input</span>:
+    input_1 : <span class='m'>Int</span>;
+    input_2 : <span class='m'>Int</span>;
+
+  <span class='k'>output</span>:
+    output_1 : <span class='m'>Int</span>;
+    output_2 : <span class='m'>Int</span>;
+
+  <span class='k'>state</span>:
+    state_var_1 : <span class='m'>Int</span> = input_1 + input_2;
+
+  <span class='k'>static</span>:
+    const_1 : <span class='m'>Int</span> = <span class='n'>100</span>;
+
+  <span class='k'>rules</span>:
+    state_var_1 = state_var_1 + input_1 + input_2 : input_1, input_2;
+    state_var_1 = state_var_1 + input_1 : input_1, <span class='k'>not</span> input_2;
+    state_var_1 = state_var_1 + input_2 : input_2, <span class='k'>not</span> input_1;
+
+    output_1 = const_1 + state_var_1;
+    output_2 = input_1 * input_2;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>We can of course add new inputs, outputs, state variables, constants, derived signals and so on:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>Derived1</span> : <span class='m'>Base</span> {
+  <span class='k'>input</span>:
+    input_3* : <span class='m'>Int</span>;
+
+  <span class='k'>output</span>:
+    output_3 : <span class='m'>Int</span>;
+
+  <span class='k'>state</span>:
+    state_var_2 : <span class='m'>Int</span> = <span class='n'>0</span>;
+
+  <span class='k'>static</span>:
+    const_2 : <span class='m'>Int</span> = -<span class='n'>1</span>;
+
+  <span class='k'>rules</span>:
+    state_var_2 = state_var_2 + input_3;
+    output_3 = const_2 * state_var_2;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>We can also remove inputs, by turning them into derived signals:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>Derived2</span> : <span class='m'>Base</span> {
+  <span class='k'>rules</span>:
+    input_2 = -input_1;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>or we can redefine existing derived signals:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>Derived3</span> : <span class='m'>Base</span> {
+  <span class='k'>rules</span>:
+    output_2 = input_1 - input_2;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>or constants:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>Derived4</span> : <span class='m'>Base</span> {
+  <span class='k'>static</span>:
+    const_1 : <span class='m'>Int</span> = <span class='n'>1000</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>We can change the rules that update state variables, or their initialization expression:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>Derived5</span> : <span class='m'>Base</span> {
+  <span class='k'>state</span>:
+    state_var_1 : <span class='m'>Int</span> = input_1;
+
+  <span class='k'>rules</span>:
+    state_var_1 = state_var_1 + input_1 : input_1;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Note that the new update rule for <code class="inline-code-box"><span class="inline-code">state_var_1</span></code> replaces all three update rules defined in <code class="inline-code-box"><span class="inline-code">Base</span></code>. You can also choose to override only the update rules for a given variable, or only its initialization expression.</p>
+
+
+<h3>Methods</h3>
+
+<p>Methods of reactive automata are similar to methods of static ones. They are just functions that happen to have implicit access to the internal state of an automaton. Their syntax is a bit different though:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> <span class='m'>Lines</span>.buffer_is_empty = buffer == ();
+
+<span class='m'>Bool</span> <span class='m'>Lines</span>.buffer_contains(<span class='m'>Nat</span> char) = in(char, buffer);
+</section>
+</figure>
+</code></pre>
+
+<p>Methods are invoked with the usual syntax <code class="inline-code-box"><span class="inline-code">automaton.method(..)</span></code> on a local automaton (inside a procedure) or a nested one and like normal functions from other methods of the same automaton. They cannot be invoked from within the body of the automaton they belong to though and they are not inherited by derived automata.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

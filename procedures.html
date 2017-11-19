@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Procedures</h2>
+
+<p>It's now time to write the "hello world!" program in Cell:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Main</span>(<span class='m'>String</span>* args) {
+  <span class='m'>Print</span>(<span class='s'>"Hello world!\n"</span>);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Both <code class="inline-code-box"><span class="inline-code">Main</span></code> and <code class="inline-code-box"><span class="inline-code">Print</span></code> here are procedures. Their names follow the same syntactic rules as type names: an uppercase letter, followed by one or more letters (either upper or lower case) and numbers, with at least one lowercase letter in the mix and no underscores. Unlike functions, procedures can have side effects and perform I/O; they may or may not return a result or take any arguments, but the parentheses after their name are always required even if the argument list is empty. Procedures can call functions, but not vice versa, since functions are not allowed to have side effects.</p>
+
+<p>All types of statements that can appear in the body of a function can also appear inside the body of a procedure, but there's a number of statements that can only be used with procedures. One of them is the "valueless" <code class="inline-code-box"><span class="inline-code">return;</span></code> statement, used to explicitly return from a procedure that has no return value. Another one is the procedure call. A few examples:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>res = <span class='m'>FileRead</span>(<span class='s'>"test-data/input-A.txt"</span>);
+ok = <span class='m'>FileWrite</span>(<span class='s'>"test-data/output-A.txt"</span>, data);
+ch = <span class='m'>GetChar</span>();
+</section>
+</figure>
+</code></pre>
+
+<p>Note that procedure calls are statements, not expressions, and therefore cannot be nested inside expressions. If a procedure returns a value, the compiler forces you to store it in a variable, you cannot just ignore it (you are free to ignore the content of that variable afterwords, of course). The other statements that can be used inside procedures but not functions are all related to automata, and we'll discuss them once we get there.</p>
+
+<p>Procedures cannot make use of type variables in their signature, cannot take closure arguments and cannot be used themselves as closures. They also cannot have explicitly declared local variables, but they can have local automaton variables (more on this later).</p>
+
+<p><code class="inline-code-box"><span class="inline-code">Main</span></code> is where the execution of the program starts: you need to define one in your program in order to create a standalone application in Cell (as opposed to a bunch of C++ classes that are then imported into an existing code base). It works just like it does in any other language: it always takes a single parameter, the program's arguments, as a sequence of strings, and if it returns a value, which must be of type <code class="inline-code-box"><span class="inline-code">Int</span></code>, that value becomes the exit status of the whole process. If no return value is provided, the exit status is 0.</p>
+
+<p>The only way to do any I/O is to use the procedures defined in the standard library. There's currently four of them, listed here with their signatures:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Reads the content of a given file, and returns it</span>
+<span class='c'>// wrapped in a Maybe type. Returns ":nothing" if the</span>
+<span class='c'>// file cannot be read, for whatever reason</span>
+<span class='m'>Maybe</span>[<span class='m'>Byte</span>*] <span class='m'>FileRead</span>(<span class='m'>String</span> filename)
+
+<span class='c'>// Write the given sequence of bytes to a file, overwriting the</span>
+<span class='c'>// existing content. Returns "true" on success, "false" on failure</span>
+<span class='m'>Bool</span> <span class='m'>FileWrite</span>(<span class='m'>String</span> filename, <span class='m'>Byte</span>* data)
+
+<span class='c'>// Prints the content of a given string to the standard output</span>
+<span class='m'>Print</span>(<span class='m'>String</span> output)
+
+<span class='c'>// Reads the next character from the standard input, and returns</span>
+<span class='c'>// it wrapped in a Maybe type. Returns ":nothing" on EOF</span>
+<span class='m'>Maybe</span>[<span class='m'>Nat</span>] <span class='m'>GetChar</span>()
+</section>
+</figure>
+</code></pre>
+
+<p>The I/O library will be expanded in the future, but it will always be very basic. Cell is designed to integrate with your primary programming language, not to write entire applications. Given that, it makes no sense whatsoever to try to reimplement in Cell the I/O capabilities of your programming language of choice. It's not just pointless, it would also be a huge drag on the development of the compiler. Procedures and some minimal I/O capabilities are there only because they are needed for testing, and when learning the language. They can of course also be used to write data-processing batch applications, like the Cell compiler itself, that read some input data from one or more files, process it and then write the results to another set of files, but nothing more than that.</p>
+
+<p>It may well be the case that a future version of the compiler will allow one to write some very specific types of applications entirely in Cell, but that will be done using a completely different programming model. Think something along the lines of <a href='https://guide.elm-lang.org/architecture/'> The Elm Architecture</a>, but for (possibly distributed) back-end applications, instead of front-end ones.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

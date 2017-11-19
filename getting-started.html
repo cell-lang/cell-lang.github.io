@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Getting started</h2>
+
+<p>The Cell compiler can be downloaded <a href='download.zip'>here</a>. After you unzip the file, you'll see five directories: <code class="inline-code-box"><span class="inline-code">bin</span></code>, <code class="inline-code-box"><span class="inline-code">stdlib</span></code>, <code class="inline-code-box"><span class="inline-code">examples</span></code>, <code class="inline-code-box"><span class="inline-code">src</span></code> and <code class="inline-code-box"><span class="inline-code">sublime-text</span></code>. The first one contains the Cell compiler executable, the second one the standard library (which at the moment consists of just one file, <code class="inline-code-box"><span class="inline-code">prelude.h</span></code>), and the third one a few ready-to-build examples to get you started. You can find more information about them in <code class="inline-code-box"><span class="inline-code">examples/README.txt</span></code>.</p>
+
+<p>The compiler produces a C++ sources file (<code class="inline-code-box"><span class="inline-code">generated.cpp</span></code>) that can be compiled directly into an executable file if your Cell source code includes a <code class="inline-code-box"><span class="inline-code">Main(..)</span></code> procedure, or otherwise included in an existing C++ project. You'll need a compiler that supports C++11. If your project defines any automata, of either type, the compiler will also produce a second files, <code class="inline-code-box"><span class="inline-code">generated.h</span></code>, which contains the declaration of the interface of the generated classes that you'll be dealing with from your own native C++ code.</p>
+
+<p>There's no documentation for the standard library yet, you'll have to delve into the <code class="inline-code-box"><span class="inline-code">prelude.h</span></code> file, which is very small anyway.</p>
+
+<p>The compiler is provided as a Linux binary, but if you're using another Unix-like platform like OS X/macOS you can try to compile it yourself using the source code in <code class="inline-code-box"><span class="inline-code">src</span></code>. If you're using GCC you can build it by just typing <code class="inline-code-box"><span class="inline-code">g++ -O3 -DNDEBUG cellc.cpp -o cellc</span></code> in <code class="inline-code-box"><span class="inline-code">src</span></code> and then replacing the executable in <code class="inline-code-box"><span class="inline-code">bin</span></code> with the one you built yourself.</p>
+
+<p>The <code class="inline-code-box"><span class="inline-code">sublime-text</span></code> directory contains syntax highlighting files for Sublime Text. Just copy them in the <code class="inline-code-box"><span class="inline-code">~/.config/sublime-text-3/Packages/User</span></code> directory on Linux, or its equivalent in other operating systems.</p>
+
+
+<h3>Debugging</h3>
+
+<p>There's no debugger for Cell, and debugging is done mainly by tracing the execution of a program with the help of the <code class="inline-code-box"><span class="inline-code">print</span></code> statement. Another useful tool is the <code class="inline-code-box"><span class="inline-code">assert</span></code> statement. When an assertion fails, the execution of the program is stopped and all the variables in scope are printed to the standard output or to a file, if they are too large. If the program is running in debug mode (more on that in a second) the call stack is also printed, along with the value of all the arguments of all function calls on the stack. Call stack and values of function arguments are also printed every time the program crashes, for whatever reason (again, this happens only if the program is running in debug mode). Only a small part of this data is actually written to the standard output, with the rest of it being written to a set of files. All the files created by a program crash are created inside the <code class="inline-code-box"><span class="inline-code">debug</span></code> subdirectory of the working directory of the process. This subdirectory is not created automatically: you have to create it manually before running the code, otherwise no dump file will be produced.</p>
+
+<p>The <code class="inline-code-box"><span class="inline-code">NDEBUG</span></code> preprocessor symbol is used to choose between debug and release mode. It's the same symbol used by the C <code class="inline-code-box"><span class="inline-code">assert(..)</span></code> macro. Defining it when compiling the generated C++ code will disable all the extra debugging code. With GCC, that can be done with the <code class="inline-code-box"><span class="inline-code">-DNDEBUG</span></code> command line argument. The code compiled in debug mode is an order of magnitude slower, so make sure that symbol is defined when building your production binaries.</p>
+
+<p>Sometimes there's no choice but to debug the generated code. The generated code itself is all but incomprehensible, but the names of variables and functions are the same as in the Cell sources, with the addition of a short suffix that is needed to avoid name clashes. For example a two-argument non-polymorphic function named <code class="inline-code-box"><span class="inline-code">my_fn(..)</span></code> in Cell will be named <code class="inline-code-box"><span class="inline-code">my_fn_F2(..)</span></code> in the generated C++ code, and a variable named <code class="inline-code-box"><span class="inline-code">my_var</span></code> will become <code class="inline-code-box"><span class="inline-code">my_var_V</span></code>. To print the value of such variable in GDB you'll need to type <code class="inline-code-box"><span class="inline-code">call print(my_var_V)</span></code> at the debugger prompt.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

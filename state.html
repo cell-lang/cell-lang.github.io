@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>State and data model</h2>
+
+<p>Pure functional languages enforce a strict distinction between pure computation and I/O. In those languages, state and state updates are often</p>
+
+<p>Application code can be seen as performing three different tasks. The first one is pure computation, that is, the task of taking some input data and to process it so as to deduce from it the desired output data. This is the sort of tasks functional programming languages tend to excel at. The second one is the management of state: stateful application need to maintain an internal state, which has to be updated in response to external event. The last one is I/O.</p>
+
+<p>It believe that while there are certainly a lot of things that could (and should) be done to improve today's programming languages in the first area, the low hanging fruit lies in the other two.</p>
+
+<p>With regards to pure computation, Cell is just another programming language, with pro</p>
+
+<p>Dealing with state is actually Cell's raison d’être.</p>
+
+<p>Stateful applications, that is, applications</p>
+
+<p>I want to explain here what I think is wrong with state and state updates as it is done in imperative languages and object-oriented ones in particular.</p>
+
+
+<h3>Access paths</h3>
+
+<p>The state of an application in object oriented languages is represented as a directed graph, whose node are objects and whose edges are pointers that link one object to another. In order for a piece of code to have access to the data held by a particular object, it needs to be passed a pointer to that object, or to another object that is, directly or indirectly, linked to it. Data that is stored by objects that are not reachable from the ones a piece of code has direct access to, is effectively out of its reach. Therefore, when the object network is created and subsequently updated, the programmer has to take care to build all the necessary access path into it, by wiring objects together so that methods of any object have access to all the information they will need.</p>
+
+<p>This approach suffers from a number of problems: first of all, the effort required to build all those access paths into the object graph is not insignificant, and that's especially true for groups of tightly coupled objects, each of which needs access to all or most other objects in the group. Another problem is that such wiring tends to be very fragile: changes in the application code often require the creation of new access paths, even when no really new information is added to the program state, and that usually involves making changes to many parts of the codebase, in order to pass around references between "distant" objects. The code that is written to perform this wiring is typically not particularly complex, it's mostly boilerplate code, but in my experience many application features that feel difficult to implement are made so not by the fact that they involve especially complex algorithms, but by the fact that it's difficult to have access to all the pieces of information required to implement them.</p>
+
+<p>Contrast that with what happens when you're writing a query or a stored procedure in a relational database. There's no "wiring" of any sort to do: all the information stored in the database can be retrieved at any time, with no restrictions. And indeed, one of the reasons the relational model was such a vast improvement over it predecessors when it was invented almost half a century ago was that it obviated the need to build those access paths into the database: all you needed to do was to encode the relevant information about your domain entities and their relationships, and you would get navigation for free. Of course, in a relational database all data is lumped together in one large schema, which any piece of code can access without restrictions. That works just fine for a database, but if applied to software development it would keep you from writing your code in a modular way. So in Cell you're allowed to partition the state of your application into several schemas, which can then either wired together or nested inside one another. You are still able to restrict the ability of any piece of code to access data it should be independent of (actually, you can do it in a way that I believe is a lot more effective that anything you can do in OOP: more on that in a minute), but you are not burdened with creating the sort of "scaffolding" needed to navigate an object graph. While there's still a bit of wiring to do (dependant automata have to be wired to their dependees), the effort involved is minimal, both because you'll be typically dealing with just a handful of automaton instances and because such wiring is "static": it's done once during initialization and it never changes after that.</p>
+
+
+<h3>Partitioning application state</h3>
+
+<p>Another problem modeling the application state as an object graph is that it becomes difficult to clearly partition the information it encodes into smaller, distinct subset: you deal with just one large object graph, and it's not always easy to figure out which parts of it a given piece of code has access to, either directly or indirectly, because in order to figure that out you need to follow all the links from the objects you have access to. In Cell, on the other hand, determining what pieces of information a method has access to is pretty straightforward: apart from its arguments, it can only access the information contained in the automaton it belong to, and all its dependees. Message handlers have read-only access to the same information, and can only modify the state of the automaton they belong to.</p>
+
+<p>Being able to partition the state of the application provides some degree of high-level control over the scope of any operation that mutates the state of the application that is totally absent in imperative programming. One interesting consequence of that is that independent automata can be (potentially at least) mutated in parallel, without giving up either safety or determinism.</p>
+
+
+<h3>Multi-step state transitions</h3>
+
+<p>Updating the application state in object-oriented languages is a multi-step process, which starts at a specific object and from there visits other objects that are reachable from the first one. The control flow visits one object at a time, updating them as needed in the process, and may visit (and update) any object more than once. At any time, a new object can be created and wired into the graph. This is a simplification of course, as the actual process is typically intermixed with I/O and mutation of static variables, but let's ignore these complications for now. The object graph goes through a large number of intermediate states, each of which is the result of applying a small mutation to the previous one, before reaching the final, definitive one. A critical consequence is that the order in which the nodes are visited and updated is critical to the correctness of the update: when updating one node you need to pull in information from other nodes, and whether the nodes you pull in information from have already been updated or not is critical to the correctness of your application logic, but the update order in an arbitrary graph is typically a very difficult to control. Restrictions to the graph topology can of course help: if the object graph happens to be a tree, for example, controlling the update order is generally speaking a lot easier, but that's not true for an arbitrary graph.</p>
+
+<p>The approach to updates taken by Cell has already been discussed, and it's not without issues, but it's certainly a lot less chaotic than the one described above, and if it turns out to be too restrictive it can be be made more flexible by carefully adding a little more flexibility when needed.</p>
+
+
+<h3>Initialization</h3>
+
+<p>Initializing the state of an automaton in Cell is not unlike assigning a new value to a variable of an atomic type in any other language, whether the new value is a literal, the result of a purely functional calculation or an I/O operation, or a mix of them. For systems that comprise multiple automata the initialization process consists of as many steps as then number of automata in the system, which may have to be performed in a specific order once inter-automata integrity constraints are implemented, but it's still very straightforward. You can put the system in any arbitrary state of your choice, which means you can easily recreate an automaton from a previously taken snapshot of the state of another instance of the same automaton. Initialization is basically a non-issue.</p>
+
+<p>In object-oriented languages on the other hand, initializing a system is not trivial, especially if you want to put the system in an initial state that is not the default one, for example when restoring a previously saved state. Initialization becomes a complex multi-step process, just like updating the state of the system is. Several factors contribute to make the process so complex. The fact that I/O is mixed with computation is one of them, of course: if you want to recreate a state, you have to redo some of the I/O that was done to bring the reach that particular state. Another one is the fact that object graphs typically contain many circular dependencies, which inevitably lead to initialization being a multi-step process: if two objects A and B reference each other, the first one to be created has to undergo a two-step initialization, with the second step needed to set a reference to the second object that didn't yet exist when the first was initialized. In practice, the process is typically more complex than this: often the order in which the objects are created cannot be fully controlled by the application developer, but is more or less dictated by some external framework. Some features that are specific to object oriented programming usually make thing worse: inheritance for example tends to create problems of its own, since virtual methods usually cannot be safely called inside constructors, and the artificial barriers created by encapsulation create additional difficulties. In short, what is a trivial process in more declarative languages becomes unnecessarily complex in object-oriented ones, and it brings in many of the same sources of complexity that are encountered when updating the state of the system.</p>
+
+
+<h3>Error recovery</h3>
+
+<p>It's generally speaking not easy to deal with errors that occur in the middle of updating the state of an application written in an imperative language, because at that point the application finds itself in one of those intermediate, partially updated states we talked about in a previous paragraph. Just aborting the update and pretending it never happened is usually not a good option, because that will usually leave us with an inconsistent state, which is likely to cause any sort of misbehaviors on the application's part. Ignoring the error and ploughing forward is just not an option in many cases. And rolling back the all the changes made to the application state up to that point is in practice rather hard, and that's before we consider any I/O, which typically cannot be undone even in principle. So that typically leaves us with no good options.</p>
+
+<p>Transactions provide a much better way to handle critical errors, but in order to support them the language needs to provide a number of features that are alien to low-level languages. The first requirement is of course a clear separation between state updating and I/O: the latter affects the external world, and cannot in general be undone, especially in an automatic or semi-automatic way, while the former only affects the internal (logical) state of the application, which can be controlled by the language. Another prerequisite is the ability to clearly mark the beginning and the end of a transaction, a notion that is not supported by any object-oriented language I know of, even though it's not, as far as I can tell, incompatible with an imperative programming model.</p>
+
+
+<h3>State and behavior should be specified separately</h3>
+
+<p>It is a tenet of OOP that data structures and the code that operates on them should be defined together, in small units that we call classes. Defining them together is a good thing, according to the OOP narrative, because things that change together should go together: when you change a data structure you'll probably have to change the code that manipulates it, and implementing new behaviors often requires making changing to the data structures involved.</p>
+
+<p>As far as low-level programming is concerned, those are probably good ideas. But encapsulation comes at a price, and I believe that in a high-level language (which Cell aims to be), the disadvantages of such a choice outweigh the advantages.</p>
+
+<p>Consider, for example, the advantages of specifying the data structures that encode the state of the application separately from the application code. In a typical application the definition of those data structures is at least an order of magnitude smaller than the actual code, and unlike the latter the former is easy to understand and contain no bugs. It is, in general, much easier to understand data structures than computation or behavior, and that's something we should try to take advantage of. Imagine starting to work on an unfamiliar codebase, and having to develop an understanding of it: wouldn't it help to be able to start from a few files containing only the data structures that encode the state of a system, and have that guide you in your understanding of the code?</p>
+
+<p>In an application written in an object-oriented language unfortunately it's very difficult to get a clear picture of what the state of the system is, because the definition of the data structure are mixed with the rest of the code, and so this crucial bit of clarity and insight is mostly lost.</p>
+
+<p>Furthermore, the OOP methodology prescribes that we should prevent code that does not belong to a certain class from accessing its data structures directly, so that when those data structures change, we only need to update the code that belong to that particular class, thereby avoiding the need to make changes all over the code base.</p>
+
+<p>Also, in a language like Cell that enforces the separation between pure computation and state updates, the dangers of granting unrestricted read-only access to the data contained in a given automaton is much smaller that it would be in lower-level languages, for a couple of reasons: the code</p>
+
+
+<h3>No separation between constant and mutable data</h3>
+
+<p>Another useful feature missing from low-level programming paradigms like OOP is a distinction between state and constant data. Some data structures,</p>
+
+
+<h3>As a high-level formalism to represent information, relations are better than records plus pointers in every conceivable way.</h3>
+
+<p>On</p>
+
+<p>## ---------------------------------------------------------------------------------------------</p>
+<p>##</p>
+<p>## Navigation should not be necessary</p>
+<p>##</p>
+<p>## State should be split into compartments</p>
+<p>##</p>
+<p>## Need directory objects</p>
+<p>##</p>
+<p>## No clear state transition</p>
+<p>##</p>
+<p>## Complex initialization</p>
+<p>##</p>
+<p>## Restoring state, or setting arbitrary state, almost impossible</p>
+<p>##</p>
+<p>## No automatic recovery mechanism</p>
+<p>##</p>
+<p>## Constant data should be treated as such</p>
+<p>##   A lot of navigation data is actually constant</p>
+<p>##</p>
+<p>## Derived data should not be explicitly stored and updated</p>
+<p>##   A lot of navigation data is non-essential</p>
+<p>##</p>
+<p>## Application state should be separated from behaviour</p>
+<p>##</p>
+<p>## Explicit integrity constraints (and things like rewrite rules) are generally better than encapsulation</p>
+<p>##   Principle of least power</p>
+<p>##</p>
+<p>## Primary keys are better than pointers/object ids</p>
+<p>##</p>
+<p>## Relations are better than pointer</p>
+<p>##   Bidirectionality</p>
+<p>##   Optional, one-to-one, one-to-many, many-to-many relationship</p>
+<p>##   Expressing relations between more than two objects</p>
+<p>##   Query language</p>
+<p>##   Integrity constraints?</p>
+<p>##</p>
+<p>## Entities should not become the minimal data structure</p>
+<p>##</p>
+<p>## ---------------------------------------------------------------------------------------------</p>
+<p>##</p>
+<p>## Circular dependencies</p>
+<p>## Need to leak a reference during creation</p>
+<p>## Object pools</p>
+<p>## Virtual functions in constructors</p>
+<p>## Data is unavailable when object is created (framework). But why is it unavailable?</p>
+<p>##</p>
+<p>## ---------------------------------------------------------------------------------------------</p>
+<p>##</p>
+<p>## PROBLEMS WITH OBJECTS:</p>
+<p>##</p>
+<p>##   objects with many properties are constructed a little bit at the time,</p>
+<p>##   why is that bad? SEE Carlo Pescio</p>
+<p>##</p>
+<p>##   Values vs Objects</p>
+<p>##     Values are immutable, and you need immutability to implements things like sets/maps/relations</p>
+<p>##     Equality is well-defined.</p>
+<p>##     They don't hide information</p>
+<p>##</p>
+<p>##   Rick Hickey talk:</p>
+<p>##     Immutability</p>
+<p>##     Semantic transparency</p>
+<p>##</p>
+<p>##     Values can be shared - (exposed) without worrying</p>
+<p>##     Reproducible results</p>
+<p>##     Easy to fabricate</p>
+<p>##</p>
+<p>##     Language indipendent</p>
+<p>##     Generic</p>
+<p>##     Values aggregate to values</p>
+<p>##</p>
+<p>##     Conveyance</p>
+<p>##     Perception</p>
+<p>##     Memory</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

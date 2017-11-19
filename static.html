@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Static automata</h2>
+
+<p>With the functional subset of the language now out of the way, we can finally examine those constructs and features that are unique to Cell, and we'll start with the most important one, static automata. We've already gone through, in the overview, the basic principles that govern the workings of static automata, and we'll now see how they are actually defined.</p>
+
+<p>The first thing you need to provide in order to define a static automaton is the type of its state. An automaton instance is a sort of glorified variable, which has, at any given point in time, a value which we'll usually refer to as its state. The state of an automaton is always a record, and its type is defined with a schema definition. Here's an example, similar to something we've seen in a previous chapter:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Counter</span> {
+  value:   <span class='m'>Int</span> = <span class='n'>0</span>;
+  updates: <span class='m'>Int</span> = <span class='n'>0</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The above schema definition looks a lot like a type definition, and indeed a schema can be used, with some limitations, as a normal type in function signatures. When <code class="inline-code-box"><span class="inline-code">Counter</span></code> is used that way, it works exactly as if it had been defined like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Counter</span> = (value: <span class='m'>Int</span>, updates: <span class='m'>Int</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>Schemas are essentially types, but they are augmented by extra bits of information that apply only to automata. One such piece of information is on display in the schema definition above: a default value for the initial state of the automaton. Whenever an instance of <code class="inline-code-box"><span class="inline-code">Counter</span></code> is created its intial state will be <code class="inline-code-box"><span class="inline-code">(value: 0, updates: 0)</span></code>, unless a different value is provided explicitly.</p>
+
+<p>While an instance of an automaton like <code class="inline-code-box"><span class="inline-code">Counter</span></code> can be though of as a variable of a record type, whose value can be read just as if it were a normal variable, in some ways such an instance behaves more like a mutable data structure (like a <code class="inline-code-box"><span class="inline-code">struct</span></code> in C or a class in an object-oriented language) with two member variables <code class="inline-code-box"><span class="inline-code">value</span></code> and <code class="inline-code-box"><span class="inline-code">updates</span></code> that can be modified directly inside a message handler. In the functional subset of the language we examined in the previous chapters there's a strict distinction between variables and values: variables can be updated, that is, the value they contain can change over time, but values themselves are immutable: if you have, say, a variable <code class="inline-code-box"><span class="inline-code">v</span></code> that contains a record value with two fields <code class="inline-code-box"><span class="inline-code">x</span></code> and <code class="inline-code-box"><span class="inline-code">y</span></code> you cannot update those fields directly like you do in imperative languages: all you can do is create a mutated copy of the record in <code class="inline-code-box"><span class="inline-code">v</span></code> and store that new record inside <code class="inline-code-box"><span class="inline-code">v</span></code>. If the language allowed imperative updates of the form <code class="inline-code-box"><span class="inline-code">v.x = new_x;</span></code> and another variable <code class="inline-code-box"><span class="inline-code">v'</span></code> somewhere else in the program pointed to the same physical data structures as <code class="inline-code-box"><span class="inline-code">v</span></code>, updating <code class="inline-code-box"><span class="inline-code">v</span></code> would have the side effect of updating <code class="inline-code-box"><span class="inline-code">v'</span></code> as well. That's what happens all the time in imperative languages of course, but preventing this kind of unrestriced side effects is quite possibly the most fundamental feature of functional programming. In the case of automata, though, the same end is achieved by different means: either by preventing (or restricting) aliasing in the first place (that's what happens with mutable relation variables, discussed below) or by making a physical copy of some of the data structures involved, which is what usually happens under the hood when you read the whole value of an automaton variable, as opposed to the value of one of its individual fields.</p>
+
+<p>As already mentioned in the overview, the most important feature of static automata, and of the entire language in general, is the ability to use (mutable) relation variables to encode their state. Here we need a slightly more complex example: let's say you want to build an old-fashioned chat server, that will allow users to connect from a remote computer using a command line tool like <code class="inline-code-box"><span class="inline-code">telnet</span></code>. As soon as they connect they will be automatically assigned a numeric id by the server (which will be invisible to them) and they will be able to choose a (unique) username using a command of the form <code class="inline-code-box"><span class="inline-code">login somecutename</span></code>. Once they're logged in they will be able to send and receive messages to and from other individual users, and will also be able to join any number of chat groups with the command <code class="inline-code-box"><span class="inline-code">join chatgroupname</span></code>. Groups are managed dynamically: a group will be automatically created, if it doesn't exist already, as soon as a user tries to join it, and destroyed when the last member leaves. If you wanted to create an automaton that keeps track of usernames and the list of chat groups each user has joined, you could for instance start with something like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Logins1</span> {
+  usernames   : [<span class='m'>Nat</span> -&gt; <span class='m'>String</span>] = [];
+  memberships : [<span class='m'>Nat</span>, <span class='m'>String</span>]   = [];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The <code class="inline-code-box"><span class="inline-code">usernames</span></code> field/variable is a map that associates each numeric user id with its corresponding username (which is a string, of course), and <code class="inline-code-box"><span class="inline-code">memberships</span></code> is a binary relation that keeps track of which chat groups each user has joined, with users identified by their numeric id and groups by their name. Here's a sample value for the state of (an instance of) the <code class="inline-code-box"><span class="inline-code">Logins1</span></code> automaton:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>( usernames: [
+    <span class='n'>0</span> -&gt; <span class='s'>"tom"</span>,
+    <span class='n'>1</span> -&gt; <span class='s'>"sara"</span>,
+    <span class='n'>2</span> -&gt; <span class='s'>"betty"</span>,
+    <span class='n'>3</span> -&gt; <span class='s'>"luke"</span>,
+    <span class='n'>4</span> -&gt; <span class='s'>"clark"</span>
+  ],
+  memberships: [
+    <span class='n'>0</span>, <span class='s'>"football"</span>;
+    <span class='n'>0</span>, <span class='s'>"politics"</span>;
+    <span class='n'>2</span>, <span class='s'>"politics"</span>;
+    <span class='n'>3</span>, <span class='s'>"football"</span>;
+    <span class='n'>4</span>, <span class='s'>"football"</span>
+  ]
+)
+</section>
+</figure>
+</code></pre>
+
+<p>Alternatively, the normal relation variables <code class="inline-code-box"><span class="inline-code">usernames</span></code> and <code class="inline-code-box"><span class="inline-code">memberships</span></code> could be turned into mutable relation variables, as shown here:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Logins2</span> {
+  usernames(<span class='m'>Nat</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+  memberships(<span class='m'>Nat</span>, <span class='m'>String</span>);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>What's the difference between <code class="inline-code-box"><span class="inline-code">Logins1</span></code> and <code class="inline-code-box"><span class="inline-code">Logins2</span></code>? With regards to the set of possible states they can assume, they're identical: every valid state for <code class="inline-code-box"><span class="inline-code">Logins1</span></code> is also a valid state for <code class="inline-code-box"><span class="inline-code">Logins2</span></code>, and vice versa. The difference lies in the operations you're allowed to perform on the relation variables <code class="inline-code-box"><span class="inline-code">usernames</span></code> and <code class="inline-code-box"><span class="inline-code">memberships</span></code>. With <code class="inline-code-box"><span class="inline-code">Logins1</span></code> you can use them as ordinary variables, whose value can be read and passed around, and you can assign a new value to them inside a message handler, subject to a number of restriction we'll talk about later. But you cannot imperatively update the values they point to, as explained earlier. With <code class="inline-code-box"><span class="inline-code">Logins2</span></code>, on the other hand, those relations can be efficiently updated in place, although of course only inside a message handler and with all the restrictions that apply. You can insert new tuples and update or delete existing ones, just like you would do with SQL in a relational database. The price to pay for such a priviledge is that mutable relation variables cannot be aliased. You cannot copy them, pass them to other functions, return them from methods, or use them to build larger composite values. The following expressions or statements, for example, are all rejected by the compiler in the case of <code class="inline-code-box"><span class="inline-code">Logins2</span></code>, but are perfectly valid if applied to <code class="inline-code-box"><span class="inline-code">Logins1</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Creating a composite value</span>
+(usernames, memberships)
+
+<span class='c'>// Passing a relation variable to a function</span>
+merge(usernames, other_usernames)
+
+<span class='c'>// Copying a relation variable</span>
+usernames_copy = usernames;
+
+<span class='c'>// Returning a relation variable from a method</span>
+<span class='k'>return</span> memberships;
+</section>
+</figure>
+</code></pre>
+
+<p>All you can do with mutable relation variables, apart from inserting, updating and deleting tuples, is lookups, searches and linear scans:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Looking up a user's name given their numeric id</span>
+usernames(id, !!)
+
+<span class='c'>// Syntactic sugared version of usernames(id, !!)</span>
+usernames(id)
+
+<span class='c'>// Looking up a user's numeric id give their name</span>
+usernames(!!, name)
+
+<span class='c'>// Returns true if there's a user whose numeric identifier</span>
+<span class='c'>// is &lt;id&gt; and whose username is &lt;name&gt;, false otherwise</span>
+usernames(id, name)
+
+<span class='c'>// Returns true if there's a user whose</span>
+<span class='c'>// numeric id is &lt;id&gt;, false otherwise</span>
+usernames(id, *)
+
+<span class='c'>// Returns true if there's a user whose username</span>
+<span class='c'>// is &lt;name&gt;, false otherwise</span>
+usernames(*, name)
+
+<span class='c'>// Retrieving all groups a given user has joined</span>
+[g : g &lt;- memberships(id, ?)]
+
+<span class='c'>// Retrieving the ids of all users who have joined a given group</span>
+[id : id &lt;- memberships(?, group_name)]
+
+<span class='c'>// Making a copy of the entire relation</span>
+[u, g : u, g &lt;- memberships]
+</section>
+</figure>
+</code></pre>
+
+<p>The result of all these expressions is an ordinary value, which cannot be updated in place but can otherwise be manipulated without restrictions. In particular, if you need to copy the content of a mutable relation variable elsewhere you need to make a physical copy of it, as show in the last of the above expressions.</p>
+
+<p>The <code class="inline-code-box"><span class="inline-code">[key: 0]</span></code> annotation to the declaration of <code class="inline-code-box"><span class="inline-code">usernames</span></code> in <code class="inline-code-box"><span class="inline-code">Logins2</span></code> simply declares that the first column is a key for the relation, that is, that no two tuples in <code class="inline-code-box"><span class="inline-code">usernames</span></code> can have the same value for the left argument. This is the same as saying that the <code class="inline-code-box"><span class="inline-code">usernames</span></code> relation is actually a map, just like it is in <code class="inline-code-box"><span class="inline-code">Login1</span></code>. But in this case we can do better: not only numeric identifiers but also usernames should be unique. This can be enforced by declaring a second key for <code class="inline-code-box"><span class="inline-code">usernames</span></code> as shown here:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Logins</span> {
+  usernames(<span class='m'>Nat</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>, <span class='k'>key</span>: <span class='n'>1</span>];
+  memberships(<span class='m'>Nat</span>, <span class='m'>String</span>);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Now <code class="inline-code-box"><span class="inline-code">usernames</span></code> is a bidirectional map: every numeric id is associated to a single username and vice versa. The ability to declare multiple keys is only available for mutable relation variables and not for ordinary types, at least for now. Ternary relations can also have composite keys: we'll see examples of that later.</p>
+
+
+<h3>Data modeling</h3>
+
+<p>It's now time to see how typical database data is modeled in Cell, and how it differs from conventional database design. In order to do so, we'll make use of a classical example that appears in every database textbook: the suppliers/parts database. The domain we're going to model consists of two entities, suppliers and parts. Each supplier is identified internally by a unique number, and has a name, an address and a phone number. Parts too are identified internally by a unique numeric id, and have an alphanumeric code (which is also unique), and a description. Each supplier sells many different parts, and each part can be sold by any number of suppliers. Parts don't have a fixed price: instead, each supplier offers them at a different price, so the price cannot be modeled as an attribute of parts, since it depends on both the supplier and the part. We also want to keep track of how many units of a given part are available from each supplier that sells it. This is how our final schema is going to look like:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>PartId</span>     = part_id(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>SupplierId</span> = supplier_id(<span class='m'>Nat</span>);
+
+<span class='k'>type</span> <span class='m'>Money</span> = dollar_cents(<span class='m'>Nat</span>);
+
+<span class='k'>schema</span> <span class='m'>Supply</span> {
+  next_part_id     : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_supplier_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  part(<span class='m'>PartId</span>):
+    description : <span class='m'>String</span>;
+
+  code(<span class='m'>PartId</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>, <span class='k'>key</span>: <span class='n'>1</span>];
+
+  supplier(<span class='m'>SupplierId</span>):
+    name    : <span class='m'>String</span>,
+    address : <span class='m'>String</span>,
+    phone*  : <span class='m'>String</span>;
+
+  sells(<span class='m'>SupplierId</span>, <span class='m'>PartId</span>):
+    unit_price   : <span class='m'>Money</span>,
+    availability : <span class='m'>Nat</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The above schema is just a syntactic sugared version of the following one:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Supply</span> {
+  <span class='c'>// First unused numeric id for parts</span>
+  next_part_id  : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  <span class='c'>// First unused numeric id for suppliers</span>
+  next_supplier_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  <span class='c'>// There exists a part whose identifier is #0</span>
+  part(<span class='m'>PartId</span>);
+
+  <span class='c'>// The description of part #0 is #1</span>
+  description(<span class='m'>PartId</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+
+  <span class='c'>// The code of part #0 is #1</span>
+  code(<span class='m'>PartId</span>, <span class='m'>String</span>)  [<span class='k'>key</span>: <span class='n'>0</span>, <span class='k'>key</span>: <span class='n'>1</span>];
+
+  <span class='c'>// There exists a supplier whose identifier is #0</span>
+  supplier(<span class='m'>SupplierId</span>);
+
+  <span class='c'>// The name of supplier #0 is #1</span>
+  name(<span class='m'>SupplierId</span>, <span class='m'>String</span>)    [<span class='k'>key</span>: <span class='n'>0</span>];
+
+  <span class='c'>// The address of supplier #0 is #1</span>
+  address(<span class='m'>SupplierId</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+
+  <span class='c'>// Supplier #0 has phone number #1</span>
+  phone(<span class='m'>SupplierId</span>, <span class='m'>String</span>);
+
+  <span class='c'>// Supplier #0 sells part #1</span>
+  sells(<span class='m'>SupplierId</span>, <span class='m'>PartId</span>);
+
+  <span class='c'>// Supplier #0 sells part #1 at price #2</span>
+  unit_price(<span class='m'>SupplierId</span>, <span class='m'>PartId</span>, <span class='m'>Money</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+
+  <span class='c'>// Supplier #0 has #2 units of part #1 available</span>
+  availability(<span class='m'>SupplierId</span>, <span class='m'>PartId</span>, <span class='m'>Nat</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>We'll discuss the "unsugared" version first, and the syntactic sugar later. The first thing to notice is the two type declarations <code class="inline-code-box"><span class="inline-code">PartId</span></code> and <code class="inline-code-box"><span class="inline-code">SupplierId</span></code>. In a relational database (assuming of course one chooses to use surrogates ids instead of real world identifiers) both suppliers and parts would be identified by an integer number. In Cell, on the other hand, it's better to create a specific data type for each entity in the application domain. A tagged integer is usually more than enough. Parts, for example, will in our example be identified by values like <code class="inline-code-box"><span class="inline-code">part_id(0)</span></code>, <code class="inline-code-box"><span class="inline-code">part_id(1)</span></code> and so on. Similarly, suppliers will be identified by values of the form <code class="inline-code-box"><span class="inline-code">supplier_id(N)</span></code>. When using plain integers (or strings) as surrogate ids, any specific value may be used to identify different entities at the same time: in a database, for example, you could (and generally would) end up having a supplier and a part that share the same numeric id. User-defined identifiers like <code class="inline-code-box"><span class="inline-code">PartId</span></code> and <code class="inline-code-box"><span class="inline-code">SupplierId</span></code>, on the hand, provide an important advantage, when used consistently: they uniquely identify the entities in your domain. <code class="inline-code-box"><span class="inline-code">part_id(0)</span></code>, for example, clearly identifies a part, and cannot be confused with <code class="inline-code-box"><span class="inline-code">supplier_id(0)</span></code>, even though they both contain the number <code class="inline-code-box"><span class="inline-code">0</span></code>. One important practical consequence of using "typed" identifiers is the ability to have polymorphic methods and functions: you can arrange your entity identifiers hierarchically, more or less like you would with classes in OOP, and have different implementations for the same method, each of which is specific for a certain type of entity. We'll see an example of that later.</p>
+
+<p>Another difference between Cell and relational databases is the fact that in Cell relations are meant to be in a fully reduced form, that is, every tuple in a relation is meant to record an atomic statement about your domain. In a relational database, for example, you would probably end up creating a <code class="inline-code-box"><span class="inline-code">SUPPLIERS</span></code> table with four fields: <code class="inline-code-box"><span class="inline-code">NUMBER</span></code>, <code class="inline-code-box"><span class="inline-code">NAME</span></code>, <code class="inline-code-box"><span class="inline-code">ADDRESS</span></code> and <code class="inline-code-box"><span class="inline-code">PHONE</span></code>. In Cell, instead, that information is split between one unary relation, <code class="inline-code-box"><span class="inline-code">supplier</span></code>, and three binary ones: <code class="inline-code-box"><span class="inline-code">name</span></code>, <code class="inline-code-box"><span class="inline-code">address</span></code> and <code class="inline-code-box"><span class="inline-code">phone</span></code>.</p>
+
+<p>Let's start with the two mutable unary relations/sets, <code class="inline-code-box"><span class="inline-code">part</span></code> and <code class="inline-code-box"><span class="inline-code">supplier</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// There exists a part whose identifier is #0</span>
+part(<span class='m'>PartId</span>);
+
+<span class='c'>// There exists a supplier whose identifier is #0</span>
+supplier(<span class='m'>SupplierId</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>The comments above each variable explain the informal meaning of each tuple in the relation or element in the set, (with <code class="inline-code-box"><span class="inline-code">#0</span></code>, <code class="inline-code-box"><span class="inline-code">#1</span></code>, <code class="inline-code-box"><span class="inline-code">#2</span></code>... obviously being placeholders for the first, second, third... element in the tuple respectively): if for example <code class="inline-code-box"><span class="inline-code">supplier</span></code> contains the value <code class="inline-code-box"><span class="inline-code">supplier_id(10)</span></code> that simply means that there exists a supplier identified by such a value. That may seem pretty pointess (and redundant) at first, but this type of relations will form the basis for a number of integrity constraints that haven't been implemented yet. They can also be convenient in a number of situations, for example when iterating through all entities of a given type.</p>
+
+<p>Unary relations/sets can also be used to encode boolean attributes. If for instance we wanted to tag all parts that are out of production (instead of deleting them altogether from the database) we could define the following relation:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Part #0 is out of production</span>
+out_of_prod(<span class='m'>PartId</span>)
+</section>
+</figure>
+</code></pre>
+
+<p>The binary relations <code class="inline-code-box"><span class="inline-code">description</span></code>, <code class="inline-code-box"><span class="inline-code">name</span></code>, <code class="inline-code-box"><span class="inline-code">address</span></code> and <code class="inline-code-box"><span class="inline-code">phone</span></code> are meant to encode individual attributes of the corresponding entities. The first three all have a key on the first colum, so that at most one value can be associated with each entity. <code class="inline-code-box"><span class="inline-code">phone</span></code> on the other hand has no keys, so that each supplier can have more than one phone number. The integrity constraints declared here are incomplete: we would like to also enforce the fact that each supplier must have a name and an address, and that each supplier id that appears in those relations is a valid one, that is, one that is an element of <code class="inline-code-box"><span class="inline-code">supplier</span></code>. Unfortunately the constraints required to do this (foreign keys being one of them) have not been implemented yet, so for now that's the best we can do.</p>
+
+<p><code class="inline-code-box"><span class="inline-code">code</span></code> is another relations whose purpose is to encode an attribute of parts. In this case though, the value in question has to be unique: no two parts can share the same code. This is done by creating another key on the second column of the relation.</p>
+
+<p>The last binary relation, <code class="inline-code-box"><span class="inline-code">sells</span></code>, is what in database parlance is sometimes called an associative table (or an associative entity in the E/R model). It differs from the other binary relations in that it is meant to encode a relationship between two different entities, parts and suppliers, instead of an attribute of a specific entity. Just to be clear, it's a relation like any other: the only difference lies in what it is conceptually meant to represent. It has no keys since it encodes a many-to-many relationship: a suppliers can sell any number of parts and a part can be sold by any number of suppliers.</p>
+
+<p>The two ternary relations <code class="inline-code-box"><span class="inline-code">unit_price</span></code> and <code class="inline-code-box"><span class="inline-code">availability</span></code> model what we could think of as attributes of the <code class="inline-code-box"><span class="inline-code">sells</span></code> relationship. As mentioned before, neither <code class="inline-code-box"><span class="inline-code">unit_price</span></code> nor <code class="inline-code-box"><span class="inline-code">availability</span></code> can be modeled as attributes of either parts or suppliers, as those quantities depend on both the part and the supplier: different suppliers might sell the same part at a different price, and they will generally have different amounts of it in stock. This is the kind of information that is somewhat awkward to model with conventional programming languages, but that can be encoded very naturally using (ternary, in this case) relations. Both relations have a composite key that consists of the first two columns, in order to ensure that the value of both attributes is unique for each combination of supplier and part.</p>
+
+<p>Note that in a valid dataset (that is, one that is internally consistent), the <code class="inline-code-box"><span class="inline-code">sells</span></code> relation is entirely redundant, in the sense that it does not contain any information that is not already stored inside <code class="inline-code-box"><span class="inline-code">unit_price</span></code> or <code class="inline-code-box"><span class="inline-code">availability</span></code>: just drop the third column from either and you'll get back the exact content of <code class="inline-code-box"><span class="inline-code">sells</span></code>. Now, one thing that every competent database designer takes for granted is that avoiding redundancy should be one of your top concerns when modeling data, and one of the main goals of Cell is to actually apply the very same principle to software development (we'll be spending a lot of time in what follows talking about the evils of redundancy). So why is <code class="inline-code-box"><span class="inline-code">sells</span></code> there at all? The answer lies in one specific type of data inconsistency that does not affect relational databases, but which the particular flavor of the relational model used in Cell is vulnerable to. In a relational database the information that here is split between <code class="inline-code-box"><span class="inline-code">sells</span></code>, <code class="inline-code-box"><span class="inline-code">unit_price</span></code> and <code class="inline-code-box"><span class="inline-code">availability</span></code> would be normally encoded in a single table, let's call it <code class="inline-code-box"><span class="inline-code">SUPPLY</span></code>, with four fields with names like <code class="inline-code-box"><span class="inline-code">SUPPLIER_NO</span></code>, <code class="inline-code-box"><span class="inline-code">PART_NO</span></code>, <code class="inline-code-box"><span class="inline-code">UNIT_PRICE</span></code> and <code class="inline-code-box"><span class="inline-code">AMOUNT_AVAILABLE</span></code>, and everything would be fine: for every valid combination of supplier and part both unit price and availability would have to be present. But once that information is divided into atomic chunks, you could end up with a particular combination of supplier and part being accounted for in one relation (either <code class="inline-code-box"><span class="inline-code">unit_price</span></code> or <code class="inline-code-box"><span class="inline-code">availability</span></code>) but not in the other: if both attributes are meant to be mandatory, that would be a clear inconsistency in your dataset. In order to avoid this issue, a future version of Cell will provide an integrity constraint whose effect will be, in this particular case, to enforce the fact that for every entry in the <code class="inline-code-box"><span class="inline-code">sells</span></code> relation, there must be a corresponding entry in both <code class="inline-code-box"><span class="inline-code">unit_price</span></code> and <code class="inline-code-box"><span class="inline-code">availability</span></code>, therefore making both attributes mandatory, and that conversely for every entry in <code class="inline-code-box"><span class="inline-code">unit_price</span></code> or <code class="inline-code-box"><span class="inline-code">availability</span></code> there must be a corresponding entry in <code class="inline-code-box"><span class="inline-code">sells</span></code>. This yet-to-be-implemented type of constraint will essentially be a sort of bidirectional foreign key, anchored to <code class="inline-code-box"><span class="inline-code">sells</span></code>, and that's why such a relation is necessary (standard foreign keys will be supported as well, by the way). The same is true for the unary relations <code class="inline-code-box"><span class="inline-code">supplier</span></code> and <code class="inline-code-box"><span class="inline-code">part</span></code> which, as briefly mentioned earlier, are entirely redundant in a well-formed dataset since they can be obtained by projecting the binary relations <code class="inline-code-box"><span class="inline-code">name</span></code> or <code class="inline-code-box"><span class="inline-code">address</span></code> (for <code class="inline-code-box"><span class="inline-code">supplier</span></code>) and <code class="inline-code-box"><span class="inline-code">code</span></code> or <code class="inline-code-box"><span class="inline-code">description</span></code> (for <code class="inline-code-box"><span class="inline-code">part</span></code>) on the first column (assuming none of those attributes is optional, of course), but which will be necessary to enforce the consistency of the data once the previously mentioned integrity constraints are implemented. Note that if you didn't need to keep track of the information stored in <code class="inline-code-box"><span class="inline-code">availability</span></code>, you wouldn't need the <code class="inline-code-box"><span class="inline-code">sells</span></code> relation either: the issue described here arises only when a given entity or relationship has at least two attributes.</p>
+
+<p>A quick note about performance: a naive implementation of this data model is, of course, not going to perform particularly well. Luckily, that's not the case for a more optimized one. Mutable binary relations can actually be implemented very efficiently, especially if they have a key, in terms of both speed and memory footprint. There are trade-offs to be made between access speed, update speed and memory consumption for mutable ternary relations, and their implementation is more complex, but they too can be made to perform just as well as informationally equivalent, hand-optimized data structures. And an efficient implementation of mutable unary relations/sets is of course trivial. This is made possible by (among other things) the strict separation that we have in Cell between the logical definition of a data structure and its physical, under-the-hood implementation. We won't go into detail yet, since the current implementation is temporary and is indeed not that efficient (all lookups and searches run in <code class="inline-code-box"><span class="inline-code">O(log(n))</span></code>, where <code class="inline-code-box"><span class="inline-code">n</span></code> is the number of entries in the relation), except for saying that the final data structures will essentially be (in the case of binary relations, at least) a more general version of those used in the Entity/Component architecture adopted by many videogames.</p>
+
+<p>Finally let's talk about syntactic sugar. The "unsweetened" version of <code class="inline-code-box"><span class="inline-code">Supply</span></code> is rather verbose, and that's only going to get worse once the full suite of integrity constraints is implemented, so Cell provides some syntactic sugar to aid readability and to save a few keystrokes. Here's how you can declare the data structures needed to encode all the information about a particular entity:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>entity(<span class='m'>EntityId</span>):
+  mandatory_attribute               : <span class='m'>Type1</span>,
+  optional_attribute?               : <span class='m'>Type2</span>,
+  mandatory_multivalued_attribute+  : <span class='m'>Type3</span>,
+  optional_multivalued_attribute*   : <span class='m'>Type4</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>A mandatory attibute is one that must have one and only one value for each instance of the entity in question; an optional one has either a single value or none; a mandatory multivalued attribute has one or more values; and an optional multivalued attribute can have any number of values, including zero. This is how the above declaration is rewritten by the compiler:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>entity(<span class='m'>EntityId</span>);
+mandatory_attribute(<span class='m'>EntityId</span>, <span class='m'>Type1</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+optional_attribute(<span class='m'>EntityId</span>, <span class='m'>Type2</span>)  [<span class='k'>key</span>: <span class='n'>0</span>];
+mandatory multivalued_attribute(<span class='m'>EntityId</span>, <span class='m'>Type3</span>);
+optional_multivalued_attribute(<span class='m'>EntityId</span>, <span class='m'>Type4</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>Note that there's currently no difference between mandatory attributes and optional ones (<code class="inline-code-box"><span class="inline-code">?</span></code>), and between mandatory multivalued attributes (<code class="inline-code-box"><span class="inline-code">+</span></code>) and optional multivalued attributes (<code class="inline-code-box"><span class="inline-code">*</span></code>), simply because the constraints needed to enforce that haven't been implemented yet, but this is just temporary. The very same syntactic sugar can be used for binary relationships:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>relationship(<span class='m'>Entity1Id</span>, <span class='m'>Entity2Id</span>):
+  mandatory_attribute               : <span class='m'>Type1</span>,
+  optional_attribute?               : <span class='m'>Type2</span>,
+  mandatory_multivalued_attribute+  : <span class='m'>Type3</span>,
+  optional_multivalued_attribute*   : <span class='m'>Type4</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>which is rewritten as:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>relationship(<span class='m'>Entity1Id</span>, <span class='m'>Entity2Id</span>);
+mandatory_attribute(<span class='m'>Entity1Id</span>, <span class='m'>Entity2Id</span>, <span class='m'>Type1</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+optional_attribute(<span class='m'>Entity1Id</span>, <span class='m'>Entity2Id</span>, <span class='m'>Type2</span>)  [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+mandatory_multivalued_attribute(<span class='m'>Entity1Id</span>, <span class='m'>Entity2Id</span>, <span class='m'>Type3</span>);
+optional_multivalued_attribute(<span class='m'>Entity1Id</span>, <span class='m'>Entity2Id</span>, <span class='m'>Type4</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>There's no syntactic sugar for unique attributes, like <code class="inline-code-box"><span class="inline-code">code</span></code> in <code class="inline-code-box"><span class="inline-code">Supply</span></code>, which have to be defined using the standard verbose syntax.</p>
+
+
+<h3>Wiring static automata together</h3>
+
+<p>Static automata are meant to be rather large data structures, storing data about many different entity types, with all their attributes and relationships. Still, once your application grows beyond a certain size, you'll want to partition the information it handles into several domains (and therefore several automata). As an example, let's say you want to create an online marketplace for used books, where anyone can register as either a buyer or a seller. In order to sell their used books sellers have to create listings: with each listing they can put up for sale any number of copies of a specific book, and buyers can choose to buy any number of copies of a book from one of the listings. There's also going to be a catalog, which is provided by the administrator of the marketplace, and cannot by edited by sellers. Here's how a toy version of the schema could look like:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>AuthorId</span>   = author_id(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>BookId</span>     = book_id(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>SellerId</span>   = seller_id(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>BuyerId</span>    = buyer_id(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>ListingId</span>  = listing_id(<span class='m'>Nat</span>);
+
+<span class='k'>type</span> <span class='m'>Money</span> = dollar_cents(<span class='m'>Nat</span>);
+
+<span class='k'>type</span> <span class='m'>BookCondition</span> = new, like_new, very_good, good,
+                     has_issues(descr: <span class='m'>String</span>);
+
+<span class='k'>schema</span> <span class='m'>BookMarket</span> {
+  next_author_id    : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_book_id      : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_seller_id    : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_buyer_id     : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_listing_id   : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  author(<span class='m'>AuthorId</span>):
+    name : <span class='m'>String</span>;
+
+  book(<span class='m'>BookId</span>):
+    title : <span class='m'>String</span>,
+    isbn  : <span class='m'>String</span>,
+    by+   : <span class='m'>AuthorId</span>,
+    listed_price : <span class='m'>Money</span>;
+
+  seller(<span class='m'>SellerId</span>):
+    name : <span class='m'>String</span>;
+
+  buyer(<span class='m'>BuyerId</span>):
+    name : <span class='m'>String</span>;
+
+  listing(<span class='m'>ListingId</span>):
+    seller_id : <span class='m'>SellerId</span>,
+    book_id   : <span class='m'>BookId</span>,
+    condition : <span class='m'>BookCondition</span>,
+    price     : <span class='m'>Money</span>,
+    amount    : <span class='m'>NzNat</span>;
+
+  purchased(<span class='m'>BuyerId</span>, <span class='m'>ListingId</span>, <span class='m'>NzNat</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>If one wanted to somehow partition the information contained in <code class="inline-code-box"><span class="inline-code">BookMarket</span></code>, one way to do it would be to split it into three domains, the first one containing information about books and authors, the second about buyers and sellers, and the last one about offerings and purchases. The first two would be standalone domains, while the last one would be conceptually dependent on the others: you can't really talk about listings and purchases without also talking about books, sellers and buyers. Here's the refactored code:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Publishing</span> {
+  next_author_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_book_id   : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  author(<span class='m'>AuthorId</span>):
+    name : <span class='m'>String</span>;
+
+  book(<span class='m'>BookId</span>):
+    title : <span class='m'>String</span>,
+    isbn  : <span class='m'>String</span>,
+    by+   : <span class='m'>AuthorId</span>,
+    listed_price : <span class='m'>Money</span>;
+}
+
+<span class='k'>schema</span> <span class='m'>Actors</span> {
+  next_seller_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_buyer_id  : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  seller(<span class='m'>SellerId</span>):
+    name : <span class='m'>String</span>;
+
+  buyer(<span class='m'>BuyerId</span>):
+    name : <span class='m'>String</span>;
+}
+
+<span class='k'>schema</span> <span class='m'>Market</span> : <span class='m'>Publishing</span>, <span class='m'>Actors</span> {
+  next_listing_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  listing(<span class='m'>ListingId</span>):
+    seller_id : <span class='m'>SellerId</span>,
+    book_id   : <span class='m'>BookId</span>,
+    condition : <span class='m'>BookCondition</span>,
+    price     : <span class='m'>Money</span>,
+    amount    : <span class='m'>NzNat</span>;
+
+  purchased(<span class='m'>BuyerId</span>, <span class='m'>ListingId</span>, <span class='m'>NzNat</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The only thing that is new here is the reference to <code class="inline-code-box"><span class="inline-code">Publishing</span></code> and <code class="inline-code-box"><span class="inline-code">Actors</span></code> in the declaration of <code class="inline-code-box"><span class="inline-code">Market</span></code>. It states that the information contained in the latter automaton is dependent on that contained in first two. In practice, this means that whenever you create an instance of <code class="inline-code-box"><span class="inline-code">Market</span></code> you need to provide a reference to an instance of both <code class="inline-code-box"><span class="inline-code">Publishing</span></code> and <code class="inline-code-box"><span class="inline-code">Actors</span></code>, which methods and message handlers of <code class="inline-code-box"><span class="inline-code">Market</span></code> have access to, but only in read-only mode. This wiring is static: once an automaton instance has been created, there's no way to change it. When creating those instances in Cell (as opposed to doing that from the host language in a mixed-language application) the wiring is not only fixed, but it's also entirely known at compile time. We will discuss the details later, when we talk about methods, message handlers and how automata are instantiated and used. Once foreign keys are implemented, it will also be possible to have them work across automata, that is, it will be possible to declare foreign keys from a field like <code class="inline-code-box"><span class="inline-code">book_id</span></code> in <code class="inline-code-box"><span class="inline-code">Market</span></code> to the <code class="inline-code-box"><span class="inline-code">book</span></code> unary relation/set in <code class="inline-code-box"><span class="inline-code">Publishing</span></code>. Dependencies between automata cannot be cyclical: two distinct automaton types are not allowed to reference, directly or indirectly, each other, and consequently neither are their instances. If two knowledge domains depend on each other, you'll have to merge them into a single one.</p>
+
+<p>Note that the above example is just meant to demonstrate automata wiring, and it should not be taken as design advice: it would never try to partition a tiny schema like <code class="inline-code-box"><span class="inline-code">BookMarket</span></code> into even smaller ones, and I certainly don't recommend you do it either: as already mentioned above, schemas are meant to be large data structures, containing information about an entire knowledge domain or subdomain, not about a single conceptual entity. But in a real application such schemas would be much larger, and therefore the data would have to be partitioned in order to stay manageable: in a company like Amazon.com, for example, customer data, product catalogs and information about orders are managed by different teams and stored in different databases, each of which has dozens or even hundreds of tables.</p>
+
+<p>One note about terminology: in what follows I will use to terms dependant and dependee to indicate the automata involved in this kind of relationship: that is, <code class="inline-code-box"><span class="inline-code">Publishing</span></code> and <code class="inline-code-box"><span class="inline-code">Actors</span></code> are dependees of <code class="inline-code-box"><span class="inline-code">Market</span></code>, and <code class="inline-code-box"><span class="inline-code">Market</span></code> is a dependant of both <code class="inline-code-box"><span class="inline-code">Publishing</span></code> and <code class="inline-code-box"><span class="inline-code">Actors</span></code>.</p>
+
+<p>Note also that the relatioship between dependant and dependees does not fit any of the standard relationship types you have in OOP: the exact details will be explain later, but it's not inheritance, nor composition, or aggregation, or association or even delegation, although it shares some characteristics with all of them.</p>
+
+
+<h3>Nested automata</h3>
+
+<p>Static automata can not only be wired together, but also nested inside one another. Here's an example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>CounterPair</span> {
+  counter_1 : <span class='m'>Counter</span>;
+  counter_2 : <span class='m'>Counter</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>It defines a new automaton, <code class="inline-code-box"><span class="inline-code">CounterPair</span></code>, which contains two instances the <code class="inline-code-box"><span class="inline-code">Counter</span></code> automaton defined earlier. When <code class="inline-code-box"><span class="inline-code">CounterPair</span></code> is instantiated, the two nested instances of <code class="inline-code-box"><span class="inline-code">Counter</span></code> are automatically created as well, bound to the <code class="inline-code-box"><span class="inline-code">counter_1</span></code> and <code class="inline-code-box"><span class="inline-code">counter_2</span></code> fields. This is a sample value for the state of <code class="inline-code-box"><span class="inline-code">CounterPair</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>( counter_1: (value: <span class='n'>1</span>, updates: <span class='n'>1</span>),
+  counter_2: (value: <span class='n'>0</span>, updates: <span class='n'>0</span>)
+)
+</section>
+</figure>
+</code></pre>
+
+<p>As you can see, the state of nested automata simply becomes part of the state of their parent, and can be updated only as part of an update of the state of their parent. We'll say more about that when we talk about updates and message handlers in the next chapter.</p>
+<p>Just like mutable relation variables, and automaton variables in general, nested automata cannot be aliased, that is, variables like <code class="inline-code-box"><span class="inline-code">counter_1</span></code> and <code class="inline-code-box"><span class="inline-code">counter_2</span></code> cannot be copied and are in general subject to the same limitations that apply to mutable relation variables. The fields/member variables of nested automata, on the other hand, can be accessed (using the familiar <code class="inline-code-box"><span class="inline-code">counter_1.value</span></code> syntax) just like the fields of their parents: with no restrictions for ordinary member variables, and with all the restrictions that apply in the case of mutable relation variables.</p>
+
+
+<h3>Methods</h3>
+
+<p>Static automaton methods are just normal functions which are given read-only access to the current state of an automaton instance. Since the states of automaton instances are not ordinary values that can be passed around as parameters (remember, automaton variables cannot be aliased) methods have to be declared inside a <code class="inline-code-box"><span class="inline-code">using</span></code> block, as shown here:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Supply</span> {
+  [<span class='m'>SupplierId</span>] lowest_price_suppliers(<span class='m'>PartId</span> pid) {
+    prices = [s, p : s, p &lt;- unit_price(?, pid, ?)];
+    <span class='k'>return</span> [] <span class='k'>if</span> prices == [];
+    min_price = only(min_by([p : s, p &lt;- prices], untag));
+    <span class='k'>return</span> [p : p, s &lt;- prices, s == min_price];
+  }
+
+  [<span class='m'>PartId</span>, <span class='m'>SupplierId</span>] lowest_price_suppliers = [
+    p, s : p &lt;- part, s &lt;- lowest_price_suppliers(p)
+  ];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>A using block can contain any number of methods, and an automaton can have any number of using blocks. Method are invoked with the same syntax used in object-oriented languages: if <code class="inline-code-box"><span class="inline-code">a</span></code> is an automaton variables and <code class="inline-code-box"><span class="inline-code">m</span></code> is a method, it can be invoked by writing <code class="inline-code-box"><span class="inline-code">a.m(..)</span></code> if <code class="inline-code-box"><span class="inline-code">m</span></code> has any arguments, or <code class="inline-code-box"><span class="inline-code">a.m</span></code> otherwise. The same is true of all automaton variables, including nested automata. Methods of a given automaton can of course invoke each other, with no need (and no way) to explicitly specify the target, and a reference to the automaton instance is passed along implicitly, just like the <code class="inline-code-box"><span class="inline-code">this</span></code>/<code class="inline-code-box"><span class="inline-code">self</span></code> argument in object-oriented languages.</p>
+
+<p>Methods of dependees (like <code class="inline-code-box"><span class="inline-code">Publishing</span></code> and <code class="inline-code-box"><span class="inline-code">Actors</span></code> for <code class="inline-code-box"><span class="inline-code">Market</span></code>) are invoked just like methods of the dependant, but have lower precedence: if a method <code class="inline-code-box"><span class="inline-code">m(..)</span></code> is defined both in the dependant and in one of its dependees, calls in the dependant will be bound to the dependant's version, and currently there's no way to explicitly invoke the one defined in the dependee. If <code class="inline-code-box"><span class="inline-code">m(..)</span></code> is not defined in the dependant but is defined in more than one dependee, calls will be rejected as ambiguous, and at present there's no way to resolve that ambiguity. The same rules apply to member variables: a reference to a variable will be bound to the dependant's copy if such a copy exists, or to the dependee's otherwise. Similarly, if a variable is defined in more than one dependee but not in the dependant any reference to it will be rejected.</p>
+
+<p>Methods can freely manipulate ordinary member variables of both the automaton they're associated with and all of its dependees, but they need to adhere to the no-aliasing rule for both mutable relation variables and nested automata. We've already seen which operations can be performed on mutable relation variables and which cannot, but if you're unsure whether something is permitted or not, just try to do it: the compiler will stop you anyway if you're doing something wrong. Mutable relation variables also benefit from a little extra syntactic sugar that is not yet available for ordinary relation values. Lookup operations of the form:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>address(sid, !!)
+unit_price(sid, pid, !!)
+</section>
+</figure>
+</code></pre>
+
+<p>can be rewritten more concisely like so:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>address(sid)
+unit_price(sid, pid)
+</section>
+</figure>
+</code></pre>
+
+<p>which makes them look like function/method calls, therefore providing a uniform syntax to access both stored attributes and computed ones.</p>
+
+
+<h3>Hierarchical classification and polymorphism</h3>
+
+<p>Sometimes (some of) the entities in your application domain can be classified hierarchically, and we're now going to see how inheritance can be modeled in Cell. Keep in mind though that this is not the only way to do it and that the necessary support hasn't entirely materialized yet: some integrity constraints are still missing, and so is some much needed syntactic sugar.</p>
+
+<p>As an example, let's say we've to build a very simple payroll system for a company that pays its employees on a weekly basis. Employees are of four types: salaried employees are paid a fixed weekly salary regardless of the number of hours worked, hourly employees are paid by the hour and receive overtime pay (i.e., 1.5 times their hourly salary rate) for all hours worked in excess of 40 hours, commission employees are paid a percentage of their sales and base-salaried commission employees receive a base salary plus a percentage of their sales.</p>
+
+<p>The first step is to create typed identifiers for each of the four types of employees and to arrange them hierarchically:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>SalariedEmployee</span>   = salaried_employee(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>HourlyEmployee</span>     = hourly_employee(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>CommissionEmployee</span> = commission_employee(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>BasePlusEmployee</span>   = base_plus_employee(<span class='m'>Nat</span>);
+
+<span class='k'>type</span> <span class='m'>AnyCommissionEmployee</span> = <span class='m'>CommissionEmployee</span>,
+                             <span class='m'>BasePlusEmployee</span>;
+
+<span class='k'>type</span> <span class='m'>Employee</span> = <span class='m'>SalariedEmployee</span>,
+                <span class='m'>HourlyEmployee</span>,
+                <span class='m'>CommissionEmployee</span>,
+                <span class='m'>BasePlusEmployee</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>The type <code class="inline-code-box"><span class="inline-code">Employee</span></code> is the superset of all employee types, and <code class="inline-code-box"><span class="inline-code">AnyCommissionEmployee</span></code> includes all employees that earn a commission on their sales, regardless of whether they also have a base salary or not. Note that the only purpose of these datatypes is to identify employees and their types, not to carry around all information that is associated with them, which will be instead stored using relations. The following <code class="inline-code-box"><span class="inline-code">Workforce</span></code> schema defines the attributes of each type of employee: some are shared among all types of employees, like <code class="inline-code-box"><span class="inline-code">first_name</span></code>, <code class="inline-code-box"><span class="inline-code">last_name</span></code> and <code class="inline-code-box"><span class="inline-code">ssn</span></code>, others apply only to a specific type of employees, like <code class="inline-code-box"><span class="inline-code">weekly_salary</span></code> for salaried employees, and finally there's a couple of attributes, <code class="inline-code-box"><span class="inline-code">gross_sales</span></code> and <code class="inline-code-box"><span class="inline-code">commission_rate</span></code>, that are shared by all types of employees that can earn commissions, hence the declaration of their base type <code class="inline-code-box"><span class="inline-code">AnyCommissionEmployee</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Workforce</span> {
+  <span class='c'>// Next unused employee id</span>
+  next_employee_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  <span class='c'>// Shared attributes of all employees</span>
+  employee(<span class='m'>Employee</span>):
+    first_name  : <span class='m'>String</span>,
+    last_name   : <span class='m'>String</span>,
+    ssn         : <span class='m'>String</span>;
+
+  <span class='c'>// Attributes of salaried employees</span>
+  weekly_salary(<span class='m'>SalariedEmployee</span>, <span class='m'>Money</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+
+  <span class='c'>// Attributes of hourly employees</span>
+  hourly_wage(<span class='m'>HourlyEmployee</span>, <span class='m'>Money</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+  hours_worked(<span class='m'>HourlyEmployee</span>, <span class='m'>Float</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+
+  <span class='c'>// Attributes of all employees that earn commissions,</span>
+  <span class='c'>// including those with base salary + commissions</span>
+  gross_sales(<span class='m'>AnyCommissionEmployee</span>, <span class='m'>Money</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+  commission_rate(<span class='m'>AnyCommissionEmployee</span>, <span class='m'>Float</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+
+  <span class='c'>// Attributes of employees with base salary + commissions</span>
+  base_salary(<span class='m'>BasePlusEmployee</span>, <span class='m'>Money</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Just to give you a quick preview of what's to come, this is how I expect the <code class="inline-code-box"><span class="inline-code">Workforce</span></code> schema to look like once the relevant syntactic sugar has been implemented:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>## WARNING: SYNTACTIC SUGAR NOT IMPLEMENTED YET</span>
+
+<span class='k'>schema</span> <span class='m'>Workforce</span> {
+  <span class='c'>// Next unused employee id</span>
+  next_employee_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  <span class='c'>// Shared attributes of all employees</span>
+  employee(<span class='m'>Employee</span>):
+    first_name  : <span class='m'>String</span>,
+    last_name   : <span class='m'>String</span>,
+    ssn         : <span class='m'>String</span>;
+
+  <span class='c'>// Attributes of salaried employees</span>
+  employee(<span class='m'>SalariedEmployee</span>):
+    weekly_salary : <span class='m'>Money</span>;
+
+  <span class='c'>// Attributes of hourly employees</span>
+  employee(<span class='m'>HourlyEmployee</span>):
+    hourly_wage  : <span class='m'>Money</span>,
+    hours_worked : <span class='m'>Float</span>;
+
+  <span class='c'>// Attributes of all employees that earn commissions,</span>
+  <span class='c'>// including those with base salary + commissions</span>
+  employee(<span class='m'>AnyCommissionEmployee</span>):
+    gross_sales     : <span class='m'>Money</span>,
+    commission_rate : <span class='m'>Float</span>;
+
+  <span class='c'>// Attributes of employees with base salary + commissions</span>
+  employee(<span class='m'>BasePlusEmployee</span>):
+    base_salary : <span class='m'>Money</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>It will be totally equivalent to the "unsweetened" definition, save for the fact that it will also include all the appropriate integrity constraints, once these have been implemented.</p>
+
+<p>Now we can define the polymorphic <code class="inline-code-box"><span class="inline-code">earnings(..)</span></code> method, which is implemented differently for each type of employee:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Workforce</span> {
+  <span class='m'>Money</span> earnings(<span class='m'>SalariedEmployee</span> e) = weekly_salary(e);
+
+  <span class='m'>Money</span> earnings(<span class='m'>HourlyEmployee</span> e) {
+    hours = hours_worked(e);
+    wage = hourly_wage(e);
+    earnings = hours * wage;
+    earnings = earnings + <span class='n'>0.5</span> * {hours - <span class='n'>40.0</span>} * wage <span class='k'>if</span> hours &gt; <span class='n'>40.0</span>;
+    <span class='k'>return</span> earnings;
+  }
+
+  <span class='m'>Money</span> earnings(<span class='m'>CommissionEmployee</span> e) =
+    commission_rate(e) * gross_sales(e);
+
+  <span class='m'>Money</span> earnings(<span class='m'>BasePlusEmployee</span> e) =
+    base_salary(e) + commission_rate(e) * gross_sales(e);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>As you can see, polymorphic methods are just like polymorphic function, except that they have access to the state of an automaton, which in this case contains the data associated with the entities they manipulate.</p>
+
+
+<h3>Design process</h3>
+
+<p>To conclude this chapter let's now quickly sketch out the design process for the static automata part of an application. The first step is to partition the information your application handles into a number of domains, each of which will be implemented as a static automaton, and identify all the dependencies between them, which will be then translated into dependant/dependees relationships between automata. My own preference (and advice) here is to have only a few coarse-grained domains instead of a large number of smaller ones: remember that despite some superficial similarities, static automata have very little in common with objects and classes (which indeed tend to be very fine-grained in well-designed object-oriented applications), so you should be wary of carrying over design practices developed for a very different paradigm. Instead, the closest analog I can think of in mainstream programming paradigms is the components of the Entity/Component architecture, of which there's usually just a handful in a tipical game. I suggest that you aim for that level of granularity, but of course nothing stops you from experimenting with different approaches.</p>
+
+<p>After that we'll need to identify all entities in the application domain, to create a specific data type for each one of them and to arrange those datatypes hierarchically if their corresponding entities lend themselves to being classified in such a way. I strongly recommend that you design those datatypes so that they only identify the corresponding entities and their types, and use relations to store their attributes, as was done in all the examples that we've seen so far, like <code class="inline-code-box"><span class="inline-code">PartId</span></code>, <code class="inline-code-box"><span class="inline-code">SupplierId</span></code>, <code class="inline-code-box"><span class="inline-code">Employee</span></code>, <code class="inline-code-box"><span class="inline-code">SalariedEmployee</span></code> and so on. Using relations instead of records to store attributes of any given type of entity (or, more generally, all information related to them) provides several very substantial advantages. Some of them should be already apparent by now, like the ability to do fast seaches on any attribute or combination of them; to have unique attributes like <code class="inline-code-box"><span class="inline-code">usernames</span></code> in <code class="inline-code-box"><span class="inline-code">Logins</span></code> or <code class="inline-code-box"><span class="inline-code">code</span></code> in <code class="inline-code-box"><span class="inline-code">Supply</span></code>; to naturally encode attributes of relationships and not just entities (<code class="inline-code-box"><span class="inline-code">unit_price</span></code> and <code class="inline-code-box"><span class="inline-code">availability</span></code> in <code class="inline-code-box"><span class="inline-code">Supply</span></code>, or <code class="inline-code-box"><span class="inline-code">purchased</span></code> in <code class="inline-code-box"><span class="inline-code">BookMarket</span></code>); and of course to imperatively update their values, while retaining the benefits of pure functional programming. But we've barely scratched the surface here: we will discuss this topic more extensively in another chapter. You're of course free to use the language as you please, but bear in mind that Cell is developed around the notion that information should be encoded using relations, and that's also true for performance optimization: if you decide to plough on and use records anyway, that will work against you, performance-wise, with future versions of the compiler.</p>
+
+<p>The next step is to define the data types for the attributes of both entities and relationships, and this is where schema design in Cell probably differs the most from conventional database design. Here attributes can be of any user-defined type, and those types should be defined in the way that makes the most sense for each specific attribute. These user-defined types can be either application-specific ones like <code class="inline-code-box"><span class="inline-code">BookCondition</span></code> in <code class="inline-code-box"><span class="inline-code">BookMarket</span></code> or more generic and reusable types like <code class="inline-code-box"><span class="inline-code">Money</span></code> (which was used in several examples throughout the chapter) that may even come with their own logic.</p>
+
+<p>There's of course some tension between the two recommendations above: using relations instead of records to store information, and using user-defined types for the arguments of those relations. As an example, which of two schemas shown below should be preferred?</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>StrategyGame</span> {
+  enemy_unit(<span class='m'>EnemyUnitId</span>):
+    position_x : <span class='m'>Int</span>,
+    position_y : <span class='m'>Int</span>,
+    ...
+}
+</section>
+</figure>
+</code></pre>
+
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Point</span> = point(x: <span class='m'>Int</span>, y: <span class='m'>Int</span>);
+
+<span class='k'>schema</span> <span class='m'>StrategyGame</span> {
+  enemy_unit(<span class='m'>EnemyUnitId</span>):
+    position : <span class='m'>Point</span>,
+    ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>In a case like this, I would be inclined to use a single attribute of type <code class="inline-code-box"><span class="inline-code">Point</span></code> rather than two integer attributes <code class="inline-code-box"><span class="inline-code">position_x</span></code> and <code class="inline-code-box"><span class="inline-code">position_y</span></code>. But in that case, why stop there and not, say, merge the <code class="inline-code-box"><span class="inline-code">first_name</span></code> and <code class="inline-code-box"><span class="inline-code">last_name</span></code> attributes of the <code class="inline-code-box"><span class="inline-code">Employee</span></code> entity in a single <code class="inline-code-box"><span class="inline-code">Name</span></code> type, as demonstrated below, which is something I would very strongly object to?</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Name</span> = name(
+  first_name:  <span class='m'>String</span>,
+  last_name:   <span class='m'>String</span>,
+  middle_name: <span class='m'>String</span>?
+);
+
+<span class='k'>schema</span> <span class='m'>Workforce</span> {
+  <span class='c'>// Next unused employee id</span>
+  next_employee_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  <span class='c'>// Shared attributes of all employees</span>
+  employee(<span class='m'>Employee</span>):
+    name  : <span class='m'>Name</span>,
+    ssn   : <span class='m'>String</span>;
+
+  ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Here are a few points to consider when making that decision:</p>
+
+<ul><li>First of all, remember that the issue arises only if you're dealing with (possibly tagged) non-polymorphic record types. If the attibutes in question are best modeled as a union type, then there isn't really much of a choice.</li><li>Is the type you're considering an "interesting" one, that is, one that comes with its own logic? <code class="inline-code-box"><span class="inline-code">Point</span></code> does, to some extent. Or is it a "boring" one, like <code class="inline-code-box"><span class="inline-code">Name</span></code>, that groups together several somehow related pieces of information, but has no intrinsic behaviour? In the former case, defining a complex type may well be a good idea. Otherwise, it's almost always a terrible one. If it's just plain data, relations are superior to records in every possible way.</li><li>Once you group together several attributes you loose the ability to perform fast searches on any one of them. In the case of <code class="inline-code-box"><span class="inline-code">Workforce</span></code> and <code class="inline-code-box"><span class="inline-code">Name</span></code>, for instance, merging the two simple attributes <code class="inline-code-box"><span class="inline-code">first_name</span></code> and <code class="inline-code-box"><span class="inline-code">last_name</span></code> into a single composite one would loose you the ability to search employees by first name only, or last name only: you would have to provide the complete value for the <code class="inline-code-box"><span class="inline-code">name</span></code> attribute in order to perform an optimized search. The same goes for some integrity constraints: for instance, once a unique attribute is merged with others, it becomes impossible to declaratively enforce its uniqueness.</li><li>You also loose the ability to imperatively update the attributes in question individually. Once <code class="inline-code-box"><span class="inline-code">first_name</span></code> and <code class="inline-code-box"><span class="inline-code">last_name</span></code> are merged, only the whole <code class="inline-code-box"><span class="inline-code">name</span></code> attribute can be the target of an imperative assignment, not its individual fields.</li></ul>
+
+<p>That's not an exaustive list, but it should be enough to make an informed decision in the vast majority of cases.</p>
+
+<p>Once the previous steps have been completed, what's left is more or less normal database design, which conventional database design wisdom applies to, despite a few differences between the two flavors of the relational model. It basically boils down to three main points:</p>
+
+<ul><li>Avoid any form of redundancy at all costs. No piece of information should ever be duplicated, full stop. There's simply no reason whatsoever to do that in Cell.</li><li>As far as possible, do not store derived data, that is, data that can be calculated from other data that is already in your schemas. That's every bit as bad as having duplicate data, and for exactly the same reasons. Unfortunately it is, in some cases, difficult to avoid. But it should be done only as a last resort.</li><li>Use all the available integrity constraints to ensure the consistency of your data.</li></ul>
+
+<p>The overarching goal of the above guidelines is to avoid inconsistencies in your dataset, which are dangerous because they almost invariably cause you code to misbehave.</p>
+
+<p>A piece of information that is duplicated, that is, stored in multiple locations, opens the door to inconsistencies: if when that particular value changes some but not all locations are updated, you'll end with an inconsistent dataset. Duplicating data is a common practice in low-level programming paradigms like OOP, and when it's done for a reason it's usually done for convenience: it may in many cases save you the trouble of traversing an object graph in search of the information you need, or even building the required access paths into it in the first place. In other cases it may be done for performance, as is for example the case with the practice of denormalizing data in relational databases in order to increase access speed. But I'm not aware of any reason to do that in Cell schemas: the data stored inside a static automata is always easy to access as there's no object graph to traverse, there aren't artificial barriers like encapsulation either, and the particular data structures that will be used in the final implementation don't require any denormalization to improve performance.</p>
+
+<p>Derived information poses similar problems: base and derived data can get out of sync during a buggy update. In this case though the performance issues are unfortunately all too real, and that makes it difficult to avoid storing derived data entirely. But how much of it and what pieces of it exactly you decide to store can actually make a lot of difference. Every extra piece of derived data in your schemas is a trap that you set for yourself, which you have to be careful to avoid during updates. The fewer traps you set the better, so try to reduce the amount of such data to a minimum, and choose it carefully in order to maximize the performance gains and minimize the downsides. The language is meant to eventually provide several forms of memoization that should obviate the need to store derived data in the vast majority of cases, but their implementation is not trivial and it will take some time to get there.</p>
+
+<p>Several other types of inconsistencies can plague your datasets, even in the absence of duplicate or derived data, but a careful use of integrity constraints can prevent at least some of them, like required information that might be missing (e.g. missing mandatory attributes); information with the wrong multiplicity (e.g. an attribute that has several values even though it's supposed to have only one); and "dangling" foreign keys. Note that without integrity constraints, Cell's flavor of the relation model is especially vulnerable to these types of inconsistencies, in a way that both record-based systems and the standard relational model are not, at least not to the same extent. Integrity constraints are still a work in progress, as explained elsewhere, but unlike memoization they will hopefully be ready relatively soon.</p>
+
+<p>Another undesirable consequence of having duplicate or derived data in your schema is that it makes updates more complex. A stored derived relation for instance will have to be updated every time a tuple is inserted, updated or deleted in any of the relations it depends on, and that could well be a lot of places. On top of that, efficiently updating only the part of a derived data structure that has changed is typically a lot more complex that recalculating everything from scratch. So not only your code will in all likehood have more bugs, but you'll also have more work to do, and the extra code you'll have to write is going to be especially complex.</p>
+
+<p>There's also a Cell-specific reason to properly design your schemas, and it's related to orthogonal persistence. Orthogonal persistence requires the ability to restore the state of an automaton using a previously-taken snapshot of the state of another automaton of the same type. But when performing a restore operation you've no guarantees of any sort about the origin of the data you're dealing with: it could have been created manually; or it could have been produced by code that is not part of your application, for example by a script that processed other data; or it could come from an earlier version of your own application; or who knows what else. The bottom line is that in order to make sure that an automaton will never enter an invalid state you cannot rely on the correctness of the code that updates it: the only defence here is to design schemas to be so tight as to rule out as many invalid states as possible.</p>
+
+<p>One point that I could never emphasize enough is that the design of your schemas is the wrong place to be lazy or negligent: by all means cut corners in the actual code, if you think that will give you an edge: code is complex and time-consuming and difficult to write, and even the ugliest hacks can at times be justified. But there's plenty of reasons to try hard to get your data structures right, and no reason not to do it. Unlike code, data structures are both short and easy to design and write, so you're not going to save any effort by not doing that with the due diligence, but on the other hand you've got a lot to loose, because badly designed data structures will make your code more complex, less reliable and more difficult to read and understand.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

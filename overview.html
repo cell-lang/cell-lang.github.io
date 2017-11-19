@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>An overview of Cell</h2>
+
+<p>The purpose of this section is to provide a bird's eye view of the Cell programming language, by emphasizing its unique features and explaining how it differs from every other programming language I know, in order to give you a sense of what it can be useful for.</p>
+
+
+<h3>The functional sublanguage</h3>
+
+<p>The innermost layer of Cell is its semi-functional sublanguage, which provides the foundation for its stateful features. It's functional in the sense that functions don't have any side effects, and are referentially transparent. It also provides a number of features typically associated with functional programming like union types, pattern matching, list comprehension and closures. It differs from fully functional languages in that the role of closures is a lot more limited, mainly because, by design, normal data and closures are kept completely separate. It also gives you the option of using a fully procedural syntax, complete with loops and the ability to update local variables. All side effects are local, so as not to compromise referential transparency, but the overall programming experience is very different from that of languages like ML and Haskell.</p>
+
+<p>The most distinctive feature of the functional subset of the language is its data model and type system. Both are entirely structural, and that gives the language the ability to (among other things) manipulate data whose structure is unknown, or just partially known. That sort of flexibility is indispensable to support orthogonal persistence, that is, the ability to transparently save and restore the state of a program (or at least part of it). This is, incidentally, the main reason Cell was designed from scratch and not built on top of an existing functional language like, for example, Haskell.</p>
+
+
+<h3>Static automata</h3>
+
+<p>The core construct of Cell is static automata. To a first approximation, think of them as fully programmable miniature databases. Their ability to use relations to encode their own state is by far the most consequential feature provided by the language: we will not be saying much about it here, as this topic is so important that it deserves to be discussed extensively, and with plenty of examples, once we have a full picture of the language. Suffice it to say for now that relations, with some help from reactive programming and memoization, can simplify (drastically, in some cases) both the data structures used to encode the state of an application and the code that updates them.</p>
+
+<p>Relations in Cell are very different from those of SQL databases: for one thing, their fields can contain any type of values, unlike in SQL where they are limited to a few predefined data types; for another, they are designed to be used in a fully reduced form, whereby the majority of relations will be either unary, binary or ternary, with higher-arity relations used less often. In practice, these differences lead to a very different sort of data modelling, and allow, I believe, for a better integration with general-purpose programming capabilities. In a way, Cell's flavor of the relational model looks a bit like a sort of high-level version of the Entity/Component architecture commonly used in videogames. There are many similarities in the physical implementation as well, and there will be even more in the future.</p>
+
+<p>The only way to mutate the state of an automaton is by sending it a message, which is just an ordinary value, that can be copied and passed around, serialized and so on. For every type of message an automaton can accept there's a corresponding handler that is invoked in order to update the automaton's state. Unlike what happens with pure functional languages (and with the functional subset of Cell itself) where the only way to "mutate" a value is to make a mutated copy of it, the state of an automaton is updated imperatively, and its relation variables in particular can be updated in place by inserting new tuples and deleting existing ones, just like in relational databases. It's important to note here that while the state of an automaton can be accessed in read-only mode without restrictions, there's no sharing of state between automata, and all side effects are limited in scope to the automaton that receives the message, with no effects on the state of other automata. The scope of these side effects is further reduced by other restrictions that are placed on updates, which will be described in another chapter.</p>
+
+<p>Every update takes place inside a transaction: that is, if the update fails (for whatever reason) the message is discarded and the state of the automaton is left untouched. This currently works only when the failure is caused by a programming error (an "exception"), but a more sophisticated implementation could also, for example, provide the ability to terminate updates that are taking too long, using too much memory or that are pre-empted by higher-priority ones.</p>
+
+<p>One important property of updates is that they are deterministic: that is, the state after the update depends only on the state before it and the message that triggered it. So if two instances of the same automaton are sent the same sequence of messages, they will end up in the same state, even if the processes they belong to are run at different times on different machines. So you'll be able to trivially reproduce any bug (even the almost-impossible-to-reproduce ones) if you just store all those messages in a log file, which can be done, with the help of a tiny library, with just one line of code, thanks to the structural nature of Cell's data model. Those same message logs will also make it a lot easier to retest your application after a refactoring, or (to a lesser extent) the development of new features.</p>
+
+<p>There are also other, fancier ways to to take advantage of this deterministic behaviour: it could be used, for examples, to provide redundancy (and some load-sharing) for stateful server applications, by running two (or more) identical automata (or set of automata) on different computers, and sending every update to all of them (so that their states are kept in sync), while rerouting read-only queries to any of them (so as to split up the workload).</p>
+
+<p>Another unusual feature of static automata is orthogonal persistence. At any point in time a client can take a snapshot of the state of an automaton, which can then be saved to persistent storage. Such snapshot can later be used to recreate an identical copy of the original automaton, which will just pick up where the original instance left off. The whole process is transparent to the interested automata, which are completely unaware of it, and it is only marginally more complex (in terms of number of lines of code) than saving and restoring the state of, say, an integer variable in other languages.</p>
+
+<p>Orthogonal persistence is made possible, and practical, by a combination of some of the language features we've already examined, like Cell's value-based data model; the fact that automata are self-contained; the deterministic nature of the language; and its structural data model, which not only makes serialization and deserialization trivial, but also makes it (a lot) easier to deal with the equivalent of schema changes in databases.</p>
+
+<p>The current implementation forces you to explicity save and restore the whole state of the automata you want to persist, which of course is not feasible in the presence of large amounts of data. But note that if an application keeps a message log, it's not necessary to save its state after every single update, because in the event of a crash the most recent state can always be reconstructed by starting from the last saved one and replaying all the messages that were received after that. A better persistence implementation, one that can automatically store just the part of the data that has changed during an update is planned, and actually pretty high up in the list of priorities.</p>
+
+<p>In the long term, the aim is also to gradually integrate into the language elements of a (Datalog-like) query language, although the focus will be on the simple queries typical of OLTP systems, rather than the arbitrarily complex, long-running queries used in data analysis.</p>
+
+<p>The implementation of relations is not yet complete: first of all, only unary, binary and ternary relations are supported (although there's a lot that can be done with just these, since with the particular flavor of the relational model used in Cell, relations with arity greater than three are not needed very often). There's also limited support for integrity constraints: primary and non-primary (possibly composite) keys are already supported, but foreign keys are not, and neither are a number of additional integrity constraints and other features that are planned but have no equivalent in SQL databases.</p>
+
+
+<h3>Reactive automata</h3>
+
+<p>Cell also includes a second type of automata: reactive automata. A reactive automaton can be regarded as a sort of "reactive object". It has inputs, outputs and a state. It reacts to changes in the values of the inputs by adjusting its state. The values of the outputs are, at any given time, a function of the current values of the inputs and the state. Unlike static automata, whose state is entirely visible from the outside, reactive automata hide their inner workings from the rest of the world, similarly to (but more effectively than) objects in OOP. The only part of a reactive automaton that is visible from the outside is its inputs and outputs, which we will collectively refer to with the term "signals", and the same word will be also used to describe other similar non-public variables that are part of an automaton definition. All signals have values that vary over time, and they can be either continuous or discrete. Continuous signals are characterized by having a value at any given point in time. As an example, think of the position of the mouse in a GUI application, or the coordinates provided by a GPS sensor in a mobile app. Discrete signals, on the other hand, are normally idle, and take on a value only at specific points in time as they are used to model any sort of events (they are not the same thing as messages in static automata, though). An example, again in the case of a GUI application, is mouse clicks or key presses.</p>
+
+<p>A reactive automaton responds either to changes in values of continuous inputs or the activation of discrete ones, and updates its outputs accordingly. Outputs are typically defined in terms of a number of intermediate values, which may in turn be defined in terms of other intermediate values and so on, but ultimately everything depends on the inputs. So updates usually happen in stages: the first signals that are updated are those that depend directly on the inputs that have changed, then come those that depend on this first layer of recalculated signals, and so on all the way from the inputs to the outputs. The developer only needs to define the value of each signal (inputs excluded, of course) in terms of other signals, and the compiler (or, rather, the code it generates) takes care of performing all the recalculations, in the proper order and only when necessary (for efficiency).</p>
+
+<p>When automata strictly follow the stateless model described above the values of their outputs are, at any point in time, entirely determined by the values of inputs at the same point in time, and any such stateless automaton is conceptually nothing more than a fancy function, with the only difference being that it may be able to avoid unnecessary recalculations when the values of the inputs change. While this stateless form of reactive programming is useful in its own right (we'll see exactly why in the following chapters), it becomes more so when automata are allowed to retain some information about the history of their inputs in the form of internal state. In stateful automata the value of the outputs is a function of both the inputs and the internal state, which is also updated when the values of the inputs change.</p>
+
+<p>Changes in the internal state of an automaton can also be triggered, even in the absence of changes in the values of the inputs, by the simple passing of time. It's very easy to express in Cell things like "update the value of state variable V if condition C has been true for 30 seconds" or "change the value of output O if none of signals S1..Sn has changed in the last 200 milliseconds". Time-dependent rules like these are both specified declaratively (no need to deal with low-level constructs like timers and callbacks) and implemented efficiently (no polling required).</p>
+
+<p>The behaviour of reactive automata is also entirely determinist, so everything that was said before about their static counterparts applies here too. As for orthogonal persistence, the whole situation is more complex than it is for static automata. There's currently support for full orthogonal persistence only for reactive automata that don't have time-dependent rules. In that case saving the values of all continuous inputs and state variables is enough to reconstruct the exact state of the automaton at a later time. The same operation can be done done with automata that are aware of the passing of time, but in that case that's not enough to reconstruct their state, because they also contain some "hidden state", in the form of timers, that is not persisted (not yet, at least). In general reactive automata are not great candidates for orthogonal persistence, for reasons we'll examine later, so the language also provides the ability to explicitly declare what part of their state has to be persisted.</p>
+
+<p>Reactive automata also follow a different error handling model. Static automata react to an error during an update by simply discarding the message that triggered it, thereby implicitly assuming that messages can be discarded without compromising the application logic, and when that assumption applies transactions are an almost ideal error-handling mechanism. Unfortunately that cannot be applied to reactive automata, as it's not really feasible to undo changes to its inputs (it can be implemented of course, but it typically doesn't make any sense in the context of the application's logic). So when a calculation inside a reactive automaton fails, the signal whose value was being calculated, or the state variable that was being updated, enters a special "undefined" state, and that state is also propagated to all signals (and state variables) that depend on it, either implicitly or explicitly, although there are some limited recovery mechanisms. The purpose of such an error model is twofold: firstly, no incorrect result must be produced as a consequence of an exception being thrown: errors mustn't go unnoticed. Secondly, an error in one subsystem must not be allowed to compromise (or bring down) the entire application, and other, indipendent subsystems must be able to carry on as usual. This error model has also some (rather limited) self-healing capabilities: if an undefined signal is, at some later time, successfully recalculated it can then resume its normal functioning. This is unfortunately not always true for state variables, which will never recover if the expressions used to calculate their new value depend on the previous, undefined one.</p>
+
+<p>Like classes in OOP reactive automata can be defined incrementally, by deriving new automata from existing ones. The derived automata can add state variables and add and also remove inputs and outputs and redefine the relationship between them. Unlike inheritance in OOP, this is only an implementation feature, and from the outside derived automata appear completely unrelated to their parent. Any notion of subtyping between automata would be pointless anyway, as their type is always statically know at compile time (so there's no polymorphism), and would only add unnecessary restrictions to the derivation process. (Just to be clear, functions can be polymorphic, and actually support multiple dynamic dispatch: but polymorphism is a notion that only applies to values, and not to automata of either type).</p>
+
+<p>Compared to static automata, which are the workhorse of the language, reactive automata are more of a niche feature, but they are nonetheless useful in a number of situations. We'll see in the following chapters a couple of examples taken from the field of embedded software development, but their applicability is not restricted to that. Large reactive subsystems are present, for example, in many games. A tipical game has quests to complete, skills to learn or, in general, any sort of in game events that are unlocked only once you've performed certain actions, completed some tasks or even, in the case of online or mobile games, after some assets, like images or level data, have been downloaded from the servers. A new quest can be unlocked once, say, you've completed previous ones, or reached certain areas in the game, owned specific artifacts or talked to some NPCs, or any complex combinations of those conditions. Even in simple mobile games these subsystems can become pretty large, with hundreds of inputs, outputs and state variables, and they can be modelled quite naturally using reactive programming.</p>
+
+
+<h3>A domain-specific language, not a general-purpose one</h3>
+
+<p>While it is possible to use Cell to write complete programs (or at least it would be, if it provided a comprehensive I/O library), that's not what the language is designed for. The Cell compiler is actually a code generator: it outputs a C++ source file, which you can then include in an existing C++ application. For each automaton in your Cell code, the compiler produces a corresponding C++ class that allows you to instantiate and interact with those automata, by doing things like sending messages to, invoking methods on and reading, saving and restoring the state of a static automata, or setting the inputs and being notified of changes in the values of the outputs of a reactive one.</p>
+
+<p>The interface between Cell and the host language is obviously a bit clunky, as moving data from one language to the other always requires some sort of conversion. Everything works smoothly if the data that is passed back and forth can be automatically mapped, on the C++ side, to builtin data types like numbers or strings, or data types defined in the standard libraries, like <code class="inline-code-box"><span class="inline-code">std::vector</span></code> or <code class="inline-code-box"><span class="inline-code">std::tuple</span></code>, but things become more complicated when dealing with complex user-defined types. In this latter case, passing data from the host language to Cell is still pretty easy, although not particularly elegant, while a bit more work is required in the other direction. The interface is still a work in progress, and feedback and suggestions on how to improve it are of course always very welcome.</p>
+
+<p>The only output language that is supported at the moment is C++, but adding new ones is relatively easy. A C# implementation is currently being worked on and should be available soon, with support for Java coming shortly after that. In the longer term, other interesting targets are plain C, JavaScript and maybe Swift, if there's demand for them. All those implementations will march along at different speeds, so don't expect them to ever be perfectly aligned in terms of functionalities or performance.</p>
+
+<p>The reason Cell was designed to be a domain-specific language, and its compiler to be a code generator, should be  obvious. Choosing the main language for your application has usually more to do with the tools, libraries and support that are available for it than it has with the language itself, and one generally has to be, by necessity, very conservative there. But a domain-specific language that integrates with your primary language, instead of replacing it, stands a much better chance of actually being useful, as it can be adopted gradually, and only when, and to the extent that, it provides a clear advantage. It's just another tool in your toolbox. You can start by identifying a small part of your application that could benefit from being written in Cell: it could be a viable alternative, for example, to an embedded SQL database for small amounts of persistent data, providing a better data model, full programmability, a better interface with the host language and, once the implementation has matured, probably better performance. Or it could be used to implement a reactive subsystem of your application, as an alternative to a reactive library, or to the tedious (and error-prone) hand-coded propagation of changes. These are just examples. Cell is nothing if not different: its strengths and weaknesses don't have a lot of overlap with those of more conventional languages, and object-oriented ones in particular, and there's no shortage of areas where it can complement them effectively.</p>
+
+
+<h3>Current status</h3>
+
+<p>Remember, this is version 0.1. I'm not aware, at the time of this writing, of any major bug, but the compiler just hasn't been tested enough. Use it at your own risk!</p>
+
+<p>More in detail, the functional subset of the language is the only part that has been been used to write a non-trivial application (the Cell compiler itself), and it has been working reliably for me for more than a year, but I've no doubt that once other people, with different programming styles, start to use it they will find bugs I never came across.</p>
+
+<p>Static automata have so far been used only to write small toy applications, and still need to be tested extensively.</p>
+
+<p>Reactive automata are at this stage very experimental. Not only they too haven't been tested anywhere enough but unlike their static counterpart their design is still tentative and in a state of flux, and their implementation much more complex.</p>
+
+<p>Performance also leaves a lot to be desired at the moment. Even though Cell is a compiled language, in terms of speed right now it's closer to, say, Python that is it to Java. But I see no reason why it shouldn't be able to at least approach the speed of fast languages, once type-driven optimization is implemented. Work on that will start once the code generators for Java and C# are out.</p>
+
+<p>The documentation on this website is another work in progress. It covers almost all the features of the language, but rational, design guidelines and examples are still missing at this stage.</p>
+
+<p>So, again, this is a beta version, don't use it for anything important quite yet.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

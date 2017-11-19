@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Type checking</h2>
+
+<p>As we've already seen, Cell's data model is entirely structural: it's not possible to define new data types; instead the programmmer has to work with a fixed set of values that is predefined by the language. Once the decision to use a structural data model is made, the type system has little choice but to follow suit. And once the type system itself is structural, it's pretty hard to avoid undecidability. In a conventional type system, a program is either correct or not (with respect to type checking). In an undecidable one, there's a third possibility: a program that is type-correct but is rejected by the typechecker, which is unable to verify its correctness. Unfortunately there's no clear definition of which programs should be accepted and which should not, as that depends on how capable the typechecker is, which is hard to legislate. And while a structural type system is more flexible and, generally speaking, more precise than a nominative one, it also requires the developer to have a more detailed knowledge of the algorithms used during the typechecking process, and to keep that knowledge up to date whenever they are improved.</p>
+
+
+<h3>Polymorphic functions</h3>
+
+<p>The first thing you need to know is how the typechecker deals with polymorphic functions. Let's use, as an example, the <code class="inline-code-box"><span class="inline-code">covers(..)</span></code> family of functions we defined in a previous chapter:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Square</span>     = square(side: <span class='m'>Float</span>);
+<span class='k'>type</span> <span class='m'>Rectangle</span>  = rectangle(width: <span class='m'>Float</span>, height: <span class='m'>Float</span>);
+<span class='k'>type</span> <span class='m'>Circle</span>     = circle(radius: <span class='m'>Float</span>);
+
+<span class='k'>type</span> <span class='m'>Shape</span> = <span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>;
+
+<span class='m'>Bool</span> covers(<span class='m'>Square</span> s1,     <span class='m'>Square</span> s2)      = s1.side &gt;= s2.side;
+<span class='m'>Bool</span> covers(<span class='m'>Square</span> s,      <span class='m'>Rectangle</span> r)    = s.side &gt;= max(r.width, r.height);
+<span class='m'>Bool</span> covers(<span class='m'>Square</span> s,      <span class='m'>Circle</span> c)       = s.side &gt;= <span class='n'>2</span> * c.radius;
+<span class='m'>Bool</span> covers(<span class='m'>Rectangle</span> r,   <span class='m'>Square</span> s)       = min(r.width, r.height) &gt;= s.side;
+<span class='m'>Bool</span> covers(<span class='m'>Rectangle</span> r1,  <span class='m'>Rectangle</span> r2)   = r1.width &gt;= r2.width <span class='k'>and</span> r1.height &gt;= r2.height;
+<span class='m'>Bool</span> covers(<span class='m'>Rectangle</span> r,   <span class='m'>Circle</span> c)       = min(r.width, r.height) &gt;= <span class='n'>2</span> * c.radius;
+<span class='m'>Bool</span> covers(<span class='m'>Circle</span> c,      <span class='m'>Square</span> s)       = c.radius &gt;= s.side / sqrt(<span class='n'>2.0</span>);
+<span class='m'>Bool</span> covers(<span class='m'>Circle</span> c,      <span class='m'>Rectangle</span> r)    = c.radius &gt;= sqrt(r.width^<span class='n'>2</span> + r.height^<span class='n'>2</span>) / <span class='n'>2</span>;
+<span class='m'>Bool</span> covers(<span class='m'>Circle</span> c1,     <span class='m'>Circle</span> c2)      = c1.radius &gt;= c2.radius;
+</section>
+</figure>
+</code></pre>
+
+<p>Let's now consider the following function, which takes a <code class="inline-code-box"><span class="inline-code">Shape</span></code> and a sequence of <code class="inline-code-box"><span class="inline-code">Shape</span></code> values, and returns all the elements in the sequence that covers the given <code class="inline-code-box"><span class="inline-code">Shape</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Shape</span>* covering(<span class='m'>Shape</span> shape, <span class='m'>Shape</span>* shapes) =
+  (s : s &lt;- shapes, covers(shape, s));
+</section>
+</figure>
+</code></pre>
+
+<p>Here <code class="inline-code-box"><span class="inline-code">covers(..)</span></code> is called with both arguments of type <code class="inline-code-box"><span class="inline-code">Shape</span></code>. How does the compiler make sure it typechecks? Well, the first thing the compiler does is to go through all the nine polymorphic definitions of <code class="inline-code-box"><span class="inline-code">covers(..)</span></code> to see if any of them can individually accept arguments of type <code class="inline-code-box"><span class="inline-code">Shape</span></code>. In this case, of course, none does. Failing that, the compiler tries to "aggregate" the signatures of the individual functions into more general ones. It starts by grouping together signatures that differ only in the type of the first argument (and also the result type, which is ignored at this stage):</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> covers(<span class='m'>Square</span>,    <span class='m'>Square</span>)
+<span class='m'>Bool</span> covers(<span class='m'>Rectangle</span>, <span class='m'>Square</span>)
+<span class='m'>Bool</span> covers(<span class='m'>Circle</span>,    <span class='m'>Square</span>)
+
+<span class='m'>Bool</span> covers(<span class='m'>Square</span>,    <span class='m'>Rectangle</span>)
+<span class='m'>Bool</span> covers(<span class='m'>Rectangle</span>, <span class='m'>Rectangle</span>)
+<span class='m'>Bool</span> covers(<span class='m'>Circle</span>,    <span class='m'>Rectangle</span>)
+
+<span class='m'>Bool</span> covers(<span class='m'>Square</span>,    <span class='m'>Circle</span>)
+<span class='m'>Bool</span> covers(<span class='m'>Rectangle</span>, <span class='m'>Circle</span>)
+<span class='m'>Bool</span> covers(<span class='m'>Circle</span>,    <span class='m'>Circle</span>)
+</section>
+</figure>
+</code></pre>
+
+<p>At this point, each group can be aggregated into a single, equivalent signature:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> covers(&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>&gt;, <span class='m'>Square</span>)
+<span class='m'>Bool</span> covers(&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>&gt;, <span class='m'>Rectangle</span>)
+<span class='m'>Bool</span> covers(&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>&gt;, <span class='m'>Circle</span>)
+</section>
+</figure>
+</code></pre>
+
+<p>Now the whole process is applied again to these new aggregated signatures, but using the second argument instead. After this second step, we end up with a single signature:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> covers(&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>&gt;, &lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>&gt;)
+</section>
+</figure>
+</code></pre>
+
+<p>For functions that take more than two arguments, the process is repeated for each one of them. Once these aggregated signatures have been calculated, the compiler checks if any of them, individually, can accept two arguments of type <code class="inline-code-box"><span class="inline-code">Shape</span></code>. If none can, the program is rejected. Note that during the whole process, and during typechecking in general, two types are considered equal if the compiler can prove they define the same (extensional) set of values, not if they have the same name. Whether a type is defined a <code class="inline-code-box"><span class="inline-code">Shape</span></code>, <code class="inline-code-box"><span class="inline-code">&lt;Square, Rectangle, Circle&gt;</span></code>, or even <code class="inline-code-box"><span class="inline-code">&lt;Rectangle, circle(radius: &lt;!&gt;), square(side: &lt;!&gt;)&gt;</span></code> is totally irrelevant, because the compiler can easily figure out that those definitions are equivalent.</p>
+
+<p>This algorithm works well enough in practice that you usually don't even need to think about it, but bear in mind it can easily go awry if you do something unusual. If, for example, you were to add the following definitions, without making any changes to the previous code, the typechecker would end up rejecting your perfectly valid program:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Ellipse</span> = ellipse(horz_axis: <span class='m'>Float</span>, vert_axis: <span class='m'>Float</span>);
+
+<span class='m'>Bool</span> covers(<span class='m'>Ellipse</span> e, <span class='m'>Circle</span> c) = min(e.horz_axis, e.vert_axis) &gt;= c.radius;
+</section>
+</figure>
+</code></pre>
+
+<p>The first aggregation step would now produce the following signatures:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> covers(&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>&gt;, <span class='m'>Square</span>)
+<span class='m'>Bool</span> covers(&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>&gt;, <span class='m'>Rectangle</span>)
+<span class='m'>Bool</span> covers(&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>, <span class='m'>Ellipse</span>&gt;, <span class='m'>Circle</span>)
+</section>
+</figure>
+</code></pre>
+
+<p>and this is what the compiler would be left with after the second and last step:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> covers(&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>&gt;, &lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>&gt;)
+<span class='m'>Bool</span> covers(&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>, <span class='m'>Circle</span>, <span class='m'>Ellipse</span>&gt;, <span class='m'>Circle</span>)
+</section>
+</figure>
+</code></pre>
+
+<p>and neither of the above signatures can, on its own, handle two arguments of type <code class="inline-code-box"><span class="inline-code">Shape</span></code>.</p>
+<p>The <code class="inline-code-box"><span class="inline-code">covers(..)</span></code> family of functions are of course an example of multiple-dispatch polymorphism, but the same problem can happen even with functions that are dispatched based on the type of just one argument. Consider the following example (and remember there's no automatic conversion from integers to floating point numbers in Cell. Not yet, at least):</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Square</span> scale(<span class='m'>Square</span> square, <span class='m'>Float</span> ratio) =
+  square(side: square.side * ratio);
+
+<span class='m'>Rectangle</span> scale(<span class='m'>Rectangle</span> rect, <span class='m'>Float</span> ratio) =
+  rectangle(width: rect.width * ratio, height: rect.height * ratio);
+
+<span class='m'>Circle</span> scale(<span class='m'>Circle</span> circle, &lt;<span class='m'>Float</span>, <span class='m'>Int</span>&gt; ratio) =
+  circle(radius: circle.radius * ratio);
+</section>
+</figure>
+</code></pre>
+
+<p>The third function definition is a bit anomalous, in that its second argument can be either an integer or a floating point number, while the first two only accept a <code class="inline-code-box"><span class="inline-code">Float</span></code>. So only the first two signatures can be merged, and a function like this is going to be rejected by typechecker:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Shape</span> double_size(<span class='m'>Shape</span> shape) = scale(shape, <span class='n'>2.0</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>In this particular case, the problem can be fixed by splitting the third instance of <code class="inline-code-box"><span class="inline-code">scale(..)</span></code> in two, if don't mind duplicating the code:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Circle</span> scale(<span class='m'>Circle</span> circle,  <span class='m'>Float</span> ratio) =
+  circle(radius: circle.radius * ratio);
+
+<span class='m'>Circle</span> scale(<span class='m'>Circle</span> circle,  <span class='m'>Int</span> ratio) =
+  circle(radius: circle.radius * ratio);
+</section>
+</figure>
+</code></pre>
+
+<p>All these limitations are just temporary. The current algorithm will eventually be integrated by a slower but more capable one that will handle the most complex cases. This is a low priority improvement though, since even the current algorithm seems to work pretty well in practice.</p>
+
+<p>One more thing before we move on to the next topic. When calculating the type of a polymorphic function call, the compiler considers only the instances of the polymorphic family of functions that can actually be dispatched in that particular context. The following functions, for example, typecheck:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Square</span> double(<span class='m'>Square</span> square) = scale(square, <span class='n'>2.0</span>);
+
+&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>&gt; triple(&lt;<span class='m'>Square</span>, <span class='m'>Rectangle</span>&gt; shape) =
+  scale(shape, <span class='n'>3.0</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>In the case of <code class="inline-code-box"><span class="inline-code">double(..)</span></code>, even though the <code class="inline-code-box"><span class="inline-code">scale(..)</span></code> functions can return any type of <code class="inline-code-box"><span class="inline-code">Shape</span></code>, the compiler can figure out that only the first one can actually be dispatched, and that one will return a value of type <code class="inline-code-box"><span class="inline-code">Square</span></code>, which is compatible with the definition of <code class="inline-code-box"><span class="inline-code">double(..)</span></code>. Similarly, in the second case, only the first two definitions of <code class="inline-code-box"><span class="inline-code">scale(..)</span></code> can possibly be dispatched, so the returned value can only be of type <code class="inline-code-box"><span class="inline-code">Square</span></code> or <code class="inline-code-box"><span class="inline-code">Rectangle</span></code>.</p>
+
+
+<h3>Generic programming and type variables</h3>
+
+<p>We're now going to take a closer look at type variables and generic programming. Let's start with a generic function we've already seen before:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='u'>T</span>* concat(<span class='u'>T</span>* s1, <span class='u'>T</span>* s2) {
+  s = s1;
+  <span class='k'>for</span> x &lt;- s2:
+    s = (s | x);
+  ;
+  <span class='k'>return</span> s;
+}
+</section>
+</figure>
+</code></pre>
+
+<p><code class="inline-code-box"><span class="inline-code">concat(..)</span></code> can of course concatenate sequences of any type, even when the two sequences contain values of different types. An expression like <code class="inline-code-box"><span class="inline-code">concat((0, 1, 2, 3), (:a, :b, :c))</span></code> is perfectly legal, and when evaluated yields the value <code class="inline-code-box"><span class="inline-code">(0, 1, 2, 3, :a, :b, :c)</span></code>. When the typechecker encounters a call to a generic function (that is, a function whose signature contains type variables) it needs to do two things: determine if its arguments are valid, and calculate the type of the returned value (which is also the type of the whole expression). To a first approximation, the first task is basically done by treating all type variables in the signature as if they were the type <code class="inline-code-box"><span class="inline-code">Any</span></code>. In the case of <code class="inline-code-box"><span class="inline-code">concat(..)</span></code>, it's as if the signature of the function had been written this way: <code class="inline-code-box"><span class="inline-code">Any* concat(Any*, Any*)</span></code>. It gets a bit more complicated than that when dealing with closure arguments, but it's still pretty straightforward. In order to calculate the type of the expression, on the other hand, since the return type of <code class="inline-code-box"><span class="inline-code">concat(..)</span></code> contains the type variable <code class="inline-code-box"><span class="inline-code">T</span></code>, such variable must be somehow bound to an actual type, and the typechecker tries to determine the smallest type that can fit the actual arguments of the call. In the case of <code class="inline-code-box"><span class="inline-code">concat((0, 1, 2, 3), (:a, :b, :c))</span></code>, <code class="inline-code-box"><span class="inline-code">T</span></code> is bound to the type <code class="inline-code-box"><span class="inline-code">&lt;&lt;0..3&gt;, a, b, c&gt;</span></code>, which is then replaced in the return type of the function, <code class="inline-code-box"><span class="inline-code">T*</span></code>, yielding the final type for the overall expression: <code class="inline-code-box"><span class="inline-code">&lt;&lt;0..3&gt;, a, b, c&gt;*</span></code>.</p>
+
+<p>This process seems straightforward enough, but there are a number of issues you need to be aware of. In the signature of <code class="inline-code-box"><span class="inline-code">concat(..)</span></code> the type variable <code class="inline-code-box"><span class="inline-code">T</span></code> appears twice, and the typechecker also ends up binding it twice, to <code class="inline-code-box"><span class="inline-code">&lt;0..3&gt;</span></code> when unifying the type of the first argument, and to <code class="inline-code-box"><span class="inline-code">&lt;a, b, c&gt;</span></code> when unifying the second, with the final binding being the union of the two: <code class="inline-code-box"><span class="inline-code">&lt;&lt;0..3&gt;, a, b, c&gt;</span></code>. To see how this process can go wrong, say you wanted to define the operator <code class="inline-code-box"><span class="inline-code">[]</span></code> for maps, as an alternative to the ugly (and temporary) map lookup operation <code class="inline-code-box"><span class="inline-code">map(key, !!)</span></code> we saw earlier. With a nominative type system, it would be fine to write something like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='u'>B</span> (_[_])([<span class='u'>A</span> -&gt; <span class='u'>B</span>] map, <span class='u'>A</span> <span class='k'>key</span>) = map(<span class='k'>key</span>, !!);
+</section>
+</figure>
+</code></pre>
+
+<p>but in Cell doing so would actually loose you some type safety. The following code, for example, would typecheck, but it would always fail at runtime:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Id</span> = id(<span class='m'>Nat</span>);
+
+<span class='m'>Float</span> lookup_bad_example([<span class='m'>Id</span> -&gt; <span class='m'>Float</span>] map, <span class='m'>Nat</span> <span class='k'>key</span>) = map[<span class='k'>key</span>];
+</section>
+</figure>
+</code></pre>
+
+<p>The typechecker would bind <code class="inline-code-box"><span class="inline-code">A</span></code> to <code class="inline-code-box"><span class="inline-code">Id</span></code> and <code class="inline-code-box"><span class="inline-code">B</span></code> to <code class="inline-code-box"><span class="inline-code">Float</span></code> when looking at the first argument of <code class="inline-code-box"><span class="inline-code">[]</span></code> and then again <code class="inline-code-box"><span class="inline-code">A</span></code> to <code class="inline-code-box"><span class="inline-code">Nat</span></code> when looking at the second. The final binding for <code class="inline-code-box"><span class="inline-code">A</span></code> would be <code class="inline-code-box"><span class="inline-code">&lt;Id, Nat&gt;</span></code> and the type of the overall expression would be <code class="inline-code-box"><span class="inline-code">B</span></code> = <code class="inline-code-box"><span class="inline-code">Float</span></code> and everything would look fine to the typechecker, which would completely miss a preventable error.</p>
+
+<p>A nominative type system, on the other hand, could have bound <code class="inline-code-box"><span class="inline-code">A</span></code> to either <code class="inline-code-box"><span class="inline-code">Id</span></code> or <code class="inline-code-box"><span class="inline-code">Nat</span></code>, but not both, and that would have been enough to catch the error at compile time. This is an example of how the extra flexibility offered by a structural type system, even though it provides many significant benefits and actually allows a more effective error checking in many cases (more on that later), can sometimes become a liability, especially, but not exclusively, when dealing with parametric types.</p>
+
+<p>A similar, although less serious, problem can happen with membership test expressions, for both sets and relations. If, for example, you defined an <code class="inline-code-box"><span class="inline-code">in(..)</span></code> function as an alias for the corresponding native set membership test primitive:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> in(<span class='u'>T</span> elt, [<span class='u'>T</span>] set) = set(elt);
+</section>
+</figure>
+</code></pre>
+
+<p>and then you called it like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Neg</span> = &lt;*..-<span class='n'>1</span>&gt;;
+
+<span class='m'>Bool</span> contains_bad_example_1([<span class='m'>Int</span>] set, <span class='m'>Id</span>  elt) = in(elt, set);
+<span class='m'>Bool</span> contains_bad_example_2([<span class='m'>Nat</span>] set, <span class='m'>Neg</span> elt) = in(elt, set);
+</section>
+</figure>
+</code></pre>
+
+<p>the compiler would happily accept your code, and the two above functions would not crash, but they would always return false, since a search for a tagged integer in a set of untagged ones is certainly not going to turn up anything, and neither is a search for negative integers in a set of non-negative ones.</p>
+
+<p>Incidentally, that's an example of how the line between sound and unsound (with respect to type checking) code may become a bit blurred in a structural type system. The <code class="inline-code-box"><span class="inline-code">containts_bad_example_?(..)</span></code> functions are certainly buggy, but they don't actually cause a crash at runtime, so it's hard to say if they are type safe or not. The vast majority of all nominative type systems I know would have prevented the error in <code class="inline-code-box"><span class="inline-code">contains_bad_example_1(..)</span></code>, but would have been powerless against the one in <code class="inline-code-box"><span class="inline-code">contains_bad_example_2(..)</span></code>. Similar considerations apply to <code class="inline-code-box"><span class="inline-code">lookup_bad_example(..)</span></code>, although in this latter case we are definitely closer to the "unsafe" end of the spectrum.</p>
+
+<p>All the above errors would have been caught if the native/primitive operators had been used instead. An expression like <code class="inline-code-box"><span class="inline-code">map(key, !!)</span></code> is rejected if the type of <code class="inline-code-box"><span class="inline-code">key</span></code> is not a subset of the type of the keys in <code class="inline-code-box"><span class="inline-code">map</span></code>. The same goes for similar expressions like <code class="inline-code-box"><span class="inline-code">rel2(!!, y)</span></code> or <code class="inline-code-box"><span class="inline-code">rel3(x, y, !!)</span></code>. This criterion usually works fine, although in some cases it's a bit too restrictive. For example <code class="inline-code-box"><span class="inline-code">map(key, !!)</span></code> would be rejected if the type of <code class="inline-code-box"><span class="inline-code">map</span></code> were <code class="inline-code-box"><span class="inline-code">[Nat -&gt; String]</span></code> and the type of <code class="inline-code-box"><span class="inline-code">key</span></code> were <code class="inline-code-box"><span class="inline-code">Int</span></code>, since <code class="inline-code-box"><span class="inline-code">Int</span></code> is not a subset of <code class="inline-code-box"><span class="inline-code">Nat</span></code>, but that's a situation that can occur fairly often in perfectly valid code. Possible workarounds include changing the declared type of <code class="inline-code-box"><span class="inline-code">map</span></code>, either by changing the function signature, or by using an explicit local variable declaration; doing a run-time type check (more on that later) to convince the type system that <code class="inline-code-box"><span class="inline-code">key</span></code> is indeed non-negative; or just using a function like the operator <code class="inline-code-box"><span class="inline-code">[]</span></code> above.</p>
+<p>In the case of membership test operators like <code class="inline-code-box"><span class="inline-code">set(elt)</span></code> (and similar ones like <code class="inline-code-box"><span class="inline-code">map(key, *)</span></code>) requiring the type of <code class="inline-code-box"><span class="inline-code">elt</span></code> to be a subset of the type of the elements of <code class="inline-code-box"><span class="inline-code">set</span></code> is just too restrictive. That's how it actually was in an earlier version of the language, but in the end that had to be changed as it turned out to be more trouble that it was worth. So now the typechecker expects the type of <code class="inline-code-box"><span class="inline-code">elt</span></code> and that of the elements of <code class="inline-code-box"><span class="inline-code">set</span></code> not to be disjoint: that seems in practice to be enough to catch the vast majority of errors, without placing any unnecessary burden on the developer.</p>
+
+
+<h3>Type refinement</h3>
+
+<p>At any given time during the type checking process, the compiler keeps track of the "type" of each variable in scope. Such a type is just a superset of the set of possible values that particular variable can possibly hold at that particular time (always bear in mind that in a structural type system like Cell's a type is just a possibly infinite set of values that is know at compile time). This (superset of the) set of possible values is not fixed, and it changes every time a variable is assigned a new value, as this snipped of code shows:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>x = <span class='n'>5</span>;
+<span class='c'>// Here the "type" of x is &lt;5..5&gt;</span>
+x = factorial(x);
+<span class='c'>// Now it has become Nat, assuming that's the return type of</span>
+<span class='c'>// factorial(..). Its actual value is alway 120, of course</span>
+x = _print_(x);
+<span class='c'>// Now the "type" of x is String. Its actual value is always "120"</span>
+</section>
+</figure>
+</code></pre>
+
+<p>But assignments are not the only things that can change the type associated with each variable at any particular position in the code. Even if the actual value of the variable doesn't change, the knowledge the typechecker has about it may. The compiler may either loose information (that's more or less what happened in some of the generic programming examples shown in the previous paragraph) or gain more, and the primary way to do that is to take advantage of expressions and statements that involve some form of branching, like the conditional <code class="inline-code-box"><span class="inline-code">if ... then ... else ...</span></code> expression, the if statement or the match expression. We'll defer a discussion of the latter to a later paragraph and concentrate one the first two here.</p>
+
+<p>Whenever a conditional expression is evaluated, different combinations of values for all the variables used in the condition can cause the execution to jump to either the "then" or the "else" branch of the condition, and inside each branch the typechecker can make additional assumptions about the possible state of each variable. To make the most trivial and obvious of all examples, we can easily conclude that the expression <code class="inline-code-box"><span class="inline-code">if v then v else not v</span></code> always returns <code class="inline-code-box"><span class="inline-code">true</span></code> and that therefore its type is <code class="inline-code-box"><span class="inline-code">True</span></code> (= <code class="inline-code-box"><span class="inline-code">&lt;true&gt;</span></code>) because we know that indipendently of the value of <code class="inline-code-box"><span class="inline-code">v</span></code>, if we make it inside the "then" branch, the value of <code class="inline-code-box"><span class="inline-code">v</span></code> must be <code class="inline-code-box"><span class="inline-code">true</span></code>, and conversely if we land in the "else" branch its value can only be <code class="inline-code-box"><span class="inline-code">false</span></code>. There are other kinds of expressions the typechecker can take advantage of every time they appear in the head of a conditional expression or, equivalently, an if statement, and now we're going to go through each one of them in turn. Note that this whole process is based on heuristics (which will change over time) and only works in a few special cases, without a general, elegant algorithm governing it. It is, nonetheless, useful in pratice.</p>
+
+<p>The first and most obvious way to acquire new compile-time information about the content of a variable is to do an explicit run-time type check, <code class="inline-code-box"><span class="inline-code">var :: Type</span></code>. As an example, <code class="inline-code-box"><span class="inline-code">int_seqs(..)</span></code> below searches for sequences of integers nested inside an arbitrary value, and uses a run-time type check to determine if it has found one:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='m'>Int</span>*] int_seqs(<span class='m'>Any</span> value) =
+  <span class='k'>if</span> value :: <span class='m'>Int</span>*
+    <span class='k'>then</span> [value]
+    <span class='k'>else</span> search_nested(value, int_seqs);
+</section>
+</figure>
+</code></pre>
+
+<p>where <code class="inline-code-box"><span class="inline-code">search_nested(..)</span></code> is defined as follow:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='u'>T</span>] search_nested(<span class='m'>Any</span> value, (<span class='m'>Any</span> -&gt; [<span class='u'>T</span>]) search) =
+  &lt;+&gt;     |
+  &lt;*..*&gt;  |
+  &lt;!&gt;     = [],
+  ()      = union([search(v) : v &lt;~ value]),
+  []      = union([search(v) : v &lt;- value]),
+  [,]     = union([search(v) : a0, a1 &lt;- value, v &lt;- [a0, a1]]),
+  [,,]    = union([search(v) : a0, a1, a2 &lt;- value, v &lt;- [a0, a1, a2]]),
+  t?(v?)  = search(v);
+</section>
+</figure>
+</code></pre>
+
+<p>Incidentally, <code class="inline-code-box"><span class="inline-code">search_nested(..)</span></code> is another example of a universal function, one that operates on values of any type and uses pattern matching to inspect and disassemble them. Inside the "then" branch of <code class="inline-code-box"><span class="inline-code">int_seqs(..)</span></code> the compiler knows that <code class="inline-code-box"><span class="inline-code">value</span></code> is of type <code class="inline-code-box"><span class="inline-code">Int*</span></code>, that's why the function typechecks, while inside the "else" branch the typechecker uses the previous known type for <code class="inline-code-box"><span class="inline-code">value</span></code>, in this case <code class="inline-code-box"><span class="inline-code">Any</span></code>. In some cases, it would actually be useful if the compiler narrowed down the type of the variables in the "else" branch as well. The following function, for example, currently does not typecheck:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Nat</span> abs(<span class='m'>Int</span> x) = <span class='k'>if</span> x :: <span class='m'>Nat</span> <span class='k'>then</span> x <span class='k'>else</span> -x; <span class='c'>// DOES NOT TYPECHECK!!</span>
+</section>
+</figure>
+</code></pre>
+
+<p>but it obviously should, since if we end up in the "else" branch <code class="inline-code-box"><span class="inline-code">x</span></code> can only be negative. That will be implemented in a future version of the compiler.</p>
+
+<p>As a side note, a runtime type check like the <code class="inline-code-box"><span class="inline-code">value :: Int*</span></code> above can be quite expensive, since unlike what happens with nominatively typed languages, in Cell the only way to find out if a sequence is a sequence of integers is to check each of its elements, one by one, to see if they are actual integers, and operation that takes O(n), where n is the length of the sequence. This process could be optimized in some special cases, but not in general, and in any case the compiler doesn't perform any optimizations at the moment.</p>
+
+<p>Polymorphich boolean functions can also be used to perform run-time type checks, provided that they are defined in a very specific way. They are faster (at least in the current implementation), safer, work on both branches of the conditional expression or statement and look more natural. Here's how the <code class="inline-code-box"><span class="inline-code">Result[..]</span></code> type is defined in the standard library, together with a few related functions:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Success</span>[<span class='u'>T</span>] = success(<span class='u'>T</span>);
+<span class='k'>type</span> <span class='m'>Failure</span>[<span class='u'>T</span>] = failure(<span class='u'>T</span>);
+
+<span class='k'>type</span> <span class='m'>Result</span>[<span class='u'>R</span>, <span class='u'>E</span>] = success(<span class='u'>R</span>), failure(<span class='u'>E</span>);
+
+<span class='m'>True</span>  succeeded(<span class='m'>Success</span>[<span class='u'>T</span>]) = <span class='k'>true</span>;
+<span class='m'>False</span> succeeded(<span class='m'>Failure</span>[<span class='u'>T</span>]) = <span class='k'>false</span>;
+
+<span class='m'>False</span> failed(<span class='m'>Success</span>[<span class='u'>T</span>]) = <span class='k'>false</span>;
+<span class='m'>True</span>  failed(<span class='m'>Failure</span>[<span class='u'>T</span>]) = <span class='k'>true</span>;
+
+<span class='u'>T</span> result(<span class='m'>Success</span>[<span class='u'>T</span>] r) = untag(r);
+
+<span class='u'>T</span> error(<span class='m'>Failure</span>[<span class='u'>T</span>] r) = untag(r);
+
+<span class='c'>// Defined elsewhere</span>
+<span class='c'>// T untag(&lt;&lt;+&gt;(T)&gt;) =</span>
+<span class='c'>//   t?(v?) = v;</span>
+</section>
+</figure>
+</code></pre>
+
+<p>Take notice of the signatures of <code class="inline-code-box"><span class="inline-code">succeeded(..)</span></code> and <code class="inline-code-box"><span class="inline-code">failed(..)</span></code>. If a call to <code class="inline-code-box"><span class="inline-code">succeeded(..)</span></code> returns <code class="inline-code-box"><span class="inline-code">true</span></code> (or, equivalently, a call to <code class="inline-code-box"><span class="inline-code">failed(..)</span></code> returns false) the compiler can narrow down the type of the argument from <code class="inline-code-box"><span class="inline-code">Result[R, E]</span></code> to <code class="inline-code-box"><span class="inline-code">Success[R]</span></code> just by looking at the signatures of those polymorphic functions. Conversely, the type is inferred to be <code class="inline-code-box"><span class="inline-code">Failure[E]</span></code> if <code class="inline-code-box"><span class="inline-code">succeeded(..)</span></code> returns false or <code class="inline-code-box"><span class="inline-code">failed(...)</span></code> returns true. Only after that check has been performed can <code class="inline-code-box"><span class="inline-code">result(..)</span></code> and <code class="inline-code-box"><span class="inline-code">error(..)</span></code> be used, since they're both total functions defined only on <code class="inline-code-box"><span class="inline-code">Success[..]</span></code> or on <code class="inline-code-box"><span class="inline-code">Failure[..]</span></code>, not on the entire <code class="inline-code-box"><span class="inline-code">Result[..]</span></code> type. Here's an example, with comments explaining the "reasoning process" of the typechecker:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Tries to parse a floating point number, starting at the</span>
+<span class='c'>// given position. Returns the parsed value and the next</span>
+<span class='c'>// offset on success, or the position of the parsing error</span>
+<span class='c'>// otherwise, wrapped inside a Result type</span>
+<span class='m'>Result</span>[(<span class='m'>Float</span>, <span class='m'>Nat</span>), <span class='m'>Nat</span>] parse_float(<span class='m'>String</span> str, <span class='m'>Nat</span> offset) {
+  ...
+}
+
+<span class='m'>Result</span>[<span class='m'>Float</span>, <span class='m'>Nat</span>] parse_and_add_two_floats(<span class='m'>String</span> str) {
+  res = parse_float(str, <span class='n'>0</span>);
+  <span class='c'>// Here the type of res can be either Success[(Float, Nat)]</span>
+  <span class='c'>// or Failure[Nat]. If failed(res) returns true, we can narrow</span>
+  <span class='c'>// that down to Failure[Nat], which happens to be a valid</span>
+  <span class='c'>// return type for the current function</span>
+  <span class='k'>return</span> res <span class='k'>if</span> failed(res);
+  <span class='c'>// failed(res) returned false, so the typechecker knows that</span>
+  <span class='c'>// the type of res can now only be Success[(Float, Nat)],</span>
+  <span class='c'>// which can be safely passed to the result(..) function</span>
+  x, i = result(res);
+  res = parse_float(str, i);
+  <span class='k'>return</span> res <span class='k'>if</span> failed(res);
+  y, i = result(res);
+  <span class='k'>return</span> <span class='a'>:success</span>(x + y);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>All this works even if the return type of some (but not all) of the instances of a polymorphich predicate is <code class="inline-code-box"><span class="inline-code">Bool</span></code> as opposed to either <code class="inline-code-box"><span class="inline-code">True</span></code> or <code class="inline-code-box"><span class="inline-code">False</span></code>. In the following example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Tab</span> = <span class='m'>Ta</span>, <span class='m'>Tb</span>;
+
+<span class='m'>Bool</span>  p(<span class='m'>Ta</span>) = ...
+<span class='m'>False</span> p(<span class='m'>Tb</span>) = <span class='k'>false</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>nothing can be inferred about <code class="inline-code-box"><span class="inline-code">x</span></code> if <code class="inline-code-box"><span class="inline-code">p(x)</span></code> is false, since that could happen for both <code class="inline-code-box"><span class="inline-code">Ta</span></code> and <code class="inline-code-box"><span class="inline-code">Tb</span></code>, but if it is true the typechecker can safely narrow down the type of <code class="inline-code-box"><span class="inline-code">x</span></code> to <code class="inline-code-box"><span class="inline-code">Ta</span></code>, since <code class="inline-code-box"><span class="inline-code">p(x)</span></code> would certainly be false if <code class="inline-code-box"><span class="inline-code">x</span></code> belonged to <code class="inline-code-box"><span class="inline-code">Tb</span></code>.</p>
+
+<p>Equality and inequality checks can also provide the compiler with more information about the type of a variable if this is compared against a symbol, an integer, the empty sequence or the empty set/relation. The <code class="inline-code-box"><span class="inline-code">Maybe[B] apply(Maybe[A], (A -&gt; B))</span></code> function we saw earlier could for example be rewritten like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Maybe</span>[<span class='u'>B</span>] apply(<span class='m'>Maybe</span>[<span class='u'>A</span>] m, (<span class='u'>A</span> -&gt; <span class='u'>B</span>) f) =
+  <span class='k'>if</span> m != <span class='a'>:nothing</span>
+    <span class='k'>then</span> <span class='a'>:just</span>(f(untag(m)))
+    <span class='k'>else</span> <span class='a'>:nothing</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>This alternative definition typechecks because the compiler crosses out the symbol <code class="inline-code-box"><span class="inline-code">nothing</span></code> from the set of all possible values for the variable <code class="inline-code-box"><span class="inline-code">m</span></code> in the "then" branch (and conversely it leaves only <code class="inline-code-box"><span class="inline-code">nothing</span></code> in the "else" branch), leaving only values of the form <code class="inline-code-box"><span class="inline-code">just(..)</span></code> that can then be safely passed to <code class="inline-code-box"><span class="inline-code">untag(..)</span></code>, which is defined only for tagged values. This is another example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> range(<span class='m'>Int</span>* xs) = <span class='k'>if</span> xs != () <span class='k'>then</span> max(xs) - min(xs) <span class='k'>else</span> <span class='n'>0</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>Both <code class="inline-code-box"><span class="inline-code">min(..)</span></code> and <code class="inline-code-box"><span class="inline-code">max(..)</span></code> are defined only for non-empty sequences, so we have to check that <code class="inline-code-box"><span class="inline-code">xs</span></code> is indeed not empty in order for the typechecker to accept our code.</p>
+
+<p>Let's now see what happens when these type-refining boolean expression are combined with the logical operators <code class="inline-code-box"><span class="inline-code">and</span></code>, <code class="inline-code-box"><span class="inline-code">or</span></code> and <code class="inline-code-box"><span class="inline-code">not</span></code>. The effect of <code class="inline-code-box"><span class="inline-code">not</span></code> is obvious: it swaps the environments (i.e. the set of types associated with each variable) in the two branches of a conditional expression or if statement. The effect of <code class="inline-code-box"><span class="inline-code">and</span></code> and <code class="inline-code-box"><span class="inline-code">or</span></code> is a bit more complex: given an expression of the form <code class="inline-code-box"><span class="inline-code">if &lt;expr1&gt; and &lt;expr2&gt; then ... else ...</span></code> the "then" branch is evaluated only if both <code class="inline-code-box"><span class="inline-code">expr1</span></code> and <code class="inline-code-box"><span class="inline-code">expr2</span></code> are true, and <code class="inline-code-box"><span class="inline-code">expr2</span></code> is evaluated only if <code class="inline-code-box"><span class="inline-code">expr1</span></code> is true, so the compiler first refines all types under the assumptions that <code class="inline-code-box"><span class="inline-code">expr1</span></code> is true, then uses the resulting environment to typecheck <code class="inline-code-box"><span class="inline-code">expr2</span></code> and finally refines it one more time under the assumption that <code class="inline-code-box"><span class="inline-code">expr2</span></code> is true to obtain the types for the "then" branch of the expression. The "else" branch on the other hand is evaluated only if <code class="inline-code-box"><span class="inline-code">expr1</span></code> is false or <code class="inline-code-box"><span class="inline-code">expr1</span></code> is true and <code class="inline-code-box"><span class="inline-code">expr2</span></code> is false, so the typechecker calculates the variables' type for the two scenarios separately, and then proceeds to "merge" them, that is, it associates with each variables the union of the types that it would have in the two scenarios. The treatment of the <code class="inline-code-box"><span class="inline-code">or</span></code> operator is similar, it just reverses the roles of truth and falsehoods in some places. A few (weird) examples can help clarify this process:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// min(xs) (whose only argument has to be of type Int+) can</span>
+<span class='c'>// be called in the right condition only because the left one</span>
+<span class='c'>// has already ruled out the possibility that xs is empty</span>
+<span class='m'>Bool</span> are_non_negative(<span class='m'>Int</span>* xs) = xs == () <span class='k'>or</span> min(xs) &gt;= <span class='n'>0</span>;
+
+<span class='c'>// Inside the "then" branch both x and y must be integers,</span>
+<span class='c'>// so they can be added. No assumption on their type is made</span>
+<span class='c'>// in the "else" branch</span>
+<span class='m'>Int</span> sum_unsafe(<span class='m'>Any</span> x, <span class='m'>Any</span> y) =
+  <span class='k'>if</span> x :: <span class='m'>Int</span> <span class='k'>and</span> y :: <span class='m'>Int</span>
+    <span class='k'>then</span> x + y
+    <span class='k'>else</span> <span class='k'>undefined</span>;
+
+<span class='c'>// Inside the "then" branch x is assumed to be of type &lt;Int, Float&gt;</span>
+<span class='c'>// so the unary minus operator can be called safely.</span>
+&lt;<span class='m'>Int</span>, <span class='m'>Float</span>&gt; negate_unsafe(<span class='m'>Any</span> x) =
+  <span class='k'>if</span> x :: <span class='m'>Int</span> <span class='k'>or</span> x :: <span class='m'>Float</span>
+    <span class='k'>then</span> -x
+    <span class='k'>else</span> <span class='k'>undefined</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>All the heuristics described so far work not only with local variables, but also with record fields. If for example a variable <code class="inline-code-box"><span class="inline-code">p</span></code> has type <code class="inline-code-box"><span class="inline-code">Param</span></code>, defined like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Param</span> = param(id: <span class='m'>Symbol</span>, value: <span class='m'>Maybe</span>[<span class='m'>Int</span>]);
+</section>
+</figure>
+</code></pre>
+
+<p>then in a conditional expression of the form <code class="inline-code-box"><span class="inline-code">if p.value != :nothing then ... else ..</span></code> the type associated to <code class="inline-code-box"><span class="inline-code">p</span></code> would become <code class="inline-code-box"><span class="inline-code">&lt;parameter(id: Symbol, value: Just[Int])&gt;</span></code> in the "then" branch, and <code class="inline-code-box"><span class="inline-code">&lt;parameter(id: Symbol, value: Nothing)&gt;</span></code> in the "else" one.</p>
+
+<p>The type of variables containing records (or tagged records) can be refined also by the field existence test <code class="inline-code-box"><span class="inline-code">r.f?</span></code>. In a previous chapter we saw the following code:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Point</span> = point(x: <span class='m'>Float</span>, y: <span class='m'>Float</span>, z: <span class='m'>Float</span>?);
+
+<span class='m'>Float</span> z(<span class='m'>Point</span> p) = <span class='k'>if</span> p.z? <span class='k'>then</span> p.z <span class='k'>else</span> <span class='n'>0.0</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>The effect of <code class="inline-code-box"><span class="inline-code">p.z?</span></code> here is to narrow down the type of <code class="inline-code-box"><span class="inline-code">p</span></code> to <code class="inline-code-box"><span class="inline-code">&lt;point(x: Float, y: Float, z: Float)&gt;</span></code> in the "then" branch, and to <code class="inline-code-box"><span class="inline-code">&lt;point(x: Float, y: Float)&gt;</span></code> in the "else" one.</p>
+
+
+<h3>Record types and comprehension expressions</h3>
+
+<p>As we've already seen, records in Cell are just maps whose keys happen to be symbols, and can therefore be used inside set and relation comprehension expressions, and the typechecker has some extra built-in logic to deal with that. Probably the best way to get a sense of what it does is to go through a few examples. Let's start with the simplest possible one, a weird identity function for a specific type of record:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>WeatherMsrt1</span> = (
+  id:           <span class='m'>Nat</span>,
+  time:         <span class='m'>Time</span>,
+  station_id:   <span class='m'>String</span>,
+  temperature:  <span class='m'>Int</span>,
+  pressure:     <span class='m'>Float</span>,
+  humidity:     <span class='m'>Nat</span>
+);
+
+<span class='m'>WeatherMsrt1</span> wm_1_id(<span class='m'>WeatherMsrt1</span> m) = [l -&gt; v : l, v &lt;- m];
+</section>
+</figure>
+</code></pre>
+
+<p>It's obvious that if <code class="inline-code-box"><span class="inline-code">m</span></code> is a map then an expression like <code class="inline-code-box"><span class="inline-code">[l -&gt; v : l, v &lt;- m]</span></code> just makes an identical copy of it, so it's not entirely surprising that <code class="inline-code-box"><span class="inline-code">wm_1_id(..)</span></code> typechecks. Let's now say we need to remove one of the fields of the record, in this case <code class="inline-code-box"><span class="inline-code">humidity</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>WeatherMsrt2</span> = (
+  id:           <span class='m'>Nat</span>,
+  time:         <span class='m'>Time</span>,
+  station_id:   <span class='m'>String</span>,
+  temperature:  <span class='m'>Int</span>,
+  pressure:     <span class='m'>Float</span>
+);
+
+<span class='m'>WeatherMsrt2</span> wm_1_to_2(<span class='m'>WeatherMsrt1</span> m) =
+  [l -&gt; v : l, v &lt;- m, l != <span class='a'>:humidity</span>];
+</section>
+</figure>
+</code></pre>
+
+<p>or to change the type of one of the fields, <code class="inline-code-box"><span class="inline-code">station_id</span></code>, by replacing the original identifier of type <code class="inline-code-box"><span class="inline-code">String</span></code> with a numeric one, using a conversion table:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>WeatherMsrt3</span> = (
+  id:           <span class='m'>Nat</span>,
+  time:         <span class='m'>Time</span>,
+  station_id:   <span class='m'>Nat</span>,
+  temperature:  <span class='m'>Int</span>,
+  pressure:     <span class='m'>Float</span>,
+  humidity:     <span class='m'>Nat</span>
+);
+
+<span class='m'>WeatherMsrt3</span> wm_1_to_3(<span class='m'>WeatherMsrt1</span> m, [<span class='m'>String</span> -&gt; <span class='m'>Nat</span>] conv_table) = [
+  l -&gt; <span class='k'>if</span> l == <span class='a'>:station_id</span> <span class='k'>then</span> conv_table(v, !!) <span class='k'>else</span> v : l, v &lt;- m
+];
+</section>
+</figure>
+</code></pre>
+
+<p>or maybe to delete the <code class="inline-code-box"><span class="inline-code">station_id</span></code> field altogether, if a particular alphanumeric weather station identifier does not appear in the conversion table:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>WeatherMsrt4</span> = (
+  id:           <span class='m'>Nat</span>,
+  time:         <span class='m'>Time</span>,
+  station_id:   <span class='m'>Nat</span>?,
+  temperature:  <span class='m'>Int</span>,
+  pressure:     <span class='m'>Float</span>,
+  humidity:     <span class='m'>Nat</span>
+);
+
+<span class='m'>WeatherMsrt4</span> wm_1_to_4(<span class='m'>WeatherMsrt1</span> m, [<span class='m'>String</span> -&gt; <span class='m'>Nat</span>] conv_table) = [
+  l -&gt; <span class='k'>if</span> l == <span class='a'>:station_id</span>
+    <span class='k'>then</span> conv_table(v, !!)
+    <span class='k'>else</span> v
+  : l, v &lt;- m, l != <span class='a'>:station_id</span> <span class='k'>or</span> conv_table(v, *)
+];
+</section>
+</figure>
+</code></pre>
+
+<p>or to rename a couple fields, <code class="inline-code-box"><span class="inline-code">temperature</span></code> into <code class="inline-code-box"><span class="inline-code">temp_celsius</span></code> and <code class="inline-code-box"><span class="inline-code">pressure</span></code> into <code class="inline-code-box"><span class="inline-code">pressure_bars</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>WeatherMsrt5</span> = (
+    id:             <span class='m'>Nat</span>,
+    time:           <span class='m'>Time</span>,
+    station_id:     <span class='m'>String</span>,
+    temp_celsius:   <span class='m'>Int</span>,
+    pressure_bars:  <span class='m'>Float</span>,
+    humidity:       <span class='m'>Nat</span>
+  );
+
+<span class='m'>WeatherMsrt5</span> wm_1_to_5(<span class='m'>WeatherMsrt1</span> m) = [
+  <span class='k'>if</span>   l == <span class='a'>:temperature</span>  <span class='k'>then</span> <span class='a'>:temp_celsius</span>
+  <span class='k'>elif</span> l == <span class='a'>:pressure</span>     <span class='k'>then</span> <span class='a'>:pressure_bars</span>
+                          <span class='k'>else</span> l
+  -&gt; v : l, v &lt;- m
+];
+</section>
+</figure>
+</code></pre>
+
+<p>All the above operations can of course be combined together. We can also merge two (or more) records:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>MsrtData</span>    = (id: <span class='m'>Nat</span>, time: <span class='m'>Time</span>, station_id: <span class='m'>String</span>);
+<span class='k'>type</span> <span class='m'>WeatherData</span> = (temperature: <span class='m'>Int</span>, pressure: <span class='m'>Float</span>, humidity: <span class='m'>Nat</span>);
+
+<span class='m'>WeatherMsrt1</span> merge_wm_data(<span class='m'>MsrtData</span> md, <span class='m'>WeatherData</span> wd) =
+  [l -&gt; v : l, v &lt;- md | l, v &lt;- wd];
+</section>
+</figure>
+</code></pre>
+
+<p>To a first approximation, in order to typecheck the above functions, the compiler proceeds more or less like this: it first splits any record type into a set of single-field records. The type <code class="inline-code-box"><span class="inline-code">WeatherData</span></code> for example is split into <code class="inline-code-box"><span class="inline-code">(temperature: Int)</span></code>, <code class="inline-code-box"><span class="inline-code">(pressure: Float)</span></code> and <code class="inline-code-box"><span class="inline-code">(humidity: Nat)</span></code>, which can be rewritten as <code class="inline-code-box"><span class="inline-code">[+&lt;temperature&gt; -&gt; Int]</span></code>, <code class="inline-code-box"><span class="inline-code">[+&lt;pressure&gt; -&gt; Float]</span></code> and <code class="inline-code-box"><span class="inline-code">[+&lt;humidity&gt; -&gt; Nat]</span></code> respectively. Each single-field record type is then typechecked individually, with the map key being a known symbol, using the same heuristics that are applied to conditional expressions and if statements. When typecheking <code class="inline-code-box"><span class="inline-code">[+&lt;humidity&gt; -&gt; Nat]</span></code> in <code class="inline-code-box"><span class="inline-code">wm_1_to_2(..)</span></code> for example, the compiler concludes that the condition <code class="inline-code-box"><span class="inline-code">l != :humidity</span></code> can never be true, so that particular field would on its own produce the empty map, while a type like <code class="inline-code-box"><span class="inline-code">[+&lt;time&gt; -&gt; Time]</span></code> would cause the same condition to be always true, and the whole comprehension expression would amount to just an identity expression. Finally the typechecker merges back all the individual result types into a single one, trying to produce the most specific type possible, which in the case of the above functions happens to be a record type.</p>
+
+
+<h3>Match expressions</h3>
+
+<p>Let's start with another example from the standard library:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Result</span>[<span class='u'>B</span>, <span class='u'>E</span>] apply(<span class='m'>Result</span>[<span class='u'>A</span>, <span class='u'>E</span>] r, (<span class='u'>A</span> -&gt; <span class='u'>B</span>) f) =
+  success(v?) = <span class='a'>:success</span>(f(v)),
+  failure()   = r;
+</section>
+</figure>
+</code></pre>
+
+<p>In the first branch of the match expression the type associated to the new variable <code class="inline-code-box"><span class="inline-code">v</span></code> is <code class="inline-code-box"><span class="inline-code">A</span></code>, as expected. But the typechecker also narrows down the type of the variable <code class="inline-code-box"><span class="inline-code">r</span></code> to the set of values that can be successfully matched by the <code class="inline-code-box"><span class="inline-code">success(v?)</span></code> pattern, that is, <code class="inline-code-box"><span class="inline-code">Success[A]</span></code>. This is demonstrated in the second branch, where the type of <code class="inline-code-box"><span class="inline-code">r</span></code> is narrowed down to <code class="inline-code-box"><span class="inline-code">Failure[E]</span></code>: without that, the expression would not typecheck. This happens even when the target of the pattern matching is not a variable but the field of a (possibly tagged) record, and when the match involves more than one expression, as is demonstrated in this longish (and admittedly very bizzare) example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Id</span>     = id(<span class='m'>Symbol</span>);
+<span class='k'>type</span> <span class='m'>SurrId</span> = surr_id(<span class='m'>Nat</span>);
+
+<span class='k'>type</span> <span class='m'>AnyId</span>  = <span class='m'>Id</span>, <span class='m'>SurrId</span>;
+
+<span class='k'>type</span> <span class='m'>Entity</span> = entity(id: <span class='m'>AnyId</span>, alt_id: <span class='m'>AnyId</span>);
+
+<span class='k'>type</span> <span class='m'>Entity1</span> = entity(id: <span class='m'>Id</span>,     alt_id: <span class='m'>Id</span>);
+<span class='k'>type</span> <span class='m'>Entity2</span> = entity(id: <span class='m'>Id</span>,     alt_id: <span class='m'>SurrId</span>);
+<span class='k'>type</span> <span class='m'>Entity3</span> = entity(id: <span class='m'>SurrId</span>, alt_id: <span class='m'>Id</span>);
+<span class='k'>type</span> <span class='m'>Entity4</span> = entity(id: <span class='m'>SurrId</span>, alt_id: <span class='m'>SurrId</span>);
+
+<span class='m'>String</span> id_repr(<span class='m'>Id</span> id)               = _print_(_untag_(id));
+<span class='m'>String</span> surr_id_repr(<span class='m'>SurrId</span> surr_id) = _print_(_untag_(surr_id));
+
+<span class='m'>String</span> entity1_repr(<span class='m'>Entity1</span> e) = id_repr(e.id) & <span class='s'>"/"</span> & id_repr(e.alt_id);
+<span class='m'>String</span> entity2_repr(<span class='m'>Entity2</span> e) = id_repr(e.id);
+<span class='m'>String</span> entity3_repr(<span class='m'>Entity3</span> e) = id_repr(e.alt_id);
+<span class='m'>String</span> entity4_repr(<span class='m'>Entity4</span> e) = surr_id_repr(e.id) & <span class='s'>"/"</span> & surr_id_repr(e.alt_id);
+
+<span class='m'>String</span> entity_repr(<span class='m'>Entity</span> e) =
+  <span class='k'>match</span> (e.id, e.alt_id)
+    id(),       id()        = entity1_repr(e),
+    id(),       surr_id()   = entity2_repr(e),
+    surr_id(),  id()        = entity3_repr(e),
+    surr_id(),  surr_id()   = entity4_repr(e);
+</section>
+</figure>
+</code></pre>
+
+<p>In the body of <code class="inline-code-box"><span class="inline-code">entity_repr(..)</span></code> the type of the fields of <code class="inline-code-box"><span class="inline-code">e</span></code> is narrowed down, for each branch of the match statement, to the set of values whose fields can match the branch patterns, and after that <code class="inline-code-box"><span class="inline-code">e</span></code> is passed as argument to one of four functions each of which only accepts a subset of the values that comprise the type <code class="inline-code-box"><span class="inline-code">Entity</span></code>.</p>
+
+<p>The typechecker does not yet "remember" the effect of failed matches, though. The following function ought to typecheck, but it currently doesn't:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Result</span>[<span class='u'>B</span>, <span class='u'>E</span>] not_yet_valid_apply(<span class='m'>Result</span>[<span class='u'>A</span>, <span class='u'>E</span>] r, (<span class='u'>A</span> -&gt; <span class='u'>B</span>) f) =
+  success(v?) = <span class='a'>:success</span>(f(v)),
+  _           = r;
+</section>
+</figure>
+</code></pre>
+
+<p><code class="inline-code-box"><span class="inline-code">not_yet_valid_apply(..)</span></code> is totally equivalent to <code class="inline-code-box"><span class="inline-code">apply(..)</span></code>, since all branches are tried sequentially, and if we make it to the second one, <code class="inline-code-box"><span class="inline-code">r</span></code> can only be of type <code class="inline-code-box"><span class="inline-code">Failure[E]</span></code>, otherwise execution would have stopped at the first. Expect this feature pretty soon, though, at least for single-argument match expressions.</p>
+
+<p>As you would expect, the compiler rejects your code if one of the patterns cannot match any of the possible value of the target expression. Example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Maybe</span>[<span class='u'>B</span>] bad_apply(<span class='m'>Maybe</span>[<span class='u'>A</span>] m, (<span class='u'>A</span> -&gt; <span class='u'>B</span>) f) =
+  noting    = <span class='a'>:nothing</span>,
+  justs(x?) = <span class='a'>:just</span>(f(x));
+</section>
+</figure>
+</code></pre>
+
+<p>In the above code, both patterns have been mispelled. <code class="inline-code-box"><span class="inline-code">noting</span></code> and <code class="inline-code-box"><span class="inline-code">justs(x?)</span></code> are perfectly valid patterns, of course, but in this context they can never produce a match, so the compiler just rejects them. One thing the compiler doesn't do yet is to check that all possible cases have been accounted for. The following function, for example, is currently accepted by the typechecker, but it won't be in the future:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='u'>T</span> value_unsafe(<span class='m'>Maybe</span>[<span class='u'>T</span>]) =
+  just(x?)  = x;
+</section>
+</figure>
+</code></pre>
+
+<p>This is the recommended way to write it, by explicitly handling all possibilities:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='u'>T</span> value_unsafe(<span class='m'>Maybe</span>[<span class='u'>T</span>]) =
+  just(x?)  = x,
+  nothing   = <span class='k'>undefined</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>In cases where you need to handle many different types of values in a uniform way, you can also make use of the catch-all pattern <code class="inline-code-box"><span class="inline-code">_</span></code>, but I would advise extreme caution there. The problem can be neatly explained with a simple example. Say you initially have the following code:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Shape</span>  = square(side: <span class='m'>Float</span>),
+              rectangle(width: <span class='m'>Float</span>, height: <span class='m'>Float</span>),
+              circle(radius: <span class='m'>Float</span>);
+
+<span class='m'>Bool</span> has_vertexes(<span class='m'>Shape</span>) =
+  circle()  = <span class='k'>false</span>,
+  _         = <span class='k'>true</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>and then change the definition of <code class="inline-code-box"><span class="inline-code">Shape</span></code> to include ellipses:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Shape</span>  = square(side: <span class='m'>Float</span>),
+              rectangle(width: <span class='m'>Float</span>, height: <span class='m'>Float</span>),
+              circle(radius: <span class='m'>Float</span>),
+              ellipse(axes: (<span class='m'>Float</span>, <span class='m'>Float</span>));
+</section>
+</figure>
+</code></pre>
+
+<p>and you forget to update <code class="inline-code-box"><span class="inline-code">has_vertexes(..)</span></code>. See the problem? The catch-all branch is initially applied only to squares and rectangles, which is fine, but once a new alternative is added to the <code class="inline-code-box"><span class="inline-code">Shape</span></code> union type, it automatically "inherits" the default behaviour, and that's wrong. And the typechecker would be totally unable to prevent this error, even once the totality check mentioned above is implemented. If, on the other hand, <code class="inline-code-box"><span class="inline-code">has_vertexes(..)</span></code> had been defined like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Bool</span> has_vertexes(<span class='m'>Shape</span>) =
+  square()    |
+  rectangle() = <span class='k'>true</span>,
+  circle()    = <span class='k'>false</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>the error could have been spotted at compile time by an inproved version of the typechecker, but even with the current one, the problem would have manifested itself with a run-time crash, which is a lot better than getting a wrong result, since in that case at least the presence of the error would not go unnoticed, and its cause would be clear.</p>
+<p>The problem is made worse by the fact that there's no encapsulation in Cell, so functions that pattern match against a given union type could be practically anywhere in your codebase. Now, there are times when a default branch is fine and in practice actually necessary, but I recommend you try to stay away from them, and when you really need them always ask yourself what would happen if a new alternative were added to the union type. Default branches may be sort of OK for example when they are associated with the <code class="inline-code-box"><span class="inline-code">undefined</span></code> expression: in that case the addition of a new type would cause a run-time crash which, as already mentioned, is generally not as bad as getting the wrong result.</p>
+
+
+<h3>Loops and type inference</h3>
+
+<p>As explained before, there's usually no need to explicitly declare local variables as the compiler can, in most cases, automatically infer their type. There are though a few exception to this rule, the most common of which involves variables of a recursive type that are updated inside a loop. We've already seen the <code class="inline-code-box"><span class="inline-code">seq2list(..)</span></code> function:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>List</span>[<span class='u'>T</span>] = empty_list, list(<span class='u'>T</span>, <span class='m'>List</span>[<span class='u'>T</span>]);
+
+<span class='m'>List</span>[<span class='u'>T</span>] seq2list(<span class='u'>T</span>* xs) {
+  l : <span class='m'>List</span>[<span class='u'>T</span>];
+
+  l = <span class='a'>:empty_list</span>;
+  <span class='k'>for</span> x &lt;- xs:
+    l = <span class='a'>:list</span>(x, l);
+  ;
+  <span class='k'>return</span> l;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Without the explicit variable declaration <code class="inline-code-box"><span class="inline-code">seq2list(..)</span></code> would not typecheck. In order to understand why, we can try to manually go through the type inference process. After the first instruction <code class="inline-code-box"><span class="inline-code">l = :empty_list;</span></code> the most specific type we can assign to the variable <code class="inline-code-box"><span class="inline-code">l</span></code> is of course the singleton type <code class="inline-code-box"><span class="inline-code">&lt;empty_list&gt;</span></code>. The next statement is the for loop. If we knew that <code class="inline-code-box"><span class="inline-code">xs</span></code> is empty, we could conclude that the type of <code class="inline-code-box"><span class="inline-code">l</span></code> after the loop would still be <code class="inline-code-box"><span class="inline-code">&lt;empty_list&gt;</span></code>, as its body would never be executed. If, on the other hand, <code class="inline-code-box"><span class="inline-code">xs</span></code> contained just one element (and therefore the body of the loop were executed just once) the most specific type we could infer for <code class="inline-code-box"><span class="inline-code">l</span></code> before <code class="inline-code-box"><span class="inline-code">return l;</span></code> would be <code class="inline-code-box"><span class="inline-code">&lt;list(T, empty_list)&gt;</span></code>. If <code class="inline-code-box"><span class="inline-code">xs</span></code> contained two elements that type would become <code class="inline-code-box"><span class="inline-code">&lt;list(T, list(T, empty_list))&gt;</span></code>, if it contained three <code class="inline-code-box"><span class="inline-code">&lt;list(T, list(T, list(T, empty_list)))&gt;</span></code> and so on. But since we don't know how many elements <code class="inline-code-box"><span class="inline-code">xs</span></code> contains, the best type we can infer for <code class="inline-code-box"><span class="inline-code">l</span></code> after the loop has terminated is the union of that (infinite) series of types, which is exactly <code class="inline-code-box"><span class="inline-code">List[T]</span></code>. Unfortunately the compiler is at the moment too dumb to figure that out, and will reject your code if that infinite series of types does not reach a fixpoint after a couple iteractions.</p>
+
+<p>As an alternative to an explicit variable declaration we can define a "constructor" function for <code class="inline-code-box"><span class="inline-code">List[T]</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>List</span>[<span class='u'>T</span>] list(<span class='u'>T</span> h, <span class='m'>List</span>[<span class='u'>T</span>] t) = <span class='a'>:list</span>(h, t);
+</section>
+</figure>
+</code></pre>
+
+<p>and rewrite <code class="inline-code-box"><span class="inline-code">seq2list(..)</span></code> as follow:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>List</span>[<span class='u'>T</span>] seq2list(<span class='u'>T</span>* xs) {
+  l = <span class='a'>:empty_list</span>;
+  <span class='k'>for</span> x &lt;- xs:
+    l = list(x, l);
+  ;
+  <span class='k'>return</span> l;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The inferred type of <code class="inline-code-box"><span class="inline-code">l</span></code> will now "stabilize" right after the assignment in the loop body, and that will be enough to convince the compiler that the function is type safe.</p>
+<p>Even in the absence of typechecking issues, for data types that consist of only a few fields (unlike, say, the <code class="inline-code-box"><span class="inline-code">WeatherMsrt1</span></code> type we saw earlier) it's a good practice to write constructor functions and use them consistently. You'll get better error messages, a more coincise syntax and other advantages that we will discuss extensively in another chapter.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>
