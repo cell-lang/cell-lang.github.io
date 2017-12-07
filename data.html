@@ -331,7 +331,7 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
 
 <p>Just like sets, maps and binary or ternary relations are currently implemented as sorted arrays of their elements. They support fast search based on any combination of arguments, but have to be built at once, since adding or removing an entry currently involves creating an entirely different collection. Maps will soon provide a balanced tree implementation as well though, with O(log(n)) insertion and deletion.</p>
 
-<p>As we'll see in another chapter, static automata can contain "mutable" relation variables. Those variables contain, conceptually speaking, ordinary relation values, but they are restricted in the way they can be used, so that they can be updated in place without compromising the functional nature of the language. In that case, the compiler uses a completely different implementation approach, in order to support both efficient insertion of new tuples and deletion of existing ones.</p>
+<p>As we'll see in another chapter, relational automata can contain "mutable" relation variables. Those variables contain, conceptually speaking, ordinary relation values, but they are restricted in the way they can be used, so that they can be updated in place without compromising the functional nature of the language. In that case, the compiler uses a completely different implementation approach, in order to support both efficient insertion of new tuples and deletion of existing ones.</p>
 
 <p>One intrinsic limitation of both native sets and relations though is that they are unordered containers, and will never be able to support operations that require an ordering of the elements of the collections, except maybe in very specific cases, such as sets of integers, or maps with integer keys. That's because these data structures must be able to contain any type of value and to work even when no explicit ordering criteria has been provided, so even though they do, in some cases, keep their elements sorted, they have to rely on an internal notion of ordering that is not meaningful to the user. That's actually one of the cases in which you might need to use custom data structures.</p>
 
@@ -371,7 +371,7 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <!-- <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li> -->
+                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
               </ul>
             </li>
             <li>The Basics
@@ -387,7 +387,7 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
             </li>
             <li>Automata
               <ul class="toc">
-                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='relational.html'>Relational automata</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>

@@ -313,7 +313,7 @@
 
 <p>Now each message handler just calculates the new value for <code class="inline-code-box"><span class="inline-code">value</span></code>, which is then passed on to the mutator method <code class="inline-code-box"><span class="inline-code">update_value(..)</span></code> which issues the commands needed to update both <code class="inline-code-box"><span class="inline-code">value</span></code> and <code class="inline-code-box"><span class="inline-code">updates</span></code>. Mutator methods must be declared inside a using block, have no return value, can take any number of arguments and can be polymorphich just like functions and ordinary read-only methods. They can be invoked only from message handlers and other mutator methods of the same automaton.</p>
 
-<p>In order to better understand the respective roles of message handlers and mutator methods and the differences between them it's useful to review the life cycle of an update. Once an automaton receives a message, the corresponding handler is invoked. A message handler is the entry point for any update to any static automaton: an update starts when a handler is invoked, and finishes when the handler returns, after which the state of the automaton is finally updated. Until the handler returns no other handler can be invoked, and therefore no other message can be received: the execution of two message handlers of the same automaton cannot be interleaved or nested, message handlers cannot invoke each other in any way, and automata cannot send messages to themselves. Mutators on the other hand can only be run as part of the execution of a message handler, and cannot be invoked in any other context. The update commands they issue are only applied when their enclosing handler returns, and if they fail they cause the entire handler to fail. Message handlers can only be invoked from the outside, and they constitute the public interface of static automata with regards to updates, while mutators are only meant to provide a way to implement message handlers in a modular way.</p>
+<p>In order to better understand the respective roles of message handlers and mutator methods and the differences between them it's useful to review the life cycle of an update. Once an automaton receives a message, the corresponding handler is invoked. A message handler is the entry point for any update to any relational automaton: an update starts when a handler is invoked, and finishes when the handler returns, after which the state of the automaton is finally updated. Until the handler returns no other handler can be invoked, and therefore no other message can be received: the execution of two message handlers of the same automaton cannot be interleaved or nested, message handlers cannot invoke each other in any way, and automata cannot send messages to themselves. Mutators on the other hand can only be run as part of the execution of a message handler, and cannot be invoked in any other context. The update commands they issue are only applied when their enclosing handler returns, and if they fail they cause the entire handler to fail. Message handlers can only be invoked from the outside, and they constitute the public interface of relational automata with regards to updates, while mutators are only meant to provide a way to implement message handlers in a modular way.</p>
 
 
 <h3>Nested automata</h3>
@@ -416,7 +416,7 @@
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <!-- <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li> -->
+                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
               </ul>
             </li>
             <li>The Basics
@@ -432,7 +432,7 @@
             </li>
             <li>Automata
               <ul class="toc">
-                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='relational.html'>Relational automata</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>

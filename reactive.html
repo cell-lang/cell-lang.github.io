@@ -495,7 +495,7 @@ var = expr <span class='k'>if</span> hidden_signal : hidden_signal;
 
 <h3>Error handling</h3>
 
-<p>Unlike static ones, reactive automata have no support for transactions, and once you work through a few examples, it's easy to see why. Instead, if the evaluation of an expression fails during the execution of a rule, the target signal simply enters a special "undefined" state, which is then propagated to all the signals that depend on it, either directly of indirectly. If for example in the following code the evaluation of <code class="inline-code-box"><span class="inline-code">f(s0)</span></code> failed, not only <code class="inline-code-box"><span class="inline-code">s1</span></code> but also <code class="inline-code-box"><span class="inline-code">s2</span></code>, <code class="inline-code-box"><span class="inline-code">c</span></code> and <code class="inline-code-box"><span class="inline-code">v</span></code> would become undefined:</p>
+<p>Unlike relational ones, reactive automata have no support for transactions, and once you work through a few examples, it's easy to see why. Instead, if the evaluation of an expression fails during the execution of a rule, the target signal simply enters a special "undefined" state, which is then propagated to all the signals that depend on it, either directly of indirectly. If for example in the following code the evaluation of <code class="inline-code-box"><span class="inline-code">f(s0)</span></code> failed, not only <code class="inline-code-box"><span class="inline-code">s1</span></code> but also <code class="inline-code-box"><span class="inline-code">s2</span></code>, <code class="inline-code-box"><span class="inline-code">c</span></code> and <code class="inline-code-box"><span class="inline-code">v</span></code> would become undefined:</p>
 
 <figure class="highlight">
 <section>
@@ -718,7 +718,7 @@ state_var = expr_3 : discrete_signal_2, <span class='k'>not</span> discrete_sign
 </figure>
 </code></pre>
 
-<p>Note the use of <code class="inline-code-box"><span class="inline-code">@buffer</span></code> instead of just <code class="inline-code-box"><span class="inline-code">buffer</span></code>. The <code class="inline-code-box"><span class="inline-code">@signal</span></code> notation is used to access the pre-update value of the signal. When, during an update, you read the value of the signal you always get its updated value (note that this is exactly the opposite of what happens with static automata: inside message handler you can only read the initial state of the automaton). But that's not always what you want: in this case, for instance, whenever <code class="inline-code-box"><span class="inline-code">char</span></code> is active and equal to <code class="inline-code-box"><span class="inline-code">new_line</span></code>, <code class="inline-code-box"><span class="inline-code">buffer</span></code> is set to <code class="inline-code-box"><span class="inline-code">()</span></code>, so <code class="inline-code-box"><span class="inline-code">:string(buffer)</span></code> would just evaluate to the empty string <code class="inline-code-box"><span class="inline-code">""</span></code>. The <code class="inline-code-box"><span class="inline-code">@signal</span></code> notation can also be used to break circular dependencies between signals.</p>
+<p>Note the use of <code class="inline-code-box"><span class="inline-code">@buffer</span></code> instead of just <code class="inline-code-box"><span class="inline-code">buffer</span></code>. The <code class="inline-code-box"><span class="inline-code">@signal</span></code> notation is used to access the pre-update value of the signal. When, during an update, you read the value of the signal you always get its updated value (note that this is exactly the opposite of what happens with relational automata: inside message handler you can only read the initial state of the automaton). But that's not always what you want: in this case, for instance, whenever <code class="inline-code-box"><span class="inline-code">char</span></code> is active and equal to <code class="inline-code-box"><span class="inline-code">new_line</span></code>, <code class="inline-code-box"><span class="inline-code">buffer</span></code> is set to <code class="inline-code-box"><span class="inline-code">()</span></code>, so <code class="inline-code-box"><span class="inline-code">:string(buffer)</span></code> would just evaluate to the empty string <code class="inline-code-box"><span class="inline-code">""</span></code>. The <code class="inline-code-box"><span class="inline-code">@signal</span></code> notation can also be used to break circular dependencies between signals.</p>
 
 <p>The one above is an example of a discrete derived signal (<code class="inline-code-box"><span class="inline-code">line</span></code>) being activated when another discrete signal (<code class="inline-code-box"><span class="inline-code">char</span></code>) is active and a given condition (<code class="inline-code-box"><span class="inline-code">char == new_line</span></code>) is true. But a discrete signal can also be activated by a change in the value of a continuous signal, as shown in the following examples:</p>
 
@@ -1006,7 +1006,7 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
 
 <h3>Methods</h3>
 
-<p>Methods of reactive automata are similar to methods of static ones. They are just functions that happen to have implicit access to the internal state of an automaton. Their syntax is a bit different though:</p>
+<p>Methods of reactive automata are similar to methods of relational ones. They are just functions that happen to have implicit access to the internal state of an automaton. Their syntax is a bit different though:</p>
 
 <figure class="highlight">
 <section>
@@ -1030,7 +1030,7 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <!-- <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li> -->
+                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
               </ul>
             </li>
             <li>The Basics
@@ -1046,7 +1046,7 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
             </li>
             <li>Automata
               <ul class="toc">
-                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='relational.html'>Relational automata</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>

@@ -219,9 +219,9 @@
 <p>When the methods of automaton-derived generated classes need to return a <code class="inline-code-box"><span class="inline-code">cell::Value</span></code> object they always do it using a <code class="inline-code-box"><span class="inline-code">std::unique_ptr&lt;cell::Value&gt;</span></code> smart pointer. Once the smart pointer goes out of scope, the <code class="inline-code-box"><span class="inline-code">cell::Value</span></code> object it points to is automatically deleted. If you get a pointer to one of its subobjects, using methods of the <code class="inline-code-box"><span class="inline-code">cell::Value</span></code> interface like for instance <code class="inline-code-box"><span class="inline-code">Value *item(unsigned int)</span></code>, do not try to delete it. Those subobjects are "owned" by the object they belong to, and are automatically deleted along with it. It goes without saying that those pointers cannot be used anymore once the root object is deleted.</p>
 
 
-<h3>Static automata</h3>
+<h3>Relational automata</h3>
 
-<p>Let's take a look at the interface of the classes produced by the compilation of a static automaton. We'll start with a very simple one, <code class="inline-code-box"><span class="inline-code">Counter</span></code>:</p>
+<p>Let's take a look at the interface of the classes produced by the compilation of a relational automaton. We'll start with a very simple one, <code class="inline-code-box"><span class="inline-code">Counter</span></code>:</p>
 
 <p><figure class="highlight"><section><pre style="margin: 0; line-height: 125%"><code><span class='k'>namespace</span> generated {
   <span class='k'>class</span> <span class='m'>Counter</span> {
@@ -244,7 +244,7 @@
 </code></pre></section></figure>
 </p>
 
-<p>As you can see, the generated C++ class has the same name of the Cell automaton it derives from, and is placed in the <code class="inline-code-box"><span class="inline-code">generated</span></code> namespace. The first three methods, <code class="inline-code-box"><span class="inline-code">read_state()</span></code>, <code class="inline-code-box"><span class="inline-code">set_state(..)</span></code> and <code class="inline-code-box"><span class="inline-code">execute(..)</span></code>, are the same for all static automata. All other methods are just accessors that are specific to a particular automaton, and can be used to read pieces of its state, or to invoke its methods.</p>
+<p>As you can see, the generated C++ class has the same name of the Cell automaton it derives from, and is placed in the <code class="inline-code-box"><span class="inline-code">generated</span></code> namespace. The first three methods, <code class="inline-code-box"><span class="inline-code">read_state()</span></code>, <code class="inline-code-box"><span class="inline-code">set_state(..)</span></code> and <code class="inline-code-box"><span class="inline-code">execute(..)</span></code>, are the same for all relational automata. All other methods are just accessors that are specific to a particular automaton, and can be used to read pieces of its state, or to invoke its methods.</p>
 
 <p>The <code class="inline-code-box"><span class="inline-code">read_state()</span></code> methods is the equivalent of the <code class="inline-code-box"><span class="inline-code">read</span></code> instruction in Cell: it takes a snapshot of the state of the automaton and returns it as a <code class="inline-code-box"><span class="inline-code">cell::Value</span></code> object. As explained earlier, once the <code class="inline-code-box"><span class="inline-code">unique_ptr</span></code> object goes out of scope the returned object and all its subobjects are automatically deleted. Saving the state of an automaton to a file in text form can be done with the instruction <code class="inline-code-box"><span class="inline-code">instance.read_state().print(ofs);</span></code>, where <code class="inline-code-box"><span class="inline-code">ofs</span></code> is a valid instance of <code class="inline-code-box"><span class="inline-code">std::ofstream</span></code>.</p>
 
@@ -442,7 +442,7 @@ printf(<span class='s'>"is_on = %s\n"</span>, is_on ? <span class='s'>"true"</sp
 </code></pre></section></figure>
 </p>
 
-<p>The <code class="inline-code-box"><span class="inline-code">read_state()</span></code> and <code class="inline-code-box"><span class="inline-code">set_state(..)</span></code> methods work in the same way as with static automata, but with the limitations we've already discussed for time-aware automata. The last two methods, <code class="inline-code-box"><span class="inline-code">changed_outputs_count()</span></code> and <code class="inline-code-box"><span class="inline-code">changed_output_id(..)</span></code> provide you with a list of outputs that have changed (or have been active, in the case of discrete outputs) as a result of the last call to <code class="inline-code-box"><span class="inline-code">apply()</span></code>:</p>
+<p>The <code class="inline-code-box"><span class="inline-code">read_state()</span></code> and <code class="inline-code-box"><span class="inline-code">set_state(..)</span></code> methods work in the same way as with relational automata, but with the limitations we've already discussed for time-aware automata. The last two methods, <code class="inline-code-box"><span class="inline-code">changed_outputs_count()</span></code> and <code class="inline-code-box"><span class="inline-code">changed_output_id(..)</span></code> provide you with a list of outputs that have changed (or have been active, in the case of discrete outputs) as a result of the last call to <code class="inline-code-box"><span class="inline-code">apply()</span></code>:</p>
 
 <figure class="highlight">
 <section>
@@ -551,7 +551,7 @@ water_sensor.set_elapsed_millisecs(<span class='n'>100</span>);
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <!-- <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li> -->
+                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
               </ul>
             </li>
             <li>The Basics
@@ -567,7 +567,7 @@ water_sensor.set_elapsed_millisecs(<span class='n'>100</span>);
             </li>
             <li>Automata
               <ul class="toc">
-                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='relational.html'>Relational automata</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>

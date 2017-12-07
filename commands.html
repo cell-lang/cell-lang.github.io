@@ -27,9 +27,9 @@
 <p>Automata of either type can only be created inside procedures and not functions. A procedure can declare any number of automaton variables, but it cannot create automata dinamically: all automaton variables are instantiated when a procedure is called, and automatically destroyed when it returns. Automaton instances are also only visible inside the procedure they're declared in and they cannot be passed to other procedures.</p>
 
 
-<h3>Static automata</h3>
+<h3>Relational automata</h3>
 
-<p>In order to see how to manipulate static automata, we'll write a tiny command line tool that is actually useful in practice. Our application will create a static automaton, read an initial state for it from a file and a list of messages from another, send each message to the automaton instance in the given order, and save its final state in another file. We'll make use of the <code class="inline-code-box"><span class="inline-code">Counter</span></code> automaton we saw in the previous chapters, but the code can be made to work with any automaton type with only trivial changes.</p>
+<p>In order to see how to manipulate relational automata, we'll write a tiny command line tool that is actually useful in practice. Our application will create a relational automaton, read an initial state for it from a file and a list of messages from another, send each message to the automaton instance in the given order, and save its final state in another file. We'll make use of the <code class="inline-code-box"><span class="inline-code">Counter</span></code> automaton we saw in the previous chapters, but the code can be made to work with any automaton type with only trivial changes.</p>
 
 <figure class="highlight">
 <section>
@@ -130,7 +130,7 @@
 
 <p>Here too the variable <code class="inline-code-box"><span class="inline-code">ok</span></code> indicates whether the message was processed successfully. Also note the <code class="inline-code-box"><span class="inline-code">msg_list :: CounterMsg*</span></code> check, which is required to verify that whatever data was loaded from the input file was indeed a valid sequence of messages for <code class="inline-code-box"><span class="inline-code">Counter</span></code>.</p>
 
-<p>The last instruction we have to manipulate static automata is used to take a snapshot of the state of an automaton instance:</p>
+<p>The last instruction we have to manipulate relational automata is used to take a snapshot of the state of an automaton instance:</p>
 
 <figure class="highlight">
 <section>
@@ -212,7 +212,7 @@
 
 <p>Once the automaton is initialized its life becomes a cycle where you update its inputs when needed, propagate those updates throughout the automaton and then check how the outputs have changed and react accordingly. Keep in mind that just setting the values of the inputs does not trigger the update propagation process, which has to be done explicitly using the <code class="inline-code-box"><span class="inline-code">apply</span></code> statement.</p>
 
-<p>Taking a snapshot of and restoring the state of a reactive automaton is the same as doing it with a static one, using the <code class="inline-code-box"><span class="inline-code">read</span></code> and <code class="inline-code-box"><span class="inline-code">write</span></code> statements respectively. The first command saves the values of all continuous inputs and state variables, but not the timers. If the automaton that does not contain any timed rules its state can be reconstructed exactly later; otherwise timed rules will behave as if all signals have no previous history.</p>
+<p>Taking a snapshot of and restoring the state of a reactive automaton is the same as doing it with a relational one, using the <code class="inline-code-box"><span class="inline-code">read</span></code> and <code class="inline-code-box"><span class="inline-code">write</span></code> statements respectively. The first command saves the values of all continuous inputs and state variables, but not the timers. If the automaton that does not contain any timed rules its state can be reconstructed exactly later; otherwise timed rules will behave as if all signals have no previous history.</p>
 
 <p>Let's now see an example of how to deal with discrete signals using another automaton we've already seen before, <code class="inline-code-box"><span class="inline-code">Lines</span></code>, which splits a string of characters into lines. We'll use it to split a test strings, and we'll print the results:</p>
 
@@ -307,6 +307,10 @@
 <p>In a real application of course you're supposed to periodically update a time-aware automaton, even when no inputs have changed, in order to allow the timed rule to update its state in real time. But the behaviour of the automaton is always deterministic: whenever you give it a chance to update its state, it always completes all pending updates before processing the new inputs.</p>
 
 
+
+<h2>Version 0.1 of functional/relational/reactive programming language Cell released</h2>
+
+
         </article>
       </div>
 
@@ -317,7 +321,7 @@
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <!-- <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li> -->
+                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
               </ul>
             </li>
             <li>The Basics
@@ -333,7 +337,7 @@
             </li>
             <li>Automata
               <ul class="toc">
-                <li><a href='static.html'>Static automata</a></li>
+                <li><a href='relational.html'>Relational automata</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>
