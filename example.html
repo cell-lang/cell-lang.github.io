@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>An introductory example</h2>
+
+<p>The purpose of this chapter is to show a toy example of what is one of the most obvious uses of Cell, namely as an alternative to an embedded SQL database. It shows some basic features of relational automata, but it's not meant to be a comprehensive introduction to them. It's also a work in progress, and feedback and suggestions on how to improve it are always appreciated.</p>
+
+
+<h3>Building a rather weird social network desktop application</h3>
+
+<p>Eleven-years-old Miki is a very smart boy, who has learned to program at a very young age, and is now proficient in several programming languages. Miki has a lot of friends, and he wants to build a desktop application to keep track of what his friends and all the other kids of his age in his small town are up to. It's going to be for now a single-user application, with Miki and his younger brother doing all the required data entry, and Miki has decided to build it with C# and .NET. For the data storage part, Miki would normally use a MS Access database, but this time he's going to try something different.</p>
+
+<p>Like a growing number of software developers these days, Miki is very excited about functional programming and all the benefits it brings to software development. Unlike most developers though, Miki has also a very solid understanding of the relational model and fully appreciates what makes it a much better data model than what both imperative and functional programming languages provide, but he's very frustrated by all the limitations of SQL databases, like the inability to define custom data types; limited or no programmability; and of course the need to do object-relational mapping.</p>
+
+<p>But Miki recently heard about a new programming language called Cell that combines functional programming with the relational model, and includes a number of features that are typically found in database management systems, like support for persistence and transactions, and has decided to give it a try.</p>
+
+<p>The first thing Miki wants to keep track of in his social network is the list of all his friends and acquaintances, and for each of them he wants to store name, surname, nickname and optionally their date of birth. In SQL, he would create the following table:</p>
+
+<p><figure class="highlight"><section><pre><code><span style="color: #008800">CREATE</span> <span style="color: #008800">TABLE</span> <span style="color: #0066BB">PEOPLE</span>(
+  ID              <span style="color: #333399">INT</span>           <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  NAME            <span style="color: #333399">VARCHAR</span>(<span style="color: #0000DD">40</span>)   <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  SURNAME         <span style="color: #333399">VARCHAR</span>(<span style="color: #0000DD">40</span>)   <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  NICKNAME        <span style="color: #333399">VARCHAR</span>(<span style="color: #0000DD">40</span>)   <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  DATE_OF_BIRTH   <span style="color: #333399">DATE</span>,
+  <span style="color: #008800">PRIMARY</span> <span style="color: #008800">KEY</span> (ID),
+  <span style="color: #008800">UNIQUE</span> (NICKNAME)
+);
+</code></pre></section></figure>
+</p>
+
+<p>Note that the <code class='inline-code-box'><span class='inline-code'>NICKNAME</span></code> field is declared unique: no two people can have the same nickname (that's admittedly a bizarre requirement). All fields are mandatory, except for <code class='inline-code-box'><span class='inline-code'>DATE_OF_BIRTH</span></code>, which may be unknown at the time data is entered, and is therefore optional.</p>
+
+<p>In order to create something equivalent in Cell, Miki needs to define a relational automaton. At first glance, a relational automaton looks a bit like a class in object-oriented languages: it combines a (mutable) data structure with the code that manipulates it. The similarities end there, though. One of the major differences is that you can make use of relations when defining the (type of the) state of a relational automaton. This is the definition of an automaton that is more or less equivalent, in terms of information content, to the above SQL table:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Person</span> = person(<span class='m'>Int</span>);
+
+<span class='k'>schema</span> <span class='m'>SocialNetwork</span> {
+  next_id : <span class='m'>Int</span> = <span class='n'>0</span>;
+
+  person(<span class='m'>Person</span>):
+    name            : <span class='m'>String</span>,
+    surname         : <span class='m'>String</span>,
+    date_of_birth?  : <span class='m'>Date</span>;
+
+  nickname(<span class='m'>Person</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>, <span class='k'>key</span>: <span class='n'>1</span>];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The first difference is the presence of the <code class='inline-code-box'><span class='inline-code'>Person</span></code> type definition. In the <code class='inline-code-box'><span class='inline-code'>PEOPLE</span></code> table, each person is identified by an integer number (stored in the <code class='inline-code-box'><span class='inline-code'>ID</span></code> field), as usually happens when defining a schema in a relational database. Another common option is to use a string. In Cell, on the other hand, it's better to define a custom type like <code class='inline-code-box'><span class='inline-code'>Person</span></code> in order to identify each entity in your application domain. Doing so provides a modicum of type safety, makes the code more readable, and most importantly allows us to define functions and methods that are polymorphic on the entity type.</p>
+
+<p>The schema declaration that follows is how you define the (type of the) state of a relational automaton. The above definition contains a lot of syntactic sugar. Without it, it would look like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>SocialNetwork</span> {
+  next_id : <span class='m'>Int</span> = <span class='n'>0</span>;
+
+  person(<span class='m'>Person</span>);
+
+  name(<span class='m'>Person</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+  surname(<span class='m'>Person</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+  date_of_birth(<span class='m'>Person</span>, <span class='m'>Date</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+  nickname(<span class='m'>Person</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>, <span class='k'>key</span>: <span class='n'>1</span>];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Let's examine the "unsweetened" version first. <code class='inline-code-box'><span class='inline-code'>next_id</span></code> is a member variable, of type <code class='inline-code-box'><span class='inline-code'>Int</span></code>. Every time we need to generate a new <code class='inline-code-box'><span class='inline-code'>Person</span></code> identifier we just read its value and increment it. Nothing new there. The definitions that follow are more interesting. In the SQL version of the schema, we have a single table that stores all the attributes of a person. In Cell, every attribute is stored in a separate relation (The term 'relation' is just another name for what in SQL is called a table. For a more formal definition, check the Wikipedia entries for <a href='https://en.wikipedia.org/wiki/Binary_relation'>binary</a> and <a href='https://en.wikipedia.org/wiki/Finitary_relation'>n-ary</a> relations). The first relation, <code class='inline-code-box'><span class='inline-code'>person</span></code>, is a unary relation, that is, a set. It simply contains the identifiers of all people whose data is stored in the database. The next four relations, <code class='inline-code-box'><span class='inline-code'>name</span></code>, <code class='inline-code-box'><span class='inline-code'>surname</span></code>, <code class='inline-code-box'><span class='inline-code'>nickname</span></code> and <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code>, are binary relations, each of which stores a single attribute of the person entity. That is, while in SQL all the information about a person is stored in a single record of the <code class='inline-code-box'><span class='inline-code'>PEOPLE</span></code> table like, for example, <code class='inline-code-box-long'><span class='inline-code'>ID = 0, NAME = "Edward", SURNAME = "Harris", NICKNAME = "ed", DATE_OF_BIRTH = 30/8/2006</span></code>, the same data in Cell is split among five different tuples/entries, <code class='inline-code-box'><span class='inline-code'>person(0)</span></code> in <code class='inline-code-box'><span class='inline-code'>person</span></code>, <code class='inline-code-box'><span class='inline-code'>person(0), "Edward"</span></code> in <code class='inline-code-box'><span class='inline-code'>name</span></code>, <code class='inline-code-box'><span class='inline-code'>person(0), "Harris"</span></code> in <code class='inline-code-box'><span class='inline-code'>surname</span></code> and so on. Note that while in SQL each column/argument of a relation is named, in Cell arguments are only identified by their position.</p>
+
+<p>The reasons for splitting into atomic pieces the information that in an SQL database would be contained in a single record/row will be discussed elsewhere, but one very marginal benefit is that it makes accessing the attributes of a given entity syntactically more convenient. As an example, this is how you can define a method that generates the complete name of a person by concatenating their name and surname:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>SocialNetwork</span> {
+  <span class='m'>String</span> full_name(<span class='m'>Person</span> p) = name(p) &amp; <span class='s'>" "</span> &amp; surname(p);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The syntax <code class='inline-code-box'><span class='inline-code'>name(p)</span></code> is not that different from the <code class='inline-code-box'><span class='inline-code'>p.name()</span></code> or <code class='inline-code-box'><span class='inline-code'>p.name</span></code> syntax used in conventional languages, and it's certainly terser than the <code class='inline-code-box-long'><span class='inline-code'>SELECT NAME FROM PEOPLE WHERE ID = AN_ID</span></code> used in SQL.</p>
+
+<p>Methods in Cell are just normal functions which are given access to the state of an automaton. They are declared inside a <code class='inline-code-box'><span class='inline-code'>using</span></code> block, as shown above. Such a block can of course contain any number of methods. Functions and methods in Cell have no side effects, just like in any other pure functional language. They do not modify the state of the program, and they cannot do any I/O: their only purpose is to compute and return a value. The state of an automaton can be mutated, as we'll see later, but any code that does so is kept separate from the rest.</p>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>[key: 0]</span></code> in the declaration of <code class='inline-code-box'><span class='inline-code'>name</span></code>, <code class='inline-code-box'><span class='inline-code'>surname</span></code> and <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code> just states that values in the first column of those binary relation have to be unique. In other words, you can only associate a single name, surname or date of birth to each person identifier. The <code class='inline-code-box'><span class='inline-code'>nickname</span></code> relation has two keys, one for each column, which means that not only each person can only have a single nickname, but also each nickname has to be unique, that is, it can be associated to only one person.</p>
+
+<p>Being able to declaratively enforce the uniqueness of an attribute is one of the many advantages provided by the relational model. Another, more important one, is that you can efficiently search your dataset on any attribute without having to write any extra code. If you wanted, for instance, to write a methods that returns the identifiers of all people born on a given date, you could do it like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>SocialNetwork</span> {
+  [<span class='m'>Person</span>] people_born_on(<span class='m'>Date</span> d) = [p : p &lt;- date_of_birth(?, d)];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>date_of_birth(?, d)</span></code> expression iterates (loosely speaking) through all the entries in <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code> whose second argument is equal to <code class='inline-code-box'><span class='inline-code'>d</span></code>. The first result is produced in constant time, <code class='inline-code-box'><span class='inline-code'>O(1)</span></code>, (it's basically a hashtable lookup) and retrieving each subsequent result only require an additional (small) constant time. Searches can be performed, with the same efficiency, on any attribute of the relation, or any combination of them in the case of ternary relations, which we'll examine later.</p>
+
+<p>Let's now go back to the syntactically sugared version of the schema/automaton. The following declaration:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>person(<span class='m'>Person</span>):
+  name            : <span class='m'>String</span>,
+  surname         : <span class='m'>String</span>,
+  date_of_birth?  : <span class='m'>Date</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>is just a more convenient way of writing this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>person(<span class='m'>Person</span>);
+
+name(<span class='m'>Person</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+surname(<span class='m'>Person</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+date_of_birth(<span class='m'>Person</span>, <span class='m'>Date</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+</section>
+</figure>
+</code></pre>
+
+<p>Note that the <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code> field is followed by a question mark, which qualifies it as optional. In SQL, an optional field is a field whose value can be <code class='inline-code-box'><span class='inline-code'>NULL</span></code>. In Cell, on the other hand, each attribute is stored in its own relation, so if, for example, you don't know the date of birth of a particular person all you need to do is to avoid inserting an entry for them in the <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code> relation. At the moment though there's no way to declaratively enforce the fact that a given attribute must be present, so in fact all attributes are optional, even those like <code class='inline-code-box'><span class='inline-code'>name</span></code> or <code class='inline-code-box'><span class='inline-code'>surname</span></code> that are supposed to be mandatory. This will be fixed in version 0.3 of the language, which will implement foreign keys and other missing integrity constraints.</p>
+
+<p>You can also declare "multivalued" attributes using the syntactically sugared notation. In the following code, for example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>person(<span class='m'>Person</span>):
+  name            : <span class='m'>String</span>,
+  surname         : <span class='m'>String</span>,
+  date_of_birth?  : <span class='m'>Date</span>,
+  phone_number*   : <span class='m'>String</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>the <code class='inline-code-box'><span class='inline-code'>phone_number</span></code> attribute can have any number of values (including zero). That's rewritten by the compiler into a binary relation with no keys, which can have multiple entries for the same <code class='inline-code-box'><span class='inline-code'>Person</span></code> value:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>phone_number(<span class='m'>Person</span>, <span class='m'>String</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>You can also tag an attribute with a <code class='inline-code-box'><span class='inline-code'>+</span></code> sign, which declares it as a mandatory multivalued attribute, that is, one that has at least one value:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>person(<span class='m'>Person</span>):
+  name            : <span class='m'>String</span>,
+  surname         : <span class='m'>String</span>,
+  date_of_birth?  : <span class='m'>Date</span>,
+  phone_number+   : <span class='m'>String</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>but since as explained before there's no support yet for enforcing the presence of an attribute in the schema declaration, right now the <code class='inline-code-box'><span class='inline-code'>+</span></code> tag has exactly the same effect as <code class='inline-code-box'><span class='inline-code'>*</span></code>. Again, support for this feature will be implemented in version 0.3 of the compiler.</p>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>nickname</span></code> attribute is declared in both cases using the standard verbose syntax because there's no syntactic sugar yet for unique attributes, but that too is going to be implemented soon.</p>
+
+<p>The kids in Miki's town have organized themselves into a number of gangs, and Miki wants to keep track of that in his application. Each gang has a cool name and a leader, and each kid is free to join any number of gangs. Every member of a gang has a rank and an official start date. This is what the new tables would look like in SQL:</p>
+
+<p><figure class="highlight"><section><pre><code><span style="color: #008800">CREATE</span> <span style="color: #008800">TABLE</span> <span style="color: #0066BB">GANGS</span>(
+  ID        <span style="color: #333399">INT</span>           <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  NAME      <span style="color: #333399">VARCHAR</span>(<span style="color: #0000DD">40</span>)   <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  LEADER    <span style="color: #333399">INT</span>           <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  <span style="color: #008800">PRIMARY</span> <span style="color: #008800">KEY</span> (ID),
+  <span style="color: #008800">FOREIGN</span> <span style="color: #008800">KEY</span> (LEADER) <span style="color: #008800">REFERENCES</span> <span style="color: #0066BB">PEOPLE</span>(ID)
+);
+
+<span style="color: #008800">CREATE</span> <span style="color: #008800">TABLE</span> <span style="color: #0066BB">MEMBERS</span>(
+  PERSON_ID   <span style="color: #333399">INT</span>     <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  GANG_ID     <span style="color: #333399">INT</span>     <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  JOINED_ON   <span style="color: #333399">DATE</span>    <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  RANK        <span style="color: #333399">INT</span>     <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  <span style="color: #008800">PRIMARY</span> <span style="color: #008800">KEY</span> (PERSON_ID, GANG_ID)
+);
+</code></pre></section></figure>
+</p>
+
+<p>and this is the Cell schema expanded with the new information:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Person</span> = person(<span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>Gang</span>   = gang(<span class='m'>Int</span>);
+
+<span class='k'>schema</span> <span class='m'>SocialNetwork</span> {
+  next_id : <span class='m'>Int</span> = <span class='n'>0</span>;
+
+  person(<span class='m'>Person</span>):
+    name          : <span class='m'>String</span>,
+    surname       : <span class='m'>String</span>,
+    date_of_birth : <span class='m'>Date</span>;
+
+  nickname(<span class='m'>Person</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>, <span class='k'>key</span>: <span class='n'>1</span>];
+
+  gang(<span class='m'>Gang</span>):
+    name    : <span class='m'>String</span>,
+    leader  : <span class='m'>Person</span>;
+
+  member(<span class='m'>Person</span>, <span class='m'>Gang</span>):
+    joined_on : <span class='m'>Date</span>,
+    rank      : <span class='m'>Int</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>Gang</span></code> type, and the <code class='inline-code-box'><span class='inline-code'>gang</span></code>, <code class='inline-code-box'><span class='inline-code'>name</span></code> and <code class='inline-code-box'><span class='inline-code'>leader</span></code> relations are very similar to what we've seen before and we will not discuss them any further. The <code class='inline-code-box'><span class='inline-code'>member</span></code> binary relations, and its two attribute relations <code class='inline-code-box'><span class='inline-code'>joined_on</span></code> and <code class='inline-code-box'><span class='inline-code'>rank</span></code> on the other hand are sort of new. Without any syntactic sugar, they would look like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Person #0 is a member of gang #1</span>
+member(<span class='m'>Person</span>, <span class='m'>Gang</span>);
+
+<span class='c'>// Person #0 joined gang #1 on #2</span>
+joined_on(<span class='m'>Person</span>, <span class='m'>Gang</span>, <span class='m'>Date</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+
+<span class='c'>// Person #0 has rank #2 inside gang #1</span>
+rank(<span class='m'>Person</span>, <span class='m'>Gang</span>, <span class='m'>Date</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+</section>
+</figure>
+</code></pre>
+
+<p>The comment that precedes the declaration of each relation is the informal relation predicate, that is, the informal meaning of each entry/tuple in the relation, with <code class='inline-code-box'><span class='inline-code'>#0</span></code>, <code class='inline-code-box'><span class='inline-code'>#1</span></code> and <code class='inline-code-box'><span class='inline-code'>#2</span></code> being the placeholders for the first, second and third argument of the relation respectively.</p>
+
+<p>Each tuple in the binary relation <code class='inline-code-box'><span class='inline-code'>member</span></code> encodes what in an E/R model would be called a relationship between two entities, namely the fact that a specific person belongs to a specific gang. It's a many-to-many relationship, with every person being able to join different gangs, and gangs having any number of members. Just like attribute relations like <code class='inline-code-box'><span class='inline-code'>name</span></code> or <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code> it can be searched efficiently on any attribute: if, for example, <code class='inline-code-box'><span class='inline-code'>p</span></code> is a variable of type <code class='inline-code-box'><span class='inline-code'>Person</span></code> and <code class='inline-code-box'><span class='inline-code'>g</span></code> of type <code class='inline-code-box'><span class='inline-code'>Gang</span></code>, the expression <code class='inline-code-box'><span class='inline-code'>member(p, ?)</span></code> will (loosely speaking) iterates through all the tuples whose first argument equals <code class='inline-code-box'><span class='inline-code'>p</span></code>, and <code class='inline-code-box'><span class='inline-code'>member(?, g)</span></code> through all the tuples whose second argument equals <code class='inline-code-box'><span class='inline-code'>g</span></code>.</p>
+
+<p>The two ternary relations <code class='inline-code-box'><span class='inline-code'>joined_on</span></code> and <code class='inline-code-box'><span class='inline-code'>rank</span></code> store what we can regard as an attribute of the "membership" relation, as opposed to an attribute of an entity like a person or a gang. The first two arguments form a key for both relations, meaning that for each combination of person and gang there can be only one start date and one rank, but a person can still, for instance, have one rank in one gang and a different one in another. The fact that attributes like these cannot be "attached" to any single entity makes them awkward to model in conventional languages, which use records as their primary "composite" data structure, but can be represented very elegantly using relations. Accessing the value of one such attribute is very similar to accessing the attributes of an entity, like <code class='inline-code-box'><span class='inline-code'>nickname</span></code> or <code class='inline-code-box'><span class='inline-code'>leader</span></code>: the expression <code class='inline-code-box'><span class='inline-code'>rank(p, g)</span></code> returns the rank of person <code class='inline-code-box'><span class='inline-code'>p</span></code> inside gang <code class='inline-code-box'><span class='inline-code'>g</span></code> (and of course will fail if <code class='inline-code-box'><span class='inline-code'>p</span></code> never joined <code class='inline-code-box'><span class='inline-code'>g</span></code>). Similarly, ternary relations can be searched on any argument or combination thereof: iterating through <code class='inline-code-box'><span class='inline-code'>joined_on(?, g, d)</span></code>, for instance, will produce a list of all people who joined gang <code class='inline-code-box'><span class='inline-code'>g</span></code> on day <code class='inline-code-box'><span class='inline-code'>d</span></code>. Lookups are performed in constant time (<code class='inline-code-box'><span class='inline-code'>O(1)</span></code>), and the same goes for retrieving the first result in any search (each additional result will of course require an extra, but small, constant time).</p>
+
+<p>The last thing Miki wants to store in his dataset is a map of who knows whom among all the kids of his age in town, along with the day they met and the identity of the person who introduced them, if any. In SQL he would be creating the following table:</p>
+
+<p><figure class="highlight"><section><pre><code><span style="color: #008800">CREATE</span> <span style="color: #008800">TABLE</span> <span style="color: #0066BB">KNOW_EACH_OTHER</span>(
+  PERSON_ID_1   <span style="color: #333399">INT</span>     <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  PERSON_ID_2   <span style="color: #333399">INT</span>     <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  MET_ON        <span style="color: #333399">DATE</span>    <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  INTRODUCED_BY <span style="color: #333399">INT</span>,
+  <span style="color: #008800">PRIMARY</span> <span style="color: #008800">KEY</span> (PERSON_ID_1, PERSON_ID_2),
+  <span style="color: #008800">FOREIGN</span> <span style="color: #008800">KEY</span> (PERSON_ID_1) <span style="color: #008800">  REFERENCES</span> <span style="color: #0066BB">PEOPLE</span>(ID),
+  <span style="color: #008800">FOREIGN</span> <span style="color: #008800">KEY</span> (PERSON_ID_2) <span style="color: #008800">  REFERENCES</span> <span style="color: #0066BB">PEOPLE</span>(ID),
+  <span style="color: #008800">FOREIGN</span> <span style="color: #008800">KEY</span> (INTRODUCED_BY) <span style="color: #008800">REFERENCES</span> <span style="color: #0066BB">PEOPLE</span>(ID)
+);
+</code></pre></section></figure>
+</p>
+
+<p>and this is the final version of the <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code> schema in Cell:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Person</span> = person(<span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>Gang</span>   = gang(<span class='m'>Int</span>);
+
+<span class='k'>schema</span> <span class='m'>SocialNetwork</span> {
+  next_id : <span class='m'>Int</span> = <span class='n'>0</span>;
+
+  person(<span class='m'>Person</span>):
+    name           : <span class='m'>String</span>,
+    surname        : <span class='m'>String</span>,
+    date_of_birth? : <span class='m'>Date</span>;
+
+  nickname(<span class='m'>Person</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>, <span class='k'>key</span>: <span class='n'>1</span>];
+
+  know_each_other(<span class='m'>Person</span>, <span class='m'>Person</span>):
+    met_on          : <span class='m'>Date</span>,
+    introduced_by?  : <span class='m'>Person</span>;
+
+  gang(<span class='m'>Gang</span>):
+    name    : <span class='m'>String</span>,
+    leader  : <span class='m'>Person</span>;
+
+  member(<span class='m'>Person</span>, <span class='m'>Gang</span>):
+    joined_on : <span class='m'>Date</span>,
+    rank      : <span class='m'>Int</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The new relations (<code class='inline-code-box'><span class='inline-code'>know_each_other</span></code>, <code class='inline-code-box'><span class='inline-code'>met_on</span></code> and <code class='inline-code-box'><span class='inline-code'>introduced_by</span></code>) look similar to the <code class='inline-code-box'><span class='inline-code'>member</span></code>, <code class='inline-code-box'><span class='inline-code'>joined_on</span></code> and <code class='inline-code-box'><span class='inline-code'>rank</span></code> ones, but one important difference is that in this case the relationship is intrinsically a symmetric one: if person A knows person B then person B also knows person A. Therefore the fact that A and B know each other could be stored inside <code class='inline-code-box'><span class='inline-code'>know_each_other</span></code> either as the <code class='inline-code-box'><span class='inline-code'>(A, B)</span></code> tuple, or as <code class='inline-code-box'><span class='inline-code'>(B, A)</span></code>, or even both of them, and that's of course a problem, because it forces you to check both possibilities if you want to find out if A and B know each other, and also forces you to try to delete both if you want to remove that particular fact from your dataset. The problem is even worse for <code class='inline-code-box'><span class='inline-code'>met_on</span></code> and <code class='inline-code-box'><span class='inline-code'>introduced_by</span></code>, since they could end up containing two different values of the attribute for any given pair of people. A better support for symmetric relations is scheduled again for version 0.3 of the language.</p>
+
+
+<h3>Messages and message handlers</h3>
+
+<p>Now that Miki has defined the core data structures of his <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code> automaton it's time for him to start writing some actual code. He's already written a couple of read-only methods:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>SocialNetwork</span> {
+  <span class='m'>String</span> full_name(<span class='m'>Person</span> p) = name(p) &amp; <span class='s'>" "</span> &amp; surname(p);
+
+  [<span class='m'>Person</span>] people_born_on(<span class='m'>Date</span> d) = [p : p &lt;- date_of_birth(?, d)];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>but code that mutates the state of an automaton is quite different. The only way to mutate the state of a relational automaton is by sending it a message. A message is just a value, that is, a piece of data. For every type of message an automaton can accept there's a corresponding message handler that is invoked when such a message is received. The message handler is where the actual updating of the state of the automaton instance takes place.</p>
+
+<p>The first message and message handler pair that Miki defines for his <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code> automaton add a new person's data to the dataset:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>AddPerson</span> = add_person(
+  id:              <span class='m'>PersonId</span>,
+  name:            <span class='m'>String</span>,
+  surname:         <span class='m'>String</span>,
+  nickname:        <span class='m'>String</span>,
+  date_of_birth?:  <span class='m'>Date</span>
+);
+
+<span class='m'>SocialNetwork</span>.<span class='m'>AddPerson</span> {
+  id = <span class='k'>self</span>.id;
+  <span class='k'>insert</span> person(id), name(id, <span class='k'>self</span>.name), surname(id, <span class='k'>self</span>.surname), nickname(id, <span class='k'>self</span>.nickname);
+  <span class='k'>if</span> <span class='k'>self</span>.date_of_birth?:
+    <span class='k'>insert</span> date_of_birth(id, <span class='k'>self</span>.date_of_birth);
+  ;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The first of the two above declarations defines the type of the message (which is just a tagged record containing all the information about a new person) and the second one defines the message handler. The message handler itself is pretty straightforward, just a bunch of insert statements, one of which is conditional since <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code> is optional. The only thing to note is the <code class='inline-code-box'><span class='inline-code'>self</span></code> keyword that is used to access the value of the message.</p>
+
+<p>Miki has also defined similar methods to add new gangs, and record the facts that people have met or that they have joined some gang, but we will not examine them here since they're pretty similar to the one above. A more interesting message handler is the one that is used to delete a person from the database, since its logic is a bit more sophisticated. Here's the code:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>SocialNetwork</span>.delete_person(id: <span class='m'>Person</span>) {
+  id = <span class='k'>self</span>.id;
+
+  <span class='c'>// Removing the person's data from <span class='inline-code'>person</span>, <span class='inline-code'>member</span> and</span>
+  <span class='c'>// all their attribute relations</span>
+  <span class='k'>delete</span> person(id), name(id, *), surname(id, *), date_of_birth(id, *), nickname(id, *);
+  <span class='k'>delete</span> member(id, *), joined_on(id, *, *), rank(id, *, *);
+
+  <span class='c'>// Removing the person's data from <span class='inline-code'>know_each_other</span> and all its</span>
+  <span class='c'>// attribute relations. Since <span class='inline-code'>know_each_other</span> is a symmetric relation,</span>
+  <span class='c'>// we've to go through both columns in order to delete everything</span>
+  <span class='k'>delete</span> know_each_other(id, *), met_on(id, *, *), introduced_by(id, *, *);
+  <span class='k'>delete</span> know_each_other(*, id), met_on(*, id, *), introduced_by(*, id, *);
+
+  <span class='c'>// Gangs that are left without a leader</span>
+  leaderless_gangs = [g : g &lt;- leader(?, id)];
+  <span class='k'>for</span> g &lt;- isort(leaderless_gangs):
+    <span class='c'>// Remaining members of the gang</span>
+    members = [p : p &lt;- member(?, g), p != id];
+    <span class='k'>if</span> members == []:
+      <span class='c'>// No member left, deleting the gang</span>
+      <span class='k'>delete</span> gang(g), name(g, *), leader(g, *);
+    <span class='k'>else</span>
+      <span class='c'>// Ranks of all remaining members</span>
+      ranks = [m -&gt; rank(m, g) : m &lt;- members];
+      <span class='c'>// Highest-ranking members</span>
+      max_rank_members = max_by(members, ranks($, !!));
+      <span class='c'>// Randomly choosing one of them as new leader</span>
+      new_leader = an_elem(max_rank_members);
+      <span class='c'>// Updating the <span class='inline-code'>leader</span> relation</span>
+      <span class='k'>update</span> leader(g, new_leader);
+    ;
+  ;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Here Miki has made use of a bit of syntactic sugar that has allowed him to avoid an explicit type definition like the <code class='inline-code-box'><span class='inline-code'>type AddPerson = ...</span></code> used previously. The following definition:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>SocialNetwork</span>.delete_person(id: <span class='m'>Person</span>) {
+  ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>is the same as:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>DeletePerson</span> = delete_person(id: <span class='m'>Person</span>);
+
+<span class='m'>SocialNetwork</span>.<span class='m'>DeletePerson</span> {
+  ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>save for the fact that type of the message is not explicitly named (how exactly this works will become clear after reading the chapter on <a href='types.html'>types</a>).</p>
+
+<p>The message handler starts with a bunch of delete statements. When deleting a person from the dataset Miki has to remove all their data from all the relations that might contain any. But that code is of course unnecessarily complicated and error-prone, and starting with version 0.3 of the language, he will be able to replace the four delete statements above with just the following one:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>delete</span> person(id), know_each_other(id | *), member(id, *);
+</section>
+</figure>
+</code></pre>
+
+<p>The remaining part of the code deals with the case of people who were leaders of one or more gangs. In that case, Miki has to choose a new leader. The new leader will be the highest-ranking member of the gang, or any of them if there's more than one person with the highest rank, unless the person being deleted is the only member left in the gang, in which case the gang will be deleted as well.</p>
+
+<p>There's one message Miki defines for <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code> that may look a bit strange to someone used to imperative languages:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>SocialNetwork</span>.reserve_ids(first_id: <span class='m'>Int</span>, count: <span class='m'>Int</span>) {
+  <span class='k'>if</span> <span class='k'>self</span>.first_id == next_id:
+    <span class='k'>set</span> next_id = next_id + <span class='k'>self</span>.count;
+  <span class='k'>else</span>
+    <span class='k'>fail</span>;
+  ;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Before adding a new person or gang to his dataset Miki needs to generate new identifiers for them, and that's done by reading and incrementing the value of the <code class='inline-code-box'><span class='inline-code'>next_id</span></code> member variable. In an imperative language it would be done with a method like the following one:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>int get_next_id() {
+  <span class='k'>return</span> next_id++;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>but in Cell message handlers cannot return a value, and read-only methods cannot change the state of the automaton instance, so things have to be done differently: first the client has to read the value of the <code class='inline-code-box'><span class='inline-code'>next_id</span></code> member variable, and then has to send a message to increment it. That would of course be problematic in a concurrent environment, because another thread could read the value of <code class='inline-code-box'><span class='inline-code'>next_id</span></code> after the first thread has read it, but before it has a chance to send the message that increments it. In order to avoid this problem the message handler has to check that the id being reserved is still available, and fail (that is, "throw an exception") if not.</p>
+
+<p>A few more things about message handlers before we move on. The first one is that message handlers run inside a transaction: if for any reason an unrecoverable error occurs during their execution, the message is simply discarded and the state of the automaton is left untouched. Secondly, message handlers are deterministic: the resulting state of the automaton only depends on the previous state and the message being received, and nothing else. Lastly, a message handler cannot do any I/O, and cannot change the state of other automaton instances: all the side effects are limited in scope to the automaton that receives the message. These properties have a number of consequences, that will be discussed elsewhere in the documentation.</p>
+
+
+<h3>Interfacing with C#</h3>
+
+<p>As already mentioned at the beginning of the chapter, Miki is going to write his application in C#. The Cell compiler will generate a number of C# classes, one for each Cell automaton, that can be included in the larger application. Compiling the Cell code will produce two files, <code class='inline-code-box'><span class='inline-code'>generated.cs</span></code> and <code class='inline-code-box'><span class='inline-code'>interfaces.txt</span></code>. The former contains all the generated C# code, the second the interface of the generated classes in pseudo-C#. This is the generated <code class='inline-code-box'><span class='inline-code'>interfaces.txt</span></code> file for Miki's code:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>class</span> CellLang.Generated.<span class='m'>SocialNetwork</span> {
+  SocialNetwork();
+
+  <span class='m'>Value</span> ReadState();
+  <span class='k'>void</span> SetState(String);
+  <span class='k'>void</span> Execute(String);
+
+  <span class='k'>long</span> NextId;
+
+  <span class='k'>bool</span> Gang(<span class='k'>long</span>);
+  <span class='k'>long</span>[] Gang();
+
+  <span class='k'>bool</span> Person(<span class='k'>long</span>);
+  <span class='k'>long</span>[] Person();
+
+  <span class='k'>bool</span> Nickname(<span class='k'>long</span>, <span class='k'>string</span>);
+  <span class='m'>Tuple</span>&lt;<span class='k'>long</span>, <span class='k'>string</span>&gt;[] Nickname();
+
+  <span class='k'>bool</span> Member(<span class='k'>long</span>, <span class='k'>long</span>);
+  <span class='m'>Tuple</span>&lt;<span class='k'>long</span>, <span class='k'>long</span>&gt;[] Member();
+
+  <span class='k'>bool</span> KnowEachOther(<span class='k'>long</span>, <span class='k'>long</span>);
+  <span class='m'>Tuple</span>&lt;<span class='k'>long</span>, <span class='k'>long</span>&gt;[] KnowEachOther();
+
+  <span class='k'>bool</span> Rank(<span class='k'>long</span>, <span class='k'>long</span>, <span class='k'>long</span>);
+  <span class='m'>Tuple</span>&lt;<span class='k'>long</span>, <span class='k'>long</span>, <span class='k'>long</span>&gt;[] Rank();
+
+  <span class='k'>bool</span> MetOn(<span class='k'>long</span>, <span class='k'>long</span>, <span class='k'>string</span>);
+  <span class='m'>Tuple</span>&lt;<span class='k'>long</span>, <span class='k'>long</span>, <span class='m'>Value</span>&gt;[] MetOn();
+
+  <span class='k'>bool</span> JoinedOn(<span class='k'>long</span>, <span class='k'>long</span>, <span class='k'>string</span>);
+  <span class='m'>Tuple</span>&lt;<span class='k'>long</span>, <span class='k'>long</span>, <span class='m'>Value</span>&gt;[] JoinedOn();
+
+  <span class='k'>bool</span> IntroducedBy(<span class='k'>long</span>, <span class='k'>long</span>, <span class='k'>long</span>);
+  <span class='m'>Tuple</span>&lt;<span class='k'>long</span>, <span class='k'>long</span>, <span class='k'>long</span>&gt;[] IntroducedBy();
+
+  <span class='k'>bool</span> Name(<span class='k'>string</span>, <span class='k'>string</span>);
+  <span class='k'>string</span> Name(<span class='k'>string</span>);
+  <span class='m'>Tuple</span>&lt;<span class='m'>Value</span>, <span class='k'>string</span>&gt;[] Name();
+
+  <span class='k'>bool</span> Surname(<span class='k'>long</span>, <span class='k'>string</span>);
+  <span class='k'>string</span> Surname(<span class='k'>long</span>);
+  <span class='m'>Tuple</span>&lt;<span class='k'>long</span>, <span class='k'>string</span>&gt;[] Surname();
+
+  <span class='k'>bool</span> DateOfBirth(<span class='k'>long</span>, <span class='k'>string</span>);
+  <span class='m'>Value</span> DateOfBirth(<span class='k'>long</span>);
+  <span class='m'>Tuple</span>&lt;<span class='k'>long</span>, <span class='m'>Value</span>&gt;[] DateOfBirth();
+
+  <span class='k'>bool</span> Leader(<span class='k'>long</span>, <span class='k'>long</span>);
+  <span class='k'>long</span> Leader(<span class='k'>long</span>);
+  <span class='m'>Tuple</span>&lt;<span class='k'>long</span>, <span class='k'>long</span>&gt;[] Leader();
+
+  <span class='k'>string</span> FullName(<span class='k'>long</span>);
+  <span class='k'>long</span>[] PeopleBornOn(<span class='k'>string</span>);
+}
+</code></pre></section></figure>
+</p>
+
+<p>That's a lot to parse, so let's break it up into more digestible pieces, starting with the pair of complementary methods <code class='inline-code-box'><span class='inline-code'>ReadState()</span></code> and <code class='inline-code-box'><span class='inline-code'>SetState()</span></code>. The former takes a snapshot of the state of an automaton, and returns it as an object of type <code class='inline-code-box'><span class='inline-code'>CellLang.Value</span></code>, which is a class that can represent any Cell value. The returned states can be freely inspected and, for example, printed or stored to a file. <code class='inline-code-box'><span class='inline-code'>SetState(..)</span></code> erases the current state of the automaton and sets its new state to whatever value is provided as argument (as long as that's a valid state for the automaton in question, of course). The argument is provided as a string containing the standard textual Cell representation of the new state. Any state returned by <code class='inline-code-box'><span class='inline-code'>ReadState()</span></code> can be used, once it has been converted to its standard textual representation, as input for <code class='inline-code-box'><span class='inline-code'>SetState(..)</span></code>, which makes it very easy to save the data stored inside an automaton to a file, and then read it back later.</p>
+
+<p>The next method, <code class='inline-code-box'><span class='inline-code'>Execute(..)</span></code>, is used to send a message to the automaton. Here too the message is provided as a string containing its standard textual representation. If an error occurs during the execution of the message handle an exception is thrown, but the state of the automaton does not change, as we've already mentioned before.</p>
+
+<p>Here's an example of how to use the three methods just discussed. The following C# code create an instance of <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code>, loads an initial state for it from a file, sends a message to the automaton to delete one specific person from the dataset and saves the resulting state/dataset to another file:</p>
+
+<p><figure class="highlight"><section><pre><code><span style="color: #008800; font-style: italic">// Creating an instance of SocialNetwork</span>
+Generated.SocialNetwork socialNetwork = <span style="color: #000080">new</span> Generated.SocialNetwork();
+
+<span style="color: #008800; font-style: italic">// Reading and setting the initial state for the automaton</span>
+socialNetwork.SetState(File.ReadAllText(<span style="color: #0000FF">&quot;initial-state.txt&quot;</span>));
+
+<span style="color: #008800; font-style: italic">// Sending a message</span>
+socialNetwork.Execute(<span style="color: #0000FF">&quot;delete_person(id: person(5))&quot;</span>);
+
+<span style="color: #008800; font-style: italic">// Writing the new state to a file</span>
+<span style="color: #000080">using</span> (StreamWriter outputWriter = <span style="color: #000080">new</span> StreamWriter(<span style="color: #0000FF">&quot;final-state.txt&quot;</span>)) {
+  socialNetwork.ReadState().Print(outputWriter);
+}
+</code></pre></section></figure>
+
+</p>
+
+<p>Here's an example of what a valid <a href='social-network-state.txt'>state</a> for the <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code> automaton looks like, once it's converted into its standard textual representation.</p>
+
+<p>All the remaining methods are specific to each type of automaton. There are methods (or properties) to read the value of member variables, like <code class='inline-code-box'><span class='inline-code'>long NextId</span></code>; to invoke read-only methods of the automaton, like <code class='inline-code-box'><span class='inline-code'>string FullName(long)</span></code> and <code class='inline-code-box'><span class='inline-code'>long PeopleBornOn(string)</span></code>; to read the entire content of a relation, like <code class='inline-code-box'><span class='inline-code'>long[] Person()</span></code>, <code class='inline-code-box'><span class='inline-code'>Tuple&lt;long, string&gt;[] Nickname()</span></code> and <code class='inline-code-box'><span class='inline-code'>Tuple&lt;long, long, long&gt;[] Rank()</span></code>; to check if a relation contains a given tuple (or element, for unary relations) like <code class='inline-code-box'><span class='inline-code'>bool Person(long)</span></code>, <code class='inline-code-box'><span class='inline-code'>bool Member(long, long)</span></code> and <code class='inline-code-box'><span class='inline-code'>bool MetOn(long, long, string)</span></code>; and finally, in the case of binary relations, to lookup the value of an attribute of a specific entity given its id, like <code class='inline-code-box'><span class='inline-code'>string Surname(long)</span></code> or <code class='inline-code-box'><span class='inline-code'>long Leader(long)</span></code>. All these methods are described in detail elsewhere in the documentation, and we won't discuss them any further here. The only thing left to mention is the fact that the Cell compiler tries to map each Cell type to a corresponding native C# type: when it cannot find a good mapping, the corresponding piece of data is either returned as a <code class='inline-code-box'><span class='inline-code'>CellLang.Value</span></code> object, when data goes from Cell to C#, or passed in as a string containing the textual representation of a Cell value when data moves in the other direction. The details of the mapping too are described in another chapter.</p>
+
+
+<h3>Where to go from here</h3>
+
+<p>Miki is rewriting the data structures and logic of the Cell part of his application in C#, in order to see how the two approaches/paradigms compare. You can read about it <a href='comparison.html'>here</a>.</p>
+
+<p>The <a href='relational.html'>relational automata</a> and <a href='updates.html'>state updates</a> chapters contain the complete documentation for relational automata, but you'll have to read about <a href='data.html'>data</a> and <a href='types.html'>types</a> first. The <a href='overview.html'>overview</a> and <a href='quick.html'>quick overview</a> will give you some additional information.</p>
+
+<p>This chapter focused on the most important of the two types of automata, namely relational automata. For an overview of the other type, reactive automata, just head to the corresponding <a href='reactive.html'>chapter</a>. It should be readable even without any previous knowledge of the language.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

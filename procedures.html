@@ -9,6 +9,17 @@
 
   <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
   <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
 </head>
 
 <body>
@@ -33,9 +44,9 @@
 </figure>
 </code></pre>
 
-<p>Both <code class="inline-code-box"><span class="inline-code">Main</span></code> and <code class="inline-code-box"><span class="inline-code">Print</span></code> here are procedures. Their names follow the same syntactic rules as type names: an uppercase letter, followed by one or more letters (either upper or lower case) and numbers, with at least one lowercase letter in the mix and no underscores. Unlike functions, procedures can have side effects and perform I/O; they may or may not return a result or take any arguments, but the parentheses after their name are always required even if the argument list is empty. Procedures can call functions, but not vice versa, since functions are not allowed to have side effects.</p>
+<p>Both <code class='inline-code-box'><span class='inline-code'>Main</span></code> and <code class='inline-code-box'><span class='inline-code'>Print</span></code> here are procedures. Their names follow the same syntactic rules as type names: an uppercase letter, followed by one or more letters (either upper or lower case) and numbers, with at least one lowercase letter in the mix and no underscores. Unlike functions, procedures can have side effects and perform I/O; they may or may not return a result or take any arguments, but the parentheses after their name are always required even if the argument list is empty. Procedures can call functions, but not vice versa, since functions are not allowed to have side effects.</p>
 
-<p>All types of statements that can appear in the body of a function can also appear inside the body of a procedure, but there's a number of statements that can only be used with procedures. One of them is the "valueless" <code class="inline-code-box"><span class="inline-code">return;</span></code> statement, used to explicitly return from a procedure that has no return value. Another one is the procedure call. A few examples:</p>
+<p>All types of statements that can appear in the body of a function can also appear inside the body of a procedure, but there's a number of statements that can only be used with procedures. One of them is the "valueless" <code class='inline-code-box'><span class='inline-code'>return;</span></code> statement, used to explicitly return from a procedure that has no return value. Another one is the procedure call. A few examples:</p>
 
 <figure class="highlight">
 <section>
@@ -50,7 +61,7 @@ ch = <span class='m'>GetChar</span>();
 
 <p>Procedures cannot make use of type variables in their signature, cannot take closure arguments and cannot be used themselves as closures. They also cannot have explicitly declared local variables, but they can have local automaton variables (more on this later).</p>
 
-<p><code class="inline-code-box"><span class="inline-code">Main</span></code> is where the execution of the program starts: you need to define one in your program in order to create a standalone application in Cell (as opposed to a bunch of C++ classes that are then imported into an existing code base). It works just like it does in any other language: it always takes a single parameter, the program's arguments, as a sequence of strings, and if it returns a value, which must be of type <code class="inline-code-box"><span class="inline-code">Int</span></code>, that value becomes the exit status of the whole process. If no return value is provided, the exit status is 0.</p>
+<p><code class='inline-code-box'><span class='inline-code'>Main</span></code> is where the execution of the program starts: you need to define one in your program in order to create a standalone application in Cell (as opposed to a bunch of C++ classes that are then imported into an existing code base). It works just like it does in any other language: it always takes a single parameter, the program's arguments, as a sequence of strings, and if it returns a value, which must be of type <code class='inline-code-box'><span class='inline-code'>Int</span></code>, that value becomes the exit status of the whole process. If no return value is provided, the exit status is 0.</p>
 
 <p>The only way to do any I/O is to use the procedures defined in the standard library. There's currently four of them, listed here with their signatures:</p>
 
@@ -90,7 +101,9 @@ ch = <span class='m'>GetChar</span>();
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
             <li>The Basics
@@ -111,6 +124,7 @@ ch = <span class='m'>GetChar</span>();
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>
                 <li><a href='interface.html'>Interfacing with C++</a></li>
+                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
               </ul>
             </li>
 

@@ -9,6 +9,17 @@
 
   <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
   <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
 </head>
 
 <body>
@@ -24,7 +35,7 @@
 
 <p>One of the most important and distinctive features of Cell is the way it represents information. Every piece of information is represented as a value, and only as a value (as opposed to an "object"). All values, of all kinds, share a number of properties:</p>
 
-<ul><li>Values do not expose their location in memory, or any other form of "identity". If, for example, the values contained in two different variables compare equal, there's no way to tell if the two variables are referring to the same location in memory, or if they are pointing to distinct memory locations that happen to have the same content. This is true for both atomic types, like booleans and integer or floating point numbers, and for composite types, like sequences or records.</li><li>Every value has a literal, that is, a human-readable representation that can be used to denote that value in the code, and to display or store it in text form. Again, this is true for atomic values (<code class="inline-code-box"><span class="inline-code">false</span></code>, <code class="inline-code-box"><span class="inline-code">42</span></code>, <code class="inline-code-box"><span class="inline-code">3.14159</span></code>) and composite values (<code class="inline-code-box"><span class="inline-code">[0, 1, 2, 3]</span></code>, <code class="inline-code-box"><span class="inline-code">point(x: 12, y: 5)</span></code>) alike.</li><li>There's no such thing as user-defined equality. The notion of equality is defined by the language itself (it is the most obvious one), for all values, and cannot be overridden. And if two values compare equal, then they can substitute each other in any expression, without changing its result (note that this is in general not true for user-defined equality, or for any kind of "deep" equality in a language with pointers or object ids). This is true even if those values are internally represented in different ways. The same (logical) sequence, for example, could be represented under the hood as an array or a list, depending on the circumstances, but those implementation details do not "leak" into the semantics of the language.</li><li>Values don't have a type, yet the language is statically typed. That sounds a bit bizarre, I know. Everything will be explained in the next chapter.</li><li>You cannot define new values. Yes, this too, sounds a bit bizarre. But all the values you can manipulate in Cell are predefined by the language, and developers can only choose from a universal set of values which ones to use. But don't worry, there's everything you need. The language provides you with a number of atomic values (integers, symbols and floating point numbers), and ways to aggregate these atomic values into composite ones, like sequences, sets and records. For an (imperfect) analogy, think of JSON in JavaScript or S-expressions in Lisp.</li><li>There is no aliasing of any sort, and values are, conceptually at least, immutables entities. You can assign a new value to an existing variable, and, under some specific circumstances, the language will be able to produce a new value by actually updating, under the hood, an existing one, but updating a variable will never result in any observable change in the content of any other variable. An alternative way to put this is to say that the content of a variable can be updated in place, but the language has value semantics for all data structures, including composite ones, so the act of modifying the content of a particular variable never affects other variables.</li></ul>
+<ul><li>Values do not expose their location in memory, or any other form of "identity". If, for example, the values contained in two different variables compare equal, there's no way to tell if the two variables are referring to the same location in memory, or if they are pointing to distinct memory locations that happen to have the same content. This is true for both atomic types, like booleans and integer or floating point numbers, and for composite types, like sequences or records.</li><li>Every value has a literal, that is, a human-readable representation that can be used to denote that value in the code, and to display or store it in text form. Again, this is true for atomic values (<code class='inline-code-box'><span class='inline-code'>false</span></code>, <code class='inline-code-box'><span class='inline-code'>42</span></code>, <code class='inline-code-box'><span class='inline-code'>3.14159</span></code>) and composite values (<code class='inline-code-box'><span class='inline-code'>[0, 1, 2, 3]</span></code>, <code class='inline-code-box'><span class='inline-code'>point(x: 12, y: 5)</span></code>) alike.</li><li>There's no such thing as user-defined equality. The notion of equality is defined by the language itself (it is the most obvious one), for all values, and cannot be overridden. And if two values compare equal, then they can substitute each other in any expression, without changing its result (note that this is in general not true for user-defined equality, or for any kind of "deep" equality in a language with pointers or object ids). This is true even if those values are internally represented in different ways. The same (logical) sequence, for example, could be represented under the hood as an array or a list, depending on the circumstances, but those implementation details do not "leak" into the semantics of the language.</li><li>Values don't have a type, yet the language is statically typed. That sounds a bit bizarre, I know. Everything will be explained in the next chapter.</li><li>You cannot define new values. Yes, this too, sounds a bit bizarre. But all the values you can manipulate in Cell are predefined by the language, and developers can only choose from a universal set of values which ones to use. But don't worry, there's everything you need. The language provides you with a number of atomic values (integers, symbols and floating point numbers), and ways to aggregate these atomic values into composite ones, like sequences, sets and records. For an (imperfect) analogy, think of JSON in JavaScript or S-expressions in Lisp.</li><li>There is no aliasing of any sort, and values are, conceptually at least, immutables entities. You can assign a new value to an existing variable, and, under some specific circumstances, the language will be able to produce a new value by actually updating, under the hood, an existing one, but updating a variable will never result in any observable change in the content of any other variable. An alternative way to put this is to say that the content of a variable can be updated in place, but the language has value semantics for all data structures, including composite ones, so the act of modifying the content of a particular variable never affects other variables.</li></ul>
 
 <p>With all that in mind, let's delve into the details.</p>
 
@@ -61,7 +72,7 @@
 </code></pre>
 
 <p>In some cases (basically wherever symbols cannot be confused with variable or constant names) the initial colon can be ommitted. (More on this in the following chapters).</p>
-<p>Two symbols, <code class="inline-code-box"><span class="inline-code">:true</span></code> and <code class="inline-code-box"><span class="inline-code">:false</span></code>, are special, in that they are used to represent boolean values. Since they are ubiquitous, there’s no need to write the initial column: they are just written <code class="inline-code-box"><span class="inline-code">true</span></code> and <code class="inline-code-box"><span class="inline-code">false</span></code>, respectively.</p>
+<p>Two symbols, <code class='inline-code-box'><span class='inline-code'>:true</span></code> and <code class='inline-code-box'><span class='inline-code'>:false</span></code>, are special, in that they are used to represent boolean values. Since they are ubiquitous, there’s no need to write the initial column: they are just written <code class='inline-code-box'><span class='inline-code'>true</span></code> and <code class='inline-code-box'><span class='inline-code'>false</span></code>, respectively.</p>
 <p>Symbols are internally represented by integer numbers, but the specific numbers used to represent each symbol vary all the time and are just an implementation detail that is hidden from the programmer.</p>
 
 
@@ -79,21 +90,21 @@
 </figure>
 </code></pre>
 
-<p>As an aside, since parenthesis are used to create sequences, when you need to specify the order of evaluation in a complex expression, you have to use braces:</p>
+<p>As an aside, when parentheses are used to specify the order of evaluation in a complex expression, in order to avoid ambiguities with one-element sequences, you have to write a <code class='inline-code-box'><span class='inline-code'>#</span></code> symbol before the opening parenthesis:</p>
 
 <figure class="highlight">
 <section>
-<pre><code>w = x * {y + z};
+<pre><code>w = x * #(y + z);
 </section>
 </figure>
 </code></pre>
 
-<p>The only exception to this rule is boolean expressions, which cannot contain sequences so in that particular case you are free to use either parentheses or braces, as you prefer. The following two expressions are both valid, and completely equivalent:</p>
+<p>The only exception to this rule is boolean expressions, which cannot contain sequences so in that particular case you are free to omit the initial <code class='inline-code-box'><span class='inline-code'>#</span></code> symbol. The following two expressions are both valid, and completely equivalent:</p>
 
 <figure class="highlight">
 <section>
 <pre><code>  e = (a <span class='k'>and</span> b) <span class='k'>or</span> (c <span class='k'>and</span> d);
-  e = {a <span class='k'>and</span> b} <span class='k'>or</span> {c <span class='k'>and</span> d};
+  e = #(a <span class='k'>and</span> b) <span class='k'>or</span> #(c <span class='k'>and</span> d);
 </section>
 </figure>
 </code></pre>
@@ -184,7 +195,7 @@
 </figure>
 </code></pre>
 
-<p>The above notation is completely equivalent to <code class="inline-code-box"><span class="inline-code">[0, :a; 1, :b; 2, :c; 3, :d]</span></code> and <code class="inline-code-box"><span class="inline-code">[:pi, 3.14159;]</span></code>, but it is used to guarantee that the value is actually a map in expressions containing variables: if <code class="inline-code-box"><span class="inline-code">w</span></code>, <code class="inline-code-box"><span class="inline-code">x</span></code>, <code class="inline-code-box"><span class="inline-code">y</span></code> and <code class="inline-code-box"><span class="inline-code">z</span></code> are variables, the two expressions <code class="inline-code-box"><span class="inline-code">[w, x; y, z]</span></code> and <code class="inline-code-box"><span class="inline-code">[w -&gt; x, y -&gt; z]</span></code> will produce exactly the same value if <code class="inline-code-box"><span class="inline-code">w</span></code> is different from <code class="inline-code-box"><span class="inline-code">y</span></code>, but the latter will fail if they are equal, while the former will succeed in either case.</p>
+<p>The above notation is completely equivalent to <code class='inline-code-box'><span class='inline-code'>[0, :a; 1, :b; 2, :c; 3, :d]</span></code> and <code class='inline-code-box'><span class='inline-code'>[:pi, 3.14159;]</span></code>, but it is used to guarantee that the value is actually a map in expressions containing variables: if <code class='inline-code-box'><span class='inline-code'>w</span></code>, <code class='inline-code-box'><span class='inline-code'>x</span></code>, <code class='inline-code-box'><span class='inline-code'>y</span></code> and <code class='inline-code-box'><span class='inline-code'>z</span></code> are variables, the two expressions <code class='inline-code-box'><span class='inline-code'>[w, x; y, z]</span></code> and <code class='inline-code-box'><span class='inline-code'>[w -&gt; x, y -&gt; z]</span></code> will produce exactly the same value if <code class='inline-code-box'><span class='inline-code'>w</span></code> is different from <code class='inline-code-box'><span class='inline-code'>y</span></code>, but the latter will fail if they are equal, while the former will succeed in either case.</p>
 
 <p>Also note that every singleton binary relation is a map, so you can avoid the syntactic quirk for one-entry relations described above by using the map notation:</p>
 
@@ -297,7 +308,7 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
 
 <h3>Strings</h3>
 
-<p>Strings in Cell are ordinary values built using the mechanisms seen above. The only special thing about them is that they have some syntactic sugar like in any other language. At their core, strings are just sequences of non-negative integer numbers, where each number is the ASCII/Unicode value of the corresponding character, tagged with the symbol <code class="inline-code-box"><span class="inline-code">:string</span></code>. In their syntactically "sugared" representation, they are enclosed in double quotes. The following are different ways of writing exactly the same value:</p>
+<p>Strings in Cell are ordinary values built using the mechanisms seen above. The only special thing about them is that they have some syntactic sugar like in any other language. At their core, strings are just sequences of non-negative integer numbers, where each number is the ASCII/Unicode value of the corresponding character, tagged with the symbol <code class='inline-code-box'><span class='inline-code'>:string</span></code>. In their syntactically "sugared" representation, they are enclosed in double quotes. The following are different ways of writing exactly the same value:</p>
 
 <figure class="highlight">
 <section>
@@ -308,7 +319,7 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
 </figure>
 </code></pre>
 
-<p>There are five special escape codes, <code class="inline-code-box"><span class="inline-code">\n</span></code>, <code class="inline-code-box"><span class="inline-code">\t</span></code>, <code class="inline-code-box"><span class="inline-code">\r</span></code> <code class="inline-code-box"><span class="inline-code">\"</span></code> and <code class="inline-code-box"><span class="inline-code">\\</span></code>, and the generic numeric one, a backslash followed by exactly four hexadecimal digit, <code class="inline-code-box"><span class="inline-code">\XXXX</span></code>, where the four digits represent the 16-bit character Unicode code point. If you need to use Unicode characters whose code point is equal to or higher than <code class="inline-code-box"><span class="inline-code">2^16</span></code> and cannot be represented by a 16-bit number, for now you'll have to use the more cumbersome standard notation for values, without the syntactic sugar.</p>
+<p>There are five special escape codes, <code class='inline-code-box'><span class='inline-code'>\n</span></code>, <code class='inline-code-box'><span class='inline-code'>\t</span></code>, <code class='inline-code-box'><span class='inline-code'>\r</span></code> <code class='inline-code-box'><span class='inline-code'>\"</span></code> and <code class='inline-code-box'><span class='inline-code'>\\</span></code>, and the generic numeric one, a backslash followed by exactly four hexadecimal digit, <code class='inline-code-box'><span class='inline-code'>\XXXX</span></code>, where the four digits represent the 16-bit character Unicode code point. If you need to use Unicode characters whose code point is equal to or higher than <code class='inline-code-box'><span class='inline-code'>2^16</span></code> and cannot be represented by a 16-bit number, for now you'll have to use the more cumbersome standard notation for values, without the syntactic sugar.</p>
 
 <p>There's no separate character type, each character can be represented either by an integer number (its Unicode code point) or by a one-character string (more on this when we talk about types).</p>
 
@@ -371,7 +382,9 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
             <li>The Basics
@@ -392,6 +405,7 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>
                 <li><a href='interface.html'>Interfacing with C++</a></li>
+                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
               </ul>
             </li>
 

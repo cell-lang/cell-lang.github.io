@@ -9,6 +9,17 @@
 
   <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
   <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
 </head>
 
 <body>
@@ -22,24 +33,38 @@
         <article class="content">
 <h2>Getting started</h2>
 
-<p>The Cell compiler can be downloaded <a href='download.zip'>here</a>. After you unzip the file, you'll see five directories: <code class="inline-code-box"><span class="inline-code">bin</span></code>, <code class="inline-code-box"><span class="inline-code">stdlib</span></code>, <code class="inline-code-box"><span class="inline-code">examples</span></code>, <code class="inline-code-box"><span class="inline-code">src</span></code> and <code class="inline-code-box"><span class="inline-code">sublime-text</span></code>. The first one contains the Cell compiler executable, the second one the standard library (which at the moment consists of just one file, <code class="inline-code-box"><span class="inline-code">prelude.h</span></code>), and the third one a few ready-to-build examples to get you started. You can find more information about them in <code class="inline-code-box"><span class="inline-code">examples/README.txt</span></code>.</p>
+<p>The Cell compiler can be downloaded <a href='download.zip'>here</a>. After you unzip the file, you'll see five directories: <code class='inline-code-box'><span class='inline-code'>bin</span></code>, <code class='inline-code-box'><span class='inline-code'>stdlib</span></code>, <code class='inline-code-box'><span class='inline-code'>examples</span></code>, <code class='inline-code-box'><span class='inline-code'>src</span></code> and <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code>. The first one contains the Cell compilers/code generators (there's one for each target language), the second one the standard library (which at the moment consists of just one file, <code class='inline-code-box'><span class='inline-code'>prelude.h</span></code>), and the third one a few ready-to-build examples to get you started. You can find more information about them in <code class='inline-code-box'><span class='inline-code'>examples/README.txt</span></code>.</p>
 
-<p>The compiler produces a C++ sources file (<code class="inline-code-box"><span class="inline-code">generated.cpp</span></code>) that can be compiled directly into an executable file if your Cell source code includes a <code class="inline-code-box"><span class="inline-code">Main(..)</span></code> procedure, or otherwise included in an existing C++ project. You'll need a compiler that supports C++11. If your project defines any automata, of either type, the compiler will also produce a second files, <code class="inline-code-box"><span class="inline-code">generated.h</span></code>, which contains the declaration of the interface of the generated classes that you'll be dealing with from your own native C++ code.</p>
+<p>The output of the C++ code generator (<code class='inline-code-box'><span class='inline-code'>cellc</span></code>) is the <code class='inline-code-box'><span class='inline-code'>generated.cpp</span></code> source file, which can be compiled directly into an executable file if your Cell source code includes a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure, or otherwise included in an existing C++ project. You'll need a compiler that supports C++11. If your project defines any automata, of either type, the compiler will also produce a second files, <code class='inline-code-box'><span class='inline-code'>generated.h</span></code>, which contains the declaration of the interface of the generated classes that you'll be dealing with from your own native C++ code.</p>
 
-<p>There's no documentation for the standard library yet, you'll have to delve into the <code class="inline-code-box"><span class="inline-code">prelude.h</span></code> file, which is very small anyway.</p>
+<p>The C++ code generator is provided as a Linux binary, but if you're using another Unix-like platform like OS X/macOS you can try to compile it yourself using the source code in <code class='inline-code-box'><span class='inline-code'>src</span></code>. If you're using GCC you can build it by just typing <code class='inline-code-box'><span class='inline-code'>g++ -O3 -DNDEBUG cellc.cpp -o cellc</span></code> in <code class='inline-code-box'><span class='inline-code'>src</span></code> and then replacing the executable in <code class='inline-code-box'><span class='inline-code'>bin</span></code> with the one you built yourself.</p>
 
-<p>The compiler is provided as a Linux binary, but if you're using another Unix-like platform like OS X/macOS you can try to compile it yourself using the source code in <code class="inline-code-box"><span class="inline-code">src</span></code>. If you're using GCC you can build it by just typing <code class="inline-code-box"><span class="inline-code">g++ -O3 -DNDEBUG cellc.cpp -o cellc</span></code> in <code class="inline-code-box"><span class="inline-code">src</span></code> and then replacing the executable in <code class="inline-code-box"><span class="inline-code">bin</span></code> with the one you built yourself.</p>
+<p>The C# code generator (<code class='inline-code-box'><span class='inline-code'>cellc-cs.exe</span></code>) generates an analogous file named <code class='inline-code-box'><span class='inline-code'>generated.cs</span></code>. The interface of the automata-derived classes is documented in another generated file, <code class='inline-code-box'><span class='inline-code'>interfaces.txt</span></code>, in pseudo-C# code.</p>
 
-<p>The <code class="inline-code-box"><span class="inline-code">sublime-text</span></code> directory contains syntax highlighting files for Sublime Text. Just copy them in the <code class="inline-code-box"><span class="inline-code">~/.config/sublime-text-3/Packages/User</span></code> directory on Linux, or its equivalent in other operating systems.</p>
+<p>The C# code generator should work on any platform that support .NET, through either the Microsoft or Mono implementation.</p>
+
+<p>There's no documentation for the standard library yet, you'll have to delve into the <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code> file, which is very small anyway.</p>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code> directory contains syntax highlighting files for Sublime Text. Just copy them in the <code class='inline-code-box-long'><span class='inline-code'>~/.config/sublime-text-3/Packages/User</span></code> directory on Linux, or its equivalent in other operating systems.</p>
 
 
-<h3>Debugging</h3>
+<h3>Debugging (general)</h3>
 
-<p>There's no debugger for Cell, and debugging is done mainly by tracing the execution of a program with the help of the <code class="inline-code-box"><span class="inline-code">print</span></code> statement. Another useful tool is the <code class="inline-code-box"><span class="inline-code">assert</span></code> statement. When an assertion fails, the execution of the program is stopped and all the variables in scope are printed to the standard output or to a file, if they are too large. If the program is running in debug mode (more on that in a second) the call stack is also printed, along with the value of all the arguments of all function calls on the stack. Call stack and values of function arguments are also printed every time the program crashes, for whatever reason (again, this happens only if the program is running in debug mode). Only a small part of this data is actually written to the standard output, with the rest of it being written to a set of files. All the files created by a program crash are created inside the <code class="inline-code-box"><span class="inline-code">debug</span></code> subdirectory of the working directory of the process. This subdirectory is not created automatically: you have to create it manually before running the code, otherwise no dump file will be produced.</p>
+<p>There's no debugger for Cell, and debugging is done mainly by tracing the execution of a program with the help of the <code class='inline-code-box'><span class='inline-code'>print</span></code> statement. Another useful tool is the <code class='inline-code-box'><span class='inline-code'>assert</span></code> statement. When an assertion fails, the execution of the program is stopped and all the variables in scope are printed to the standard output or to a file, if they are too large. If the program is running in debug mode (more on that in a second) the call stack is also printed, along with the value of all the arguments of all function calls on the stack. Call stack and values of function arguments are also printed every time the program crashes, for whatever reason (again, this happens only if the program is running in debug mode). Only a small part of this data is actually written to the standard output, with the rest of it being written to a set of files. All the files created by a program crash are created inside the <code class='inline-code-box'><span class='inline-code'>debug</span></code> subdirectory of the working directory of the process. This subdirectory is not created automatically: you have to create it manually before running the code, otherwise no dump file will be produced.</p>
 
-<p>The <code class="inline-code-box"><span class="inline-code">NDEBUG</span></code> preprocessor symbol is used to choose between debug and release mode. It's the same symbol used by the C <code class="inline-code-box"><span class="inline-code">assert(..)</span></code> macro. Defining it when compiling the generated C++ code will disable all the extra debugging code. With GCC, that can be done with the <code class="inline-code-box"><span class="inline-code">-DNDEBUG</span></code> command line argument. The code compiled in debug mode is an order of magnitude slower, so make sure that symbol is defined when building your production binaries.</p>
 
-<p>Sometimes there's no choice but to debug the generated code. The generated code itself is all but incomprehensible, but the names of variables and functions are the same as in the Cell sources, with the addition of a short suffix that is needed to avoid name clashes. For example a two-argument non-polymorphic function named <code class="inline-code-box"><span class="inline-code">my_fn(..)</span></code> in Cell will be named <code class="inline-code-box"><span class="inline-code">my_fn_F2(..)</span></code> in the generated C++ code, and a variable named <code class="inline-code-box"><span class="inline-code">my_var</span></code> will become <code class="inline-code-box"><span class="inline-code">my_var_V</span></code>. To print the value of such variable in GDB you'll need to type <code class="inline-code-box"><span class="inline-code">call print(my_var_V)</span></code> at the debugger prompt.</p>
+<h3>Debugging (C++ specific)</h3>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>NDEBUG</span></code> preprocessor symbol is used to choose between debug and release mode. It's the same symbol used by the C <code class='inline-code-box'><span class='inline-code'>assert(..)</span></code> macro. Defining it when compiling the generated C++ code will disable all the extra debugging code. With GCC, that can be done with the <code class='inline-code-box'><span class='inline-code'>-DNDEBUG</span></code> command line argument. The code compiled in debug mode is an order of magnitude slower, so make sure that symbol is defined when building your production binaries.</p>
+
+<p>Sometimes there's no choice but to debug the generated code. The generated code itself is all but incomprehensible, but the names of variables and functions are the same as in the Cell sources, with the addition of a short suffix that is needed to avoid name clashes. For example a two-argument non-polymorphic function named <code class='inline-code-box'><span class='inline-code'>my_fn(..)</span></code> in Cell will be named <code class='inline-code-box'><span class='inline-code'>my_fn_F2(..)</span></code> in the generated C++ code, and a variable named <code class='inline-code-box'><span class='inline-code'>my_var</span></code> will become <code class='inline-code-box'><span class='inline-code'>my_var_V</span></code>. To print the value of such variable in GDB you'll need to type <code class='inline-code-box'><span class='inline-code'>call print(my_var_V)</span></code> at the debugger prompt.</p>
+
+
+<h3>Debugging (C# specific)</h3>
+
+<p>In order to compile your code in debug mode, and have it print a complete stack trace when an error occurs, you'll have to use the <code class='inline-code-box'><span class='inline-code'>-d</span></code> option of the compiler: <code class='inline-code-box'><span class='inline-code'>cellc-cs.exe -d project.txt</span></code>. Execution times approximately double in debug mode.</p>
+
+<p>The generated C# code is very similar to the generated C++ both in structure and with regards to the naming conventions, so most of what was said in the previous paragraph about C++ applies here as well.</p>
 
 
         </article>
@@ -52,7 +77,9 @@
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
             <li>The Basics
@@ -73,6 +100,7 @@
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>
                 <li><a href='interface.html'>Interfacing with C++</a></li>
+                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
               </ul>
             </li>
 

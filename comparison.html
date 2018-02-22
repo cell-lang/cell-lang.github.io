@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>A comparison with OOP</h2>
+
+<p>Note: if you haven't already, read the introductory <a href='example.html'>example</a> before reading this.</p>
+
+<p>After writing the core of his application in Cell, Miki has now decided to write it again in C#, in order to get a better sense of the differences between the two programming paradigms, OOP and the functional/relational approach used in Cell. Miki is not trying here to replicate more "advanced" features of Cell, like orthogonal persistence, transactions, or the ability to record and replay the execution of the application. He just wants to write some of the logic in both paradigms to see how they compare in terms of the usual metrics that we value as software engineers, things like simplicity, reliability, maintainability, overall development effort and so on.</p>
+
+<p>On the Cell side, Miki has decided to make use of a number of previously discussed features that are not implemented in the current (0.1.1) version of the compiler, but which will be available starting with version 0.3.</p>
+
+<p>On the C# side, in order to avoid boring boilerplate code that would make the comparison less clear, Miki has decided to only partially follow one of the fundamental tenets of OOP, encapsulation. All member variables will be public, but they are intended to be read-only outside the class they belong to. Any change to the state of any object will only be carried out by methods of its class. This is similar to what happens in Cell with relational automata, whose state is visible in read-only mode to the outside world, but can be mutated only by the message handlers of the same automaton, although there are several major differences here, one of them being the fact that in Cell that's actually enforced by the language, while in C# it is left to the programmer's self-discipline.</p>
+
+<p>The other rule that Miki has set for himself is that no linear searches are allowed in his code. His application is of course managing only a small amount of data, and he could probably get away with linear searches, but he has decided to write it as if it were a real, industrial-scale one. In the Cell version of the software of course all searches and lookups are performed in constant time, courtesy of the relational model.</p>
+
+
+<h3>Data structures</h3>
+
+<p>We've already seen the Cell schema for the core logic of Miki's application:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Person</span> = person(<span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>Gang</span>   = gang(<span class='m'>Int</span>);
+
+<span class='k'>schema</span> <span class='m'>SocialNetwork</span> {
+  next_id : <span class='m'>Int</span> = <span class='n'>0</span>;
+
+  person(<span class='m'>Person</span>):
+    name           : <span class='m'>String</span>,
+    surname        : <span class='m'>String</span>,
+    nickname       : <span class='m'>String</span> [<span class='k'>unique</span>],
+    date_of_birth? : <span class='m'>Date</span>;
+
+  know_each_other(<span class='m'>Person</span> | <span class='m'>Person</span>):
+    met_on          : <span class='m'>Date</span>,
+    introduced_by?  : <span class='m'>Person</span>;
+
+  gang(<span class='m'>Gang</span>):
+    name    : <span class='m'>String</span>,
+    leader  : <span class='m'>Person</span>;
+
+  member(<span class='m'>Person</span>, <span class='m'>Gang</span>):
+    joined_on : <span class='m'>Date</span>,
+    rank      : <span class='m'>Int</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>There are a couple minor differences here, due to the fact that we are using the yet unreleased version 0.3 of the language. There's syntactic sugar for the unique <code class='inline-code-box'><span class='inline-code'>nickname</span></code> attribute, and the <code class='inline-code-box'><span class='inline-code'>know_each_other</span></code> relation and its attribute relations, <code class='inline-code-box'><span class='inline-code'>met_on</span></code> and <code class='inline-code-box'><span class='inline-code'>introduced_by</span></code>, have been declared as symmetric.</p>
+
+<p>There are of course many ways to design a set of equivalent data structures in C# (unlike what happens with Cell, where's there's just one obvious way to design the data schema), but this is what Miki has settled on:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>partial</span> <span class='k'>class</span> <span class='m'>Person</span> {
+  <span class='k'>public</span> <span class='b'>int</span>      id;
+  <span class='k'>public</span> <span class='b'>string</span>   name;
+  <span class='k'>public</span> <span class='b'>string</span>   surname;
+  <span class='k'>public</span> <span class='b'>string</span>   nickname;
+  <span class='k'>public</span> <span class='m'>DateTime</span> dateOfBirth;
+
+  <span class='c'>// The dictionary key is the id of the gang</span>
+  <span class='k'>public</span> <span class='m'>Dictionary</span>&lt;<span class='b'>int</span>, <span class='m'>Membership</span>&gt; memberships;
+
+  <span class='c'>// The dictionary key is the id of the other person</span>
+  <span class='k'>public</span> <span class='m'>Dictionary</span>&lt;<span class='b'>int</span>, <span class='m'>Friendship</span>&gt; friendships;
+}
+
+<span class='k'>partial</span> <span class='k'>class</span> <span class='m'>Gang</span> {
+  <span class='k'>public</span> <span class='b'>int</span>    id;
+  <span class='k'>public</span> <span class='b'>string</span> name;
+  <span class='k'>public</span> <span class='m'>Person</span> leader;
+
+  <span class='c'>// The dictionary key is the id of the member</span>
+  <span class='k'>public</span> <span class='m'>Dictionary</span>&lt;<span class='b'>int</span>, <span class='m'>Membership</span>&gt; memberships;
+}
+
+<span class='k'>partial</span> <span class='k'>class</span> <span class='m'>Membership</span> {
+  <span class='k'>public</span> <span class='m'>Person</span>   person;
+  <span class='k'>public</span> <span class='m'>Gang</span>     gang;
+  <span class='k'>public</span> <span class='m'>DateTime</span> joinedOn;
+  <span class='k'>public</span> <span class='b'>int</span>      rank;
+}
+
+<span class='k'>partial</span> <span class='k'>class</span> <span class='m'>Friendship</span> {
+  <span class='k'>public</span> <span class='m'>Person</span>   person1;
+  <span class='k'>public</span> <span class='m'>Person</span>   person2;
+  <span class='k'>public</span> <span class='m'>DateTime</span> metOn;
+  <span class='k'>public</span> <span class='m'>Person</span>   introducedBy;
+}
+
+<span class='k'>partial</span> <span class='k'>class</span> SocialNetwork {
+  <span class='b'>int</span> nextId = <span class='n'>0</span>;
+
+  <span class='c'>// The dictionary key is the id of the person</span>
+  <span class='k'>public</span> <span class='m'>Dictionary</span>&lt;<span class='b'>int</span>, <span class='m'>Person</span>&gt; people;
+
+  <span class='c'>// The dictionary key is the id of the gang</span>
+  <span class='k'>public</span> <span class='m'>Dictionary</span>&lt;<span class='b'>int</span>, <span class='m'>Gang</span>&gt;   gangs;
+}
+</code></pre></section></figure>
+</p>
+
+<p>There are a couple issues that Miki has noticed with the C# version of the schema. The first one is that there's some redundancy in the data. The most obvious part of it is the <code class='inline-code-box'><span class='inline-code'>memberships</span></code> member variables in <code class='inline-code-box'><span class='inline-code'>Person</span></code> and <code class='inline-code-box'><span class='inline-code'>Gang</span></code>: either one could be eliminated without actually removing any information from the data set. The redundancy is needed because we have to be able to efficiently retrieve both the list of gangs a given person has joined (along with the membership data, like join date and rank) and the list of all members of a given gang. But there's another, more subtle, source of redundancy: all the <code class='inline-code-box'><span class='inline-code'>Dictionary&lt;&gt;</span></code> member variables contain a list of key/value pairs where the value is an object of one of the classes in Miki's model, and the key is either the id of the object itself or that of another object linked from it. That is, the id of the entity that is used as key is stored twice, first in the object itself and second as the key of the dictionary.</p>
+
+<p>There's two main problems that Miki sees with that. The first one is that if some piece of information is stored in multiple places, every time he updates it Miki has to update each of the locations that contain it, and that means writing more code. The other problem has to do with consistency: a bug in the code could cause redundant data structures to go out of sync, and that would almost surely cause the software to misbehave. One could end up for example in a situation where a <code class='inline-code-box'><span class='inline-code'>Person</span></code> "thinks" it has joined a <code class='inline-code-box'><span class='inline-code'>Gang</span></code>, but the corresponding <code class='inline-code-box'><span class='inline-code'>Gang</span></code> object doesn't have such person among its members. Miki also feels that the redundancy makes his data structures less clear and more difficult to understand.</p>
+
+<p>The second issue that bothers Miki is the fact that in C# (and more generally, in OOP) there's no way to enforce a number of useful integrity constraints on the data. Nothing would prevent buggy code from, for example, creating two different <code class='inline-code-box'><span class='inline-code'>Membership</span></code> objects for the same combination of person and gang, with the result that a person could end up having two different join dates and ranks in the same gang. Similar problems could occur with <code class='inline-code-box'><span class='inline-code'>Friendship</span></code> objects. And of course there's no way to declaratively enforce the fact that nicknames have to be unique.</p>
+
+<p>All these problems are easily avoided using the relational model. In OOP the only way to make sure that that doesn't happen is to write bug-free code. But code is complex and difficult to write, and will invariably contain bugs in any non-trivial application, while redundance-free data structures and declarative integrity constraints are very easy to design and get right.</p>
+
+
+<h3>Updating the information in the dataset</h3>
+
+<p>The next thing that Miki is going to do is write methods that are equivalent to the Cell message handlers. Inserting a new person or gang is trivial and very similar in both languages, so Miki will not even bother to show you the code for that. Instead, he will start with the code that records the fact that a person has joined a gang, or that two people have met. Here's the Cell code for that:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>SocialNetwork</span>.have_met(person_1: <span class='m'>Person</span>, person_2: <span class='m'>Person</span>, day: <span class='m'>Date</span>, introduced_by: <span class='m'>Person</span>?) {
+  <span class='k'>insert</span> know_each_other(
+    <span class='k'>self</span>.person_1 | <span class='k'>self</span>.person_2,
+    met_on = <span class='k'>self</span>.day,
+    introduced_by = <span class='k'>self</span>.introduced_by <span class='k'>if</span> <span class='k'>self</span>.introduced_by?
+  );
+}
+
+<span class='m'>SocialNetwork</span>.has_joined(person: <span class='m'>Person</span>, gang: <span class='m'>Gang</span>, date: <span class='m'>Date</span>, rank: <span class='m'>Int</span>); {
+  <span class='k'>insert</span> member(<span class='k'>self</span>.person, <span class='k'>self</span>.gang, joined_on = <span class='k'>self</span>.date, rank = <span class='k'>self</span>.rank);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Here too Miki's code is making use of some syntactic sugar that will only be available with version 0.3 of Cell. In C# the same functionality is implemented by the following methods of the <code class='inline-code-box'><span class='inline-code'>Person</span></code> class:</p>
+
+<p><figure class="highlight"><section><pre><code><span <span class='k'>partial</span> <span <span class='k'>class</span> <span class='m'>Person</span> {
+  <span <span class='k'>public</span> <span <span class='k'>void</span> Join(<span class='m'>Gang</span> gang, <span class='m'>DateTime</span> joinedOn, <span <span class='k'>int</span> rank) {
+    <span class='m'>Membership</span> membership = <span <span class='k'>new</span> <span class='m'>Membership</span>(<span <span class='k'>this</span>, gang, joinedOn, rank);
+    memberships[gang.id] = membership;
+    gang.memberships[id] = membership;
+  }
+
+  <span <span class='k'>public</span> <span <span class='k'>void</span> MakeFriendsWith(<span class='m'>Person</span> otherPerson, <span class='m'>DateTime</span> metOn, <span class='m'>Person</span> introducedBy) {
+    <span class='m'>Friendship</span> friendship = <span <span class='k'>new</span> <span class='m'>Friendship</span>(<span <span class='k'>this</span>, otherPerson, metOn, introducedBy);
+    friendships[otherPerson.id] = friendship;
+    otherPerson.friendships[id] = friendship;
+  }
+}
+</code></pre></section></figure>
+</p>
+
+<p>The C# code is slightly more complex, in the case of <code class='inline-code-box'><span class='inline-code'>Join(..)</span></code> because the same <code class='inline-code-box'><span class='inline-code'>Membership</span></code> object has to be inserted in both <code class='inline-code-box'><span class='inline-code'>Person.memberships</span></code> and <code class='inline-code-box'><span class='inline-code'>Gang.memberships</span></code>, and in the case of <code class='inline-code-box'><span class='inline-code'>MakeFriendsWith(..)</span></code> because the same <code class='inline-code-box'><span class='inline-code'>Friendship</span></code> object has to be added to the <code class='inline-code-box'><span class='inline-code'>friendships</span></code> member variables of both parties involved. But that's not much of deal.</p>
+
+<p>The code that deletes data from the dataset, though, is more interesting. Here's the Cell version:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>SocialNetwork</span>.delete_person(id: <span class='m'>Person</span>) {
+  id = <span class='k'>self</span>.id;
+  <span class='k'>delete</span> person(id), know_each_other(id | *);
+  leave_gang(id, g) : g &lt;- member(id, ?);
+}
+
+<span class='m'>SocialNetwork</span>.delete_gang(id: <span class='m'>Gang</span>) {
+  <span class='k'>delete</span> gang(<span class='k'>self</span>.id), member(*, <span class='k'>self</span>.id);
+}
+
+<span class='m'>SocialNetwork</span>.leave_gang(person: <span class='m'>Person</span>, gang: <span class='m'>Gang</span>) {
+  leave_gang(<span class='k'>self</span>.person, <span class='k'>self</span>.gang);
+}
+
+<span class='k'>using</span> <span class='m'>SocialNetwork</span> {
+  leave_gang(<span class='m'>Person</span> person, <span class='m'>Gang</span> gang) {
+    <span class='k'>delete</span> member(person, gang);
+    <span class='k'>if</span> leader(gang) == person:
+      members = [p : p &lt;- member(?, gang), p != person];
+      <span class='k'>if</span> members == []:
+        <span class='k'>delete</span> gang(gang);
+      <span class='k'>else</span>
+        max_rank_members = max_by(members, rank($, g));
+        new_leader = an_elem(max_rank_members);
+        <span class='k'>update</span> leader(gang, new_leader);
+      ;
+    ;
+  }
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The above code makes use of both features that are already available but we haven't encountered before and others that will only be available with version 0.3 . For the equivalent C# code Miki has added a <code class='inline-code-box'><span class='inline-code'>Delete()</span></code> methods to both <code class='inline-code-box'><span class='inline-code'>Person</span></code> and <code class='inline-code-box'><span class='inline-code'>Gang</span></code>:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>partial</span> <span class='k'>class</span> <span class='m'>Person</span> {
+  <span class='k'>public</span> <span class='m'>SocialNetwork</span> socialNetwork;
+
+  <span class='k'>public</span> <span class='k'>void</span> Delete() {
+    socialNetwork.Remove(<span class='k'>this</span>);
+
+    <span class='k'>foreach</span> (<span class='k'>var</span> e <span class='k'>in</span> memberships)
+      e.Value.gang.RemoveMember(<span class='k'>this</span>);
+
+    <span class='k'>foreach</span> (<span class='k'>var</span> e <span class='k'>in</span> friendships) {
+      <span class='m'>Friendship</span> f = e.Value;
+      <span class='m'>Person</span> otherPerson = f.person1 == <span class='k'>this</span> ? f.person2 : f.person1;
+      otherPerson.friendships.Remove(id);
+    }
+  }
+
+  <span class='k'>public</span> <span class='k'>void</span> LeaveGang(<span class='m'>Gang</span> gang) {
+    <span class='k'>if</span> (memberships.Remove(gang.id))
+      gang.RemoveMember(<span class='k'>this</span>);
+  }
+}
+
+<span class='k'>partial</span> <span class='k'>class</span> <span class='m'>Gang</span> {
+  <span class='k'>public</span> <span class='m'>SocialNetwork</span> socialNetwork;
+
+  <span class='k'>public</span> <span class='k'>void</span> Delete() {
+    socialNetwork.Remove(<span class='k'>this</span>);
+
+    <span class='k'>foreach</span> (<span class='k'>var</span> e <span class='k'>in</span> memberships)
+      e.Value.person.LeaveGang(<span class='k'>this</span>);
+  }
+
+  <span class='k'>public</span> <span class='k'>void</span> RemoveMember(<span class='m'>Person</span> person) {
+    <span class='k'>if</span> (!memberships.Remove(person.id)) {
+      person.LeaveGang(<span class='k'>this</span>);
+      <span class='k'>if</span> (leader == person) {
+        <span class='m'>Person</span> newLeader = <span class='k'>null</span>;
+        <span class='k'>int</span> newLeaderRank = <span class='n'>0</span>;
+        <span class='k'>foreach</span> (<span class='k'>var</span> e <span class='k'>in</span> memberships) {
+          <span class='m'><span class='m'>Membership</span></span> m = e.Value;
+          <span class='k'>if</span> (newLeader == <span class='k'>null</span> || newLeaderRank &lt; m.rank) {
+            newLeader = m.person;
+            newLeaderRank = m.rank;
+          }
+        }
+        <span class='k'>if</span> (newLeader != <span class='k'>null</span>)
+          leader = newLeader;
+        <span class='k'>else</span>
+          Delete();
+      }
+    }
+  }
+}
+
+<span class='k'>partial</span> <span class='k'>class</span> <span class='m'>SocialNetwork</span> {
+  <span class='k'>public</span> <span class='k'>void</span> Remove(<span class='m'>Person</span> person) {
+    if (people.Remove(person.id))
+      person.Delete();
+  }
+
+  <span class='k'>public</span> <span class='k'>void</span> Remove(<span class='m'>Gang</span> gang) {
+    if (gangs.Remove(gang.id))
+      gang.Delete();
+  }
+}
+</code></pre></section></figure>
+</p>
+
+<p>Here the problems created by a bad data representation are more evident. The first thing Miki has to do is to add new "wiring" to his class model: both <code class='inline-code-box'><span class='inline-code'>Person</span></code> and <code class='inline-code-box'><span class='inline-code'>Gang</span></code> now need to have a pointer to <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code>, since their <code class='inline-code-box'><span class='inline-code'>Delete()</span></code> methods need to remove the corresponding objects from the list of "live" objects that is held by <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code>. That means adding a new member variable to both, changing both constructors and all places where objects of either class are instantiated. In a toy application like this it may not be much of a problem, but Miki has already enough experience of real-world software development to be familiar with this situation: implementing a new feature causes the classes/objects where the logic is located to need access to other nodes of the object graph, which has therefore to be augmented with some extra wiring. Depending on how "distant" the two parts of the graph are, many places in the codebase may have to be modified in order to "carry" a pointer to the required data structures from the place where it's already available to the one where it's now needed.</p>
+
+<p>As was the case with the <code class='inline-code-box'><span class='inline-code'>Join(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>MakeFriendsWith(..)</span></code> methods we saw before, the <code class='inline-code-box'><span class='inline-code'>Delete()</span></code> methods have more work to do because of the redundancy in the data: <code class='inline-code-box'><span class='inline-code'>Person.Delete()</span></code> has to leave all the gangs the person has joined, and remove the other side of each friendship, in orders to remove all traces of itself, while <code class='inline-code-box'><span class='inline-code'>Gang.Delete()</span></code> has to make all members of the gang leave it. And both of them need to remove the objects they belong to from <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code> as we mentioned earlier.</p>
+
+<p>Another thing that Miki feels is making the code more difficult to understand and less elegant is the fact that there's a mutual dependency between <code class='inline-code-box'><span class='inline-code'>LeaveGang(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>RemoveMember(..)</span></code>: each of them needs to call the other in order to complete its work, and therefore there has to be some check in place to avoid entering an infinite loop.</p>
+
+<p>The same type of cyclical dependency in repeated with the <code class='inline-code-box'><span class='inline-code'>Delete()</span></code> methods and the corresponding <code class='inline-code-box'><span class='inline-code'>Remove(..)</span></code> methods in <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code>. If those methods were simply defined as follow:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>partial</span> <span class='k'>class</span> <span class='m'>SocialNetwork</span> {
+  <span class='k'>public</span> <span class='k'>void</span> Remove(<span class='m'>Person</span> person) {
+    people.Remove(person.id)
+  }
+
+  <span class='k'>public</span> <span class='k'>void</span> Remove(<span class='m'>Gang</span> gang) {
+    gangs.Remove(gang.id);
+  }
+}
+</code></pre></section></figure>
+</p>
+
+<p>they would be unsafe, because if they were erroneously called on their own by the user of Miki's classes (which could well happen since they are public) they would cause the dataset to enter an inconsistent state: the person or gang in question would be removed from the list of objects held by <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code>, but would still be reachable from all the <code class='inline-code-box'><span class='inline-code'>Membership</span></code> and <code class='inline-code-box'><span class='inline-code'>Friendship</span></code> objects that reference them. Miki was even tempted to do away with the two <code class='inline-code-box'><span class='inline-code'>Remove(..)</span></code> methods in <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code> altogether, and let <code class='inline-code-box'><span class='inline-code'>Person</span></code> and <code class='inline-code-box'><span class='inline-code'>Gang</span></code> remove themselves directly from SocialNetwork (using the instructions <code class='inline-code-box'><span class='inline-code'>socialNetwork.people.Remove(id)</span></code> and <code class='inline-code-box'><span class='inline-code'>socialNetwork.gangs.Remove(id)</span></code> respectively), but that would violate the rule he had set for himself at the beginning of the project: all changes to the state of an object can only be carried out by the methods of its class. Violating the principle of encapsulation like that would cause other problems further down the road, as we'll see in the next paragraph.</p>
+
+
+<h3>Searches</h3>
+
+<p>Miki is now going to implement one of the (read-only) methods that we saw previously, <code class='inline-code-box'><span class='inline-code'>people_born_on(..)</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>SocialNetwork</span> {
+  [<span class='m'>PersonId</span>] people_born_on(<span class='m'>Date</span> d) = [p : p &lt;- date_of_birth(?, d)];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>This is what Miki came up with:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>partial</span> <span class='k'>class</span> <span class='m'>SocialNetwork</span> {
+  Dictionary&lt;DateTime, Dictionary&lt;<span class='b'>int</span>, <span class='m'>Person</span>&gt;&gt; peopleByDateOfBirth =
+    <span class='k'>new</span> Dictionary&lt;DateTime, Dictionary&lt;<span class='b'>int</span>, <span class='m'>Person</span>&gt;&gt;();
+
+  <span class='k'>public</span> <span class='m'>Person</span>[] PeopleBornOn(DateTime date) {
+    <span class='k'>if</span> (peopleByDateOfBirth.ContainsKey(date))
+      <span class='k'>return</span> peopleByDateOfBirth[date].Values.ToArray();
+    <span class='k'>else</span>
+      <span class='k'>return</span> <span class='k'>new</span> <span class='m'>Person</span>[<span class='n'>0</span>];
+  }
+
+  <span class='k'>public</span> <span class='k'>void</span> Add(<span class='m'>Person</span> person) {
+    people[person.id] = person;
+    <span class='k'>if</span> (!peopleByDateOfBirth.ContainsKey(person.dateOfBirth)) <span class='c'>// NEW</span>
+      peopleByDateOfBirth[person.dateOfBirth] = <span class='k'>new</span> Dictionary&lt;<span class='b'>int</span>, <span class='m'>Person</span>&gt;(); <span class='c'>// NEW</span>
+    peopleByDateOfBirth[person.dateOfBirth][person.id] = person; <span class='c'>// NEW</span>
+  }
+
+  <span class='k'>public</span> <span class='k'>void</span> Remove(<span class='m'>Person</span> person) {
+    <span class='k'>if</span> (people.Remove(person.id)) {
+      person.Delete();
+      peopleByDateOfBirth[person.dateOfBirth].Remove(person.id); <span class='c'>// NEW</span>
+    }
+  }
+}
+</code></pre></section></figure>
+</p>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>PeopleBornOn(..)</span></code> method and the <code class='inline-code-box'><span class='inline-code'>peopleByDateOfBirth</span></code> member variable are new, while <code class='inline-code-box'><span class='inline-code'>Add(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>Remove(..)</span></code> where already there, but had to be modified to support the new functionality. The lines of code that have been added to them are marked by the <code class='inline-code-box'><span class='inline-code'>// NEW</span></code> comment (The <code class='inline-code-box'><span class='inline-code'>Add(...)</span></code> methods was not shown before, as it was a trivial one-liner).</p>
+
+<p>Note that if Miki had decided to violate the encapsulation of <code class='inline-code-box'><span class='inline-code'>SocialNetwork</span></code> in the previous paragraph, it would have been easier for him to miss the fact that his code needed to be modified after the addition of <code class='inline-code-box'><span class='inline-code'>peopleByDateOfBirth</span></code>.</p>
+
+
+<h3>What Miki has learned so far...</h3>
+
+<p>Miki could of course have designed his C# data structures differently, and he actually had to choose between a number of possible designs none of which was clearly superior to the others, but each of which involved a number of trade-offs, and Miki is not even sure he chose the best one for his application (He is, by the way, open to suggestions. If you see a way to improve his code, leave a message in the <a href='https://groups.google.com/d/forum/cell-lang'>forum</a>). This stand in sharp contrast with what happened when writing the Cell schema. In that case, there was a single, obvious way to design it, and Miki is positive that if ten different developers had been given the same informal specifications to implement they would all have come up with essentially the same data schema.</p>
+
+<p>Furthermore, the Cell schema did not need any changes to its initial version, unlike the C# data structures which required several additions that were discovered only in a later stage of the application development, and which involved several code changes that were spread out all over the code base. None of these additions actually added any information to the dataset, their only purpose was either to allow the code to navigate it, or to avoid performing unnecessarily slow searches.</p>
+
+<p>Miki already appreciated the advantages offered by the relational model, but one thing he was not aware of previously is that relational data structures seem to be intrinsically more "stable" that their counterparts in low-level programming paradigms like OOP, and he suspects that might actually be a non-trivial advantage for software development, since every change to the data structures invariably involves changes to the actual code.</p>
+
+<p>Miki is not done yet with his software development experiments. He's going to try again soon with a larger application. Stay tuned.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

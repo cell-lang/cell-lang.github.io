@@ -9,6 +9,17 @@
 
   <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
   <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
 </head>
 
 <body>
@@ -39,7 +50,7 @@
 </figure>
 </code></pre>
 
-<p>When using the procedural syntax, the body of the function is, instead of an expression, just a number of statements written between braces. Here we see four types of statements: assignments, returns, conditionals and for loops. All statements, including composite ones, are terminated by a semicolon (the two standalone semicolons above terminate the if and for statements respectively). If the body of an if statements contains a single atomic statements, you can more succinctly write it in postfix notation: the <code class="inline-code-box"><span class="inline-code">count_non_zero(..)</span></code> function can be rewritten as follows:</p>
+<p>When using the procedural syntax, the body of the function is, instead of an expression, just a number of statements written between braces. Here we see four types of statements: assignments, returns, conditionals and for loops. All statements, including composite ones, are terminated by a semicolon (the two standalone semicolons above terminate the if and for statements respectively). If the body of an if statements contains a single atomic statements, you can more succinctly write it in postfix notation: the <code class='inline-code-box'><span class='inline-code'>count_non_zero(..)</span></code> function can be rewritten as follows:</p>
 
 <figure class="highlight">
 <section>
@@ -54,7 +65,7 @@
 </figure>
 </code></pre>
 
-<p>The for loop iterates through the sequence <code class="inline-code-box"><span class="inline-code">xs</span></code> storing the current element in <code class="inline-code-box"><span class="inline-code">x</span></code>. For loops can make use of index variables and tuple destructuring just like sequence comprehension. The following function for example takes a sequence of integer pairs, and returns the index of the first pair whose elements are equal, wrapped as a maybe type:</p>
+<p>The for loop iterates through the sequence <code class='inline-code-box'><span class='inline-code'>xs</span></code> storing the current element in <code class='inline-code-box'><span class='inline-code'>x</span></code>. For loops can make use of index variables and tuple destructuring just like sequence comprehension. The following function for example takes a sequence of integer pairs, and returns the index of the first pair whose elements are equal, wrapped as a maybe type:</p>
 
 <figure class="highlight">
 <section>
@@ -68,7 +79,7 @@
 </figure>
 </code></pre>
 
-<p>All the above for loops are actually "foreach" loops: they traverse a sequence and execute the body for each of its elements. You can also have standard "for" loops, which iterate over a range of integer. Here's how you can define a Haskell-style <code class="inline-code-box"><span class="inline-code">foldr(..)</span></code> function:</p>
+<p>All the above for loops are actually "foreach" loops: they traverse a sequence and execute the body for each of its elements. You can also have standard "for" loops, which iterate over a range of integer. Here's how you can define a Haskell-style <code class='inline-code-box'><span class='inline-code'>foldr(..)</span></code> function:</p>
 
 <figure class="highlight">
 <section>
@@ -85,7 +96,7 @@
 </figure>
 </code></pre>
 
-<p>The body of the for loop above is executed <code class="inline-code-box"><span class="inline-code">len</span></code> times, with the value of the loop variable <code class="inline-code-box"><span class="inline-code">i</span></code> going from 0 to <code class="inline-code-box"><span class="inline-code">len-1</span></code>. It's basically the equivalent of <code class="inline-code-box"><span class="inline-code">for (int i=0 ; i &lt; len ; i++)</span></code> in C or Java. The for loop has a number of different forms, listed here with their C/Java equivalent:</p>
+<p>The body of the for loop above is executed <code class='inline-code-box'><span class='inline-code'>len</span></code> times, with the value of the loop variable <code class='inline-code-box'><span class='inline-code'>i</span></code> going from 0 to <code class='inline-code-box'><span class='inline-code'>len-1</span></code>. It's basically the equivalent of <code class='inline-code-box'><span class='inline-code'>for (int i=0 ; i &lt; len ; i++)</span></code> in C or Java. The for loop has a number of different forms, listed here with their C/Java equivalent:</p>
 
 <figure class="highlight">
 <section>
@@ -136,7 +147,7 @@
 </figure>
 </code></pre>
 
-<p>Any number of loops can combined, not just two. Note that in both cases, the <code class="inline-code-box"><span class="inline-code">break</span></code> statement only terminates the innermost loops.</p>
+<p>Any number of loops can combined, not just two. Note that in both cases, the <code class='inline-code-box'><span class='inline-code'>break</span></code> statement only terminates the innermost loops.</p>
 
 <p>While loops behave as expected. This is a function that merges two sequences of sorted integers into a single sorted sequence:</p>
 
@@ -161,7 +172,7 @@
 </figure>
 </code></pre>
 
-<p>There's also special syntax for infinite loops, that have to be explicitly terminated by a <code class="inline-code-box"><span class="inline-code">break</span></code> or a <code class="inline-code-box"><span class="inline-code">return</span></code>. The following function repeatedly applies a function to a value until it reaches a fixpoint:</p>
+<p>There's also special syntax for infinite loops, that have to be explicitly terminated by a <code class='inline-code-box'><span class='inline-code'>break</span></code> or a <code class='inline-code-box'><span class='inline-code'>return</span></code>. The following function repeatedly applies a function to a value until it reaches a fixpoint:</p>
 
 <figure class="highlight">
 <section>
@@ -176,7 +187,7 @@
 </figure>
 </code></pre>
 
-<p>The <code class="inline-code-box"><span class="inline-code">fail</span></code> statement is for statements what <code class="inline-code-box"><span class="inline-code">undefined</span></code> is for expressions: it throws an exception. It doesn't take any argument. The following function returns the index of the first occurrence of an element in the sequence, or fails if the sequence doesn't contain such an element:</p>
+<p>The <code class='inline-code-box'><span class='inline-code'>fail</span></code> statement is for statements what <code class='inline-code-box'><span class='inline-code'>undefined</span></code> is for expressions: it throws an exception. It doesn't take any argument. The following function returns the index of the first occurrence of an element in the sequence, or fails if the sequence doesn't contain such an element:</p>
 
 <figure class="highlight">
 <section>
@@ -190,7 +201,7 @@
 </figure>
 </code></pre>
 
-<p>The <code class="inline-code-box"><span class="inline-code">assert</span></code> and <code class="inline-code-box"><span class="inline-code">print</span></code> statements are used for debugging. They do what you would expect: the first one evaluates a boolean expression and fails if it's false, the second one just prints the value of any given expression using the standard textual representation of values in Cell. Any value printed in such way can be copied and pasted directly inside Cell source code, but it usually has to be enclosed between <code class="inline-code-box"><span class="inline-code">#{...}</span></code>. A few examples:</p>
+<p>The <code class='inline-code-box'><span class='inline-code'>assert</span></code> and <code class='inline-code-box'><span class='inline-code'>print</span></code> statements are used for debugging. They do what you would expect: the first one evaluates a boolean expression and fails if it's false, the second one just prints the value of any given expression using the standard textual representation of values in Cell. Any value printed in such way can be copied and pasted directly inside Cell source code, but it usually has to be enclosed between <code class='inline-code-box'><span class='inline-code'>#{...}</span></code>. A few examples:</p>
 
 <figure class="highlight">
 <section>
@@ -251,7 +262,7 @@
 </figure>
 </code></pre>
 
-<p>Note that the <code class="inline-code-box"><span class="inline-code">return</span></code> statement doesn't cause the entire function to return, it just terminates (and provides a value for) the enclosing procedural block. The above function could have just been written, with less clarity and efficiency, like this:</p>
+<p>Note that the <code class='inline-code-box'><span class='inline-code'>return</span></code> statement doesn't cause the entire function to return, it just terminates (and provides a value for) the enclosing procedural block. The above function could have just been written, with less clarity and efficiency, like this:</p>
 
 <figure class="highlight">
 <section>
@@ -313,7 +324,7 @@
 
 <h3>Local functions</h3>
 
-<p>Inside the body of functions written in a procedural style, you can also define local functions, that is, functions that are visible only inside the top-level function that contains them. Apart from their restricted scope, they are just like any other function. In particular, they have no access to the arguments or the local variables of the outer function. They have to be defined at the bottom of the enclosing block of statements, and are not available when such a block is used as a normal expression. This is yet another way to define the <code class="inline-code-box"><span class="inline-code">h(..)</span></code> function above:</p>
+<p>Inside the body of functions written in a procedural style, you can also define local functions, that is, functions that are visible only inside the top-level function that contains them. Apart from their restricted scope, they are just like any other function. In particular, they have no access to the arguments or the local variables of the outer function. They have to be defined at the bottom of the enclosing block of statements, and are not available when such a block is used as a normal expression. This is yet another way to define the <code class='inline-code-box'><span class='inline-code'>h(..)</span></code> function above:</p>
 
 <figure class="highlight">
 <section>
@@ -333,8 +344,8 @@
 <h3>Imperative programming</h3>
 
 <p>Cell also includes a couple of pseudo-imperative features, as some algorithms are just a lot easier to write in an imperative style. We've already seen the first one, the functional insert operation. It generally takes amortized O(1), with a pretty small constant factor. Here's how it works: every time a new sequence is created, the runtime allocates some extra memory at the end of the array. When you try to insert a new element at the end, the runtime tries to make use of that extra space to store the new element. Existing references to the original sequence are not affected, as each of them stores not just a pointer to the array, but also its own copy of the length of the sequence, so they just ignore the extra elements and keep seeing only the original part of the sequence.</p>
-<p>The same thing, by the way, happens with the <code class="inline-code-box"><span class="inline-code">_slice_(..)</span></code> builtin function (which is aliased in the standard library by the function <code class="inline-code-box"><span class="inline-code">slice(..)</span></code>, and used by other standard functions like <code class="inline-code-box"><span class="inline-code">take(..)</span></code> or <code class="inline-code-box"><span class="inline-code">drop(..)</span></code>): creating a subsequence is fast, because the newly created object only needs to store a pointer to the first element of the subsequence and its length.</p>
-<p>Going back to the functional insertion, the runtime needs to make a copy of the original sequence only in two cases: when it runs out of space at the end, in which case the entire sequence is reallocated with extra space, or when the next slot is already taken, likely because it was used by a previous insertion operation. You should take care to avoid the latter case, as much as possible. The following (buggy) function runs in O((N1+N2)^2), where N1 and N2 are the lengths of <code class="inline-code-box"><span class="inline-code">s1</span></code> and <code class="inline-code-box"><span class="inline-code">s2</span></code> respectively, because of the (useless, in this case) <code class="inline-code-box"><span class="inline-code">unused = (res | x);</span></code> instruction:</p>
+<p>The same thing, by the way, happens with the <code class='inline-code-box'><span class='inline-code'>_slice_(..)</span></code> builtin function (which is aliased in the standard library by the function <code class='inline-code-box'><span class='inline-code'>slice(..)</span></code>, and used by other standard functions like <code class='inline-code-box'><span class='inline-code'>take(..)</span></code> or <code class='inline-code-box'><span class='inline-code'>drop(..)</span></code>): creating a subsequence is fast, because the newly created object only needs to store a pointer to the first element of the subsequence and its length.</p>
+<p>Going back to the functional insertion, the runtime needs to make a copy of the original sequence only in two cases: when it runs out of space at the end, in which case the entire sequence is reallocated with extra space, or when the next slot is already taken, likely because it was used by a previous insertion operation. You should take care to avoid the latter case, as much as possible. The following (buggy) function runs in O((N1+N2)^2), where N1 and N2 are the lengths of <code class='inline-code-box'><span class='inline-code'>s1</span></code> and <code class='inline-code-box'><span class='inline-code'>s2</span></code> respectively, because of the (useless, in this case) <code class='inline-code-box'><span class='inline-code'>unused = (res | x);</span></code> instruction:</p>
 
 <figure class="highlight">
 <section>
@@ -354,7 +365,7 @@
 </figure>
 </code></pre>
 
-<p>Once you remove the faulty instruction, the function runs in O(N1+N2), as you would expect. The <code class="inline-code-box"><span class="inline-code">_cat_(..)</span></code> builtin function, which is used by the <code class="inline-code-box"><span class="inline-code">&</span></code> operator for sequences and strings, works in a similar way, so if you build a long sequence/string by appending shorter sequences/strings to its right, the whole process runs in linear time, with respect to the length of the resulting sequence. This is how the <code class="inline-code-box"><span class="inline-code">join(..)</span></code> function is defined in the standard library:</p>
+<p>Once you remove the faulty instruction, the function runs in O(N1+N2), as you would expect. The <code class='inline-code-box'><span class='inline-code'>_cat_(..)</span></code> builtin function, which is used by the <code class='inline-code-box'><span class='inline-code'>&amp;</span></code> operator for sequences and strings, works in a similar way, so if you build a long sequence/string by appending shorter sequences/strings to its right, the whole process runs in linear time, with respect to the length of the resulting sequence. This is how the <code class='inline-code-box'><span class='inline-code'>join(..)</span></code> function is defined in the standard library:</p>
 
 <figure class="highlight">
 <section>
@@ -403,7 +414,7 @@
 </figure>
 </code></pre>
 
-<p>A statement of the form <code class="inline-code-box"><span class="inline-code">xs(i) := x;</span></code> is a functional sequence update: conceptually, it is completely equivalent to the following code (provided of course that there's no existing variable named <code class="inline-code-box"><span class="inline-code">xj</span></code> or <code class="inline-code-box"><span class="inline-code">j</span></code> in the current scope):</p>
+<p>A statement of the form <code class='inline-code-box'><span class='inline-code'>xs(i) := x;</span></code> is a functional sequence update: conceptually, it is completely equivalent to the following code (provided of course that there's no existing variable named <code class='inline-code-box'><span class='inline-code'>xj</span></code> or <code class='inline-code-box'><span class='inline-code'>j</span></code> in the current scope):</p>
 
 <figure class="highlight">
 <section>
@@ -413,7 +424,7 @@ xs = (<span class='k'>if</span> j == i <span class='k'>then</span> x <span class
 </figure>
 </code></pre>
 
-<p>And that's exactly how it is currently implemented. But in cases like the one above, it would be pretty easy for the compiler to figure out that at the time of the assignment <code class="inline-code-box"><span class="inline-code">rp</span></code> is the only reference to that particular sequence, in which case the underlying object can be updated directly, in O(1), without any side effects. Of course, there are limits to what even a mildly sophisticated compiler can be expected to be able to infer from a static analysis of the code: such a uniqueness analysis is easy when a sequence is created and updated inside a single function; it can still be doable, in some simple cases, even if the sequence is juggled between different functions: in the case of <code class="inline-code-box"><span class="inline-code">reverse_permutation(..)</span></code>, for example, it's easy to figure out that the returned object is not aliased, so the caller can still update it in place. I'll document the details once such analysis is implemented: it will probably be done in stages, starting with the simplest cases. For the time being, just don't use this feature unless you're dealing with really tiny sequences.</p>
+<p>And that's exactly how it is currently implemented. But in cases like the one above, it would be pretty easy for the compiler to figure out that at the time of the assignment <code class='inline-code-box'><span class='inline-code'>rp</span></code> is the only reference to that particular sequence, in which case the underlying object can be updated directly, in O(1), without any side effects. Of course, there are limits to what even a mildly sophisticated compiler can be expected to be able to infer from a static analysis of the code: such a uniqueness analysis is easy when a sequence is created and updated inside a single function; it can still be doable, in some simple cases, even if the sequence is juggled between different functions: in the case of <code class='inline-code-box'><span class='inline-code'>reverse_permutation(..)</span></code>, for example, it's easy to figure out that the returned object is not aliased, so the caller can still update it in place. I'll document the details once such analysis is implemented: it will probably be done in stages, starting with the simplest cases. For the time being, just don't use this feature unless you're dealing with really tiny sequences.</p>
 
 
         </article>
@@ -426,7 +437,9 @@ xs = (<span class='k'>if</span> j == i <span class='k'>then</span> x <span class
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
             <li>The Basics
@@ -447,6 +460,7 @@ xs = (<span class='k'>if</span> j == i <span class='k'>then</span> x <span class
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>
                 <li><a href='interface.html'>Interfacing with C++</a></li>
+                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
               </ul>
             </li>
 

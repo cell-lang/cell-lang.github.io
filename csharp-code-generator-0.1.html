@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Cell-to-C# compiler initial release</h2>
+
+<p>The first release of the Cell-to-C# compiler/code generator is out today. It is provided as a .NET application, and even though it was developed using Mono on Linux, it should work just fine on Windows, though I haven't actually tried it there yet.</p>
+
+<p>The interface of the generated code is documented in the <a href='interface-cs.html'>Interfacing with C#</a> chapter. Other details can be found in the <a href='getting-started.html'>Getting started</a> chapter.</p>
+
+<p>All language features are exactly the same as in the C++ version, but the Cell to C# compiler has a couple of improvements. First of all, the interface of the generated code is quite a bit nicer. The names of the methods of the generated classes are very similar to what you would see in hand-written code, unless there's some naming conflict that forces the compiler to add prefixes and/or underscores. More importantly, the mapping between the Cell data types and the native C# types works better here, both because mapping to C# data structures is intrinsically easier, and because there have been improvements to the mapping itself, which will of course be soon backported to the C++ code generator as well. The new mapping doesn't take full advantage of all the available C# features, though. In particular, it's not making use yet of named tuples, which can be used to straightforwardly map Cell records. That will be fixed soon.</p>
+
+<p>The other major improvement is in the data structures that are used in the physical implementation of mutable relations, which are now much closer to their final form. All lookups and searches are now performed in constant time (of course if a search returns more than one result, retrieving each additional result required an additional small constant time).</p>
+
+<p>The bad news is that (apart from the aforementioned case of operations on mutable relations) the generated C# code is a lot slower than the generated C++. The Cell compiler, which is itself written in Cell and is the only real benchmark I have at the moment, runs an order of magnitude slower when compiled to C# instead of C++. All the low level optimizations that worked well with C++ only seemed to make things worse here, so I gave up on that after a couple of days. I could have tried harder, but since I'm going to start working very soon on type-based optimization, which is where the real speed gains should come from (and which will work across all target languages), there was no point in investing more time and effort in that. Whatever optimization I can add at this stage, it will probably became useless once type-based optimization is implemented.</p>
+
+<p>Along with this release I've also added a new hands-on <a href='example.html'>introduction/tutorial</a> and a <a href='comparison.html'>comparison with OOP</a>.</p>
+
+<p>Next up is the Java version of the compiler/code generator. It's going to be very similar to the C# version released today, so it should be ready pretty soon, in just a few weeks.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='interface.html'>Interfacing with C++</a></li>
+                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

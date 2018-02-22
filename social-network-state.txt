@@ -1,0 +1,93 @@
+( next_id: 7,
+  person: [
+    person(0),
+    person(1),
+    person(2),
+    person(3),
+    person(4),
+    person(5),
+    person(6)
+  ],
+  gang: [gang(0), gang(1)],
+  name: [
+    person(0) -> "Michael",
+    person(1) -> "John",
+    person(2) -> "Charles",
+    person(3) -> "Jack",
+    person(4) -> "Luke",
+    person(5) -> "Edward",
+    person(6) -> "Neil",
+    gang(0) -> "The Wild Ones",
+    gang(1) -> "The Chosen Few"
+  ],
+  rank: [
+    person(0), gang(0), 10;
+    person(1), gang(0), 4;
+    person(2), gang(0), 6;
+    person(3), gang(1), 10;
+    person(4), gang(1), 4;
+    person(5), gang(1), 6;
+    person(6), gang(0), 2
+  ],
+  leader: [gang(0) -> person(0), gang(1) -> person(5)],
+  member: [
+    person(0) -> gang(0),
+    person(1) -> gang(0),
+    person(2) -> gang(0),
+    person(3) -> gang(1),
+    person(4) -> gang(1),
+    person(5) -> gang(1),
+    person(6) -> gang(0)
+  ],
+  met_on: [
+    person(0), person(1), date(day: 27, month:  6, year: 2007);
+    person(0), person(2), date(day:  8, month:  9, year: 2012);
+    person(0), person(6), date(day: 13, month:  2, year: 2014);
+    person(1), person(2), date(day:  7, month: 11, year: 2013);
+    person(1), person(6), date(day: 10, month:  9, year: 2013)
+  ],
+  surname: [
+    person(0) -> "Taylor",
+    person(1) -> "Taylor",
+    person(2) -> "Wang",
+    person(3) -> "Evans",
+    person(4) -> "Brown",
+    person(5) -> "Harris",
+    person(6) -> "Jackson"
+  ],
+  nickname: [
+    person(0) -> "miki",
+    person(1) -> "jonny",
+    person(2) -> "charlie",
+    person(3) -> "jack",
+    person(4) -> "luke",
+    person(5) -> "ed",
+    person(6) -> "neil"
+  ],
+  joined_on: [
+    person(0), gang(0), date(day: 13, month: 2, year: 2017);
+    person(1), gang(0), date(day: 13, month: 2, year: 2017);
+    person(2), gang(0), date(day: 15, month: 2, year: 2017);
+    person(3), gang(1), date(day: 24, month: 6, year: 2017);
+    person(4), gang(1), date(day: 24, month: 6, year: 2017);
+    person(5), gang(1), date(day: 25, month: 6, year: 2017);
+    person(6), gang(0), date(day: 28, month: 2, year: 2017)
+  ],
+  date_of_birth: [
+    person(0) -> date(day: 12, month:  2, year: 2006),
+    person(1) -> date(day: 27, month:  6, year: 2007),
+    person(2) -> date(day: 19, month:  8, year: 2006),
+    person(3) -> date(day:  4, month:  5, year: 2006),
+    person(4) -> date(day: 19, month: 12, year: 2006),
+    person(5) -> date(day: 30, month:  8, year: 2006),
+    person(6) -> date(day:  3, month:  5, year: 2007)
+  ],
+  introduced_by: [person(0), person(6), person(1); person(1), person(2), person(0)],
+  know_each_other: [
+    person(0), person(1);
+    person(0), person(2);
+    person(0), person(6);
+    person(1), person(2);
+    person(1), person(6)
+  ]
+)

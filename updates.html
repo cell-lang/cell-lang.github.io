@@ -9,6 +9,17 @@
 
   <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
   <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
 </head>
 
 <body>
@@ -22,7 +33,7 @@
         <article class="content">
 <h2>Message handlers and updates</h2>
 
-<p>The normal way to mutate the state of an automaton is to send it a message. For each type of message there's a corresponding message handler which is just a block of imperative code that takes the message itself as argument and carries out the actual update. Here's an example, using the <code class="inline-code-box"><span class="inline-code">Counter</span></code> automaton that we defined earlier:</p>
+<p>The normal way to mutate the state of an automaton is to send it a message. For each type of message there's a corresponding message handler which is just a block of imperative code that takes the message itself as argument and carries out the actual update. Here's an example, using the <code class='inline-code-box'><span class='inline-code'>Counter</span></code> automaton that we defined earlier:</p>
 
 <figure class="highlight">
 <section>
@@ -56,7 +67,7 @@
 </figure>
 </code></pre>
 
-<p>The <code class="inline-code-box"><span class="inline-code">CounterMsg</span></code> type defines the set of messages <code class="inline-code-box"><span class="inline-code">Counter</span></code> can accept. The declaration is commented out because it's actually unnecessary, it's basically just documentation. After that are four message handlers: the first three handle the values <code class="inline-code-box"><span class="inline-code">:incr</span></code>, <code class="inline-code-box"><span class="inline-code">:decr</span></code> and <code class="inline-code-box"><span class="inline-code">:reset</span></code> respectively, and the last one all integers tagged with the <code class="inline-code-box"><span class="inline-code">:reset</span></code> symbol. They all make use of some syntactic sugar: the general, unsweetened form of a message handler is as follows:</p>
+<p>The <code class='inline-code-box'><span class='inline-code'>CounterMsg</span></code> type defines the set of messages <code class='inline-code-box'><span class='inline-code'>Counter</span></code> can accept. The declaration is commented out because it's actually unnecessary, it's basically just documentation. After that are four message handlers: the first three handle the values <code class='inline-code-box'><span class='inline-code'>:incr</span></code>, <code class='inline-code-box'><span class='inline-code'>:decr</span></code> and <code class='inline-code-box'><span class='inline-code'>:reset</span></code> respectively, and the last one all integers tagged with the <code class='inline-code-box'><span class='inline-code'>:reset</span></code> symbol. They all make use of some syntactic sugar: the general, unsweetened form of a message handler is as follows:</p>
 
 <figure class="highlight">
 <section>
@@ -93,9 +104,9 @@
 </figure>
 </code></pre>
 
-<p>but in the latter case you're allowed to ommit the <code class="inline-code-box"><span class="inline-code">&lt;</span></code> and <code class="inline-code-box"><span class="inline-code">&gt;</span></code> symbols, if the type between them is not a union type. In order to access the value of the message you need to use the keyword <code class="inline-code-box"><span class="inline-code">self</span></code>, as demonstrated in the last handler, <code class="inline-code-box"><span class="inline-code">Counter.reset(Int)</span></code>. Note that the same keyword is also used in several object-oriented programming languages, but the meaning is different: in OOP it's used to refer to the target of a method (that is, the object that "receives the message") while here it's used to refer to the message itself. There's no way in this context to refer to (the value of) the automaton instance that receives the message (only its individual fields can be accessed), because that value cannot be aliased as we explained in the previous chapter.</p>
+<p>but in the latter case you're allowed to ommit the <code class='inline-code-box'><span class='inline-code'>&lt;</span></code> and <code class='inline-code-box'><span class='inline-code'>&gt;</span></code> symbols, if the type between them is not a union type. In order to access the value of the message you need to use the keyword <code class='inline-code-box'><span class='inline-code'>self</span></code>, as demonstrated in the last handler, <code class='inline-code-box'><span class='inline-code'>Counter.reset(Int)</span></code>. Note that the same keyword is also used in several object-oriented programming languages, but the meaning is different: in OOP it's used to refer to the target of a method (that is, the object that "receives the message") while here it's used to refer to the message itself. There's no way in this context to refer to (the value of) the automaton instance that receives the message (only its individual fields can be accessed), because that value cannot be aliased as we explained in the previous chapter.</p>
 
-<p>Any number of message handlers can be merged without restrictions, whenever that's convenient. The four message handlers of <code class="inline-code-box"><span class="inline-code">Counter</span></code> can for example be rewritten as follow:</p>
+<p>Any number of message handlers can be merged without restrictions, whenever that's convenient. The four message handlers of <code class='inline-code-box'><span class='inline-code'>Counter</span></code> can for example be rewritten as follow:</p>
 
 <figure class="highlight">
 <section>
@@ -143,9 +154,9 @@
 
 <h3>Atomic update instructions</h3>
 
-<p>We've already seen our first atomic update instruction, the <code class="inline-code-box"><span class="inline-code">set</span></code> statement, which simply sets the value of a member variable. It can be used only with ordinary variables, and not with mutable relation variables or nested automata. The most important thing to notice here is that any member given variable can be assigned only once during the execution of the message handler: trying to set the same variable twice would cause the message handler to fail. That's because, as explained above, the order in which assignments are issued is ignored, and therefore there's no way to decide which of two (conflicting) assignments targeting the same member variable should actually be executed.</p>
+<p>We've already seen our first atomic update instruction, the <code class='inline-code-box'><span class='inline-code'>set</span></code> statement, which simply sets the value of a member variable. It can be used only with ordinary variables, and not with mutable relation variables or nested automata. The most important thing to notice here is that any member given variable can be assigned only once during the execution of the message handler: trying to set the same variable twice would cause the message handler to fail. That's because, as explained above, the order in which assignments are issued is ignored, and therefore there's no way to decide which of two (conflicting) assignments targeting the same member variable should actually be executed.</p>
 
-<p>In order to update mutable relation variables the language provides two commands, <code class="inline-code-box"><span class="inline-code">insert</span></code> and <code class="inline-code-box"><span class="inline-code">delete</span></code>. To illustrate them, we'll make use of some of the automata we defined in the previous chapter. Here's our first example:</p>
+<p>In order to update mutable relation variables the language provides two commands, <code class='inline-code-box'><span class='inline-code'>insert</span></code> and <code class='inline-code-box'><span class='inline-code'>delete</span></code>. To illustrate them, we'll make use of some of the automata we defined in the previous chapter. Here's our first example:</p>
 
 <figure class="highlight">
 <section>
@@ -155,43 +166,43 @@
 }
 
 <span class='m'>Logins</span>.login(user_id: <span class='m'>Nat</span>, name: <span class='m'>String</span>) {
-  <span class='c'>// Inserting the entry <span class="inline-code">self.user_id, self.name</span> into <span class="inline-code">usernames</span></span>
-  <span class='c'>// No effect if <span class="inline-code">usernames</span> already contains such an entry</span>
+  <span class='c'>// Inserting the entry <span class='inline-code'>self.user_id, self.name</span> into <span class='inline-code'>usernames</span></span>
+  <span class='c'>// No effect if <span class='inline-code'>usernames</span> already contains such an entry</span>
   <span class='c'>// Fails if a (different) entry with the same left argument or</span>
   <span class='c'>// the same right argument (but not both) already exists, since</span>
-  <span class='c'>// that would violate the integrity constraints of <span class="inline-code">usernames</span></span>
+  <span class='c'>// that would violate the integrity constraints of <span class='inline-code'>usernames</span></span>
   <span class='k'>insert</span> usernames(<span class='k'>self</span>.user_id, <span class='k'>self</span>.name);
 }
 
 <span class='m'>Logins</span>.logout(user_id: <span class='m'>Nat</span>) {
-  <span class='c'>// Deleting all entries whose left field equals <span class="inline-code">self.user_id</span></span>
-  <span class='c'>// from both <span class="inline-code">usernames</span> and <span class="inline-code">memberships</span></span>
+  <span class='c'>// Deleting all entries whose left field equals <span class='inline-code'>self.user_id</span></span>
+  <span class='c'>// from both <span class='inline-code'>usernames</span> and <span class='inline-code'>memberships</span></span>
   <span class='k'>delete</span> usernames(<span class='k'>self</span>.user_id, *), memberships(<span class='k'>self</span>.user_id, *);
 }
 
 <span class='m'>Logins</span>.join_room(user_id: <span class='m'>Nat</span>, room: <span class='m'>String</span>) {
-  <span class='c'>// Inserting the entry <span class="inline-code">self.user_id, self.room</span> into <span class="inline-code">memberships</span></span>
-  <span class='c'>// No effect if <span class="inline-code">memberships</span> already contains such an entry</span>
+  <span class='c'>// Inserting the entry <span class='inline-code'>self.user_id, self.room</span> into <span class='inline-code'>memberships</span></span>
+  <span class='c'>// No effect if <span class='inline-code'>memberships</span> already contains such an entry</span>
   <span class='k'>insert</span> memberships(<span class='k'>self</span>.user_id, <span class='k'>self</span>.room);
 }
 
 <span class='m'>Logins</span>.leave_room(user_id: <span class='m'>Nat</span>, room: <span class='m'>String</span>) {
-  <span class='c'>// Deleting the entry <span class="inline-code">self.user_id, self.room</span> from <span class="inline-code">memberships</span>,</span>
+  <span class='c'>// Deleting the entry <span class='inline-code'>self.user_id, self.room</span> from <span class='inline-code'>memberships</span>,</span>
   <span class='c'>// if such entry exists, no effect otherwise</span>
   <span class='k'>delete</span> memberships(<span class='k'>self</span>.user_id, <span class='k'>self</span>.room);
 }
 
 <span class='m'>Logins</span>.clear {
-  <span class='c'>// Deleting all entries from both <span class="inline-code">usernames</span> and <span class="inline-code">memberships</span></span>
+  <span class='c'>// Deleting all entries from both <span class='inline-code'>usernames</span> and <span class='inline-code'>memberships</span></span>
   <span class='k'>delete</span> usernames(*, *), memberships(*, *);
 }
 </section>
 </figure>
 </code></pre>
 
-<p>Both commands offer a bit of syntactic sugar, that allows you to merge several commands into a single one: <code class="inline-code-box"><span class="inline-code">insert relvar1(x1, y1);</span></code> and <code class="inline-code-box"><span class="inline-code">insert relvar2(x2, y2);</span></code> can be combined, with no difference in meaning, into <code class="inline-code-box"><span class="inline-code">insert relvar1(x1, y1), relvar2(x2, y2);</span></code>. When deleting entries you can also use wildcard arguments, as demonstrated in <code class="inline-code-box"><span class="inline-code">Logins.join_room(..)</span></code> and <code class="inline-code-box"><span class="inline-code">Logins.clear</span></code>. The above examples all use binary relation variables, but it all works in the same way for unary and ternary ones, just with one or three arguments respectively instead of two.</p>
+<p>Both commands offer a bit of syntactic sugar, that allows you to merge several commands into a single one: <code class='inline-code-box'><span class='inline-code'>insert relvar1(x1, y1);</span></code> and <code class='inline-code-box'><span class='inline-code'>insert relvar2(x2, y2);</span></code> can be combined, with no difference in meaning, into <code class='inline-code-box-long'><span class='inline-code'>insert relvar1(x1, y1), relvar2(x2, y2);</span></code>. When deleting entries you can also use wildcard arguments, as demonstrated in <code class='inline-code-box'><span class='inline-code'>Logins.join_room(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>Logins.clear</span></code>. The above examples all use binary relation variables, but it all works in the same way for unary and ternary ones, just with one or three arguments respectively instead of two.</p>
 
-<p>The <code class="inline-code-box"><span class="inline-code">insert</span></code> command comes in two flavors. The standard version is the one shown in the above example: it fails when inserting an entry that would violate the integrity constraints that apply to the target relation variable. The second form is a sort of "forced insert": if the relation contains entries that are key-incompatible with the entry that is being inserted the former are simply deleted. The only syntactic difference is that it requires the <code class="inline-code-box"><span class="inline-code">update</span></code> keyword instead of <code class="inline-code-box"><span class="inline-code">insert</span></code>. A command of the form:</p>
+<p>The <code class='inline-code-box'><span class='inline-code'>insert</span></code> command comes in two flavors. The standard version is the one shown in the above example: it fails when inserting an entry that would violate the integrity constraints that apply to the target relation variable. The second form is a sort of "forced insert": if the relation contains entries that are key-incompatible with the entry that is being inserted the former are simply deleted. The only syntactic difference is that it requires the <code class='inline-code-box'><span class='inline-code'>update</span></code> keyword instead of <code class='inline-code-box'><span class='inline-code'>insert</span></code>. A command of the form:</p>
 
 <figure class="highlight">
 <section>
@@ -200,7 +211,7 @@
 </figure>
 </code></pre>
 
-<p>is (in the specific case of <code class="inline-code-box"><span class="inline-code">usernames</span></code>, which has a key on both columns) equivalent to:</p>
+<p>is (in the specific case of <code class='inline-code-box'><span class='inline-code'>usernames</span></code>, which has a key on both columns) equivalent to:</p>
 
 <figure class="highlight">
 <section>
@@ -211,7 +222,7 @@
 </figure>
 </code></pre>
 
-<p>For relations that have no keys, like <code class="inline-code-box"><span class="inline-code">memberships</span></code>, the two forms are completely equivalent. The <code class="inline-code-box"><span class="inline-code">update</span></code> form is convenient when updating the values of the attributes of an existing entity or relationship (hence its name): this is, for instance, how you would update the value of the <code class="inline-code-box"><span class="inline-code">address</span></code> attribute for a specific supplier in the <code class="inline-code-box"><span class="inline-code">Supply</span></code> automaton defined in the previous chapter:</p>
+<p>For relations that have no keys, like <code class='inline-code-box'><span class='inline-code'>memberships</span></code>, the two forms are completely equivalent. The <code class='inline-code-box'><span class='inline-code'>update</span></code> form is convenient when updating the values of the attributes of an existing entity or relationship (hence its name): this is, for instance, how you would update the value of the <code class='inline-code-box'><span class='inline-code'>address</span></code> attribute for a specific supplier in the <code class='inline-code-box'><span class='inline-code'>Supply</span></code> automaton defined in the previous chapter:</p>
 
 <figure class="highlight">
 <section>
@@ -239,7 +250,7 @@
 </figure>
 </code></pre>
 
-<p>Just like it happens with the <code class="inline-code-box"><span class="inline-code">set</span></code> instruction, the order in which inserts, updates and deletes are issued is ignored, so you have to take care not to issue conflicting commands. These update handlers, for instance, will fail:</p>
+<p>Just like it happens with the <code class='inline-code-box'><span class='inline-code'>set</span></code> instruction, the order in which inserts, updates and deletes are issued is ignored, so you have to take care not to issue conflicting commands. These update handlers, for instance, will fail:</p>
 
 <figure class="highlight">
 <section>
@@ -281,7 +292,7 @@
 
 <h3>Mutator methods</h3>
 
-<p>Message handlers have no way to invoke one another (or to put it another way, automata cannot send messages to themselves), so when you need to share code between them or split their implementation in smaller, more manageable chunks, you need to make use of another construct, mutator methods. The following is yet another way to implement the message handlers of <code class="inline-code-box"><span class="inline-code">Counter</span></code>:</p>
+<p>Message handlers have no way to invoke one another (or to put it another way, automata cannot send messages to themselves), so when you need to share code between them or split their implementation in smaller, more manageable chunks, you need to make use of another construct, mutator methods. The following is yet another way to implement the message handlers of <code class='inline-code-box'><span class='inline-code'>Counter</span></code>:</p>
 
 <figure class="highlight">
 <section>
@@ -311,7 +322,7 @@
 </figure>
 </code></pre>
 
-<p>Now each message handler just calculates the new value for <code class="inline-code-box"><span class="inline-code">value</span></code>, which is then passed on to the mutator method <code class="inline-code-box"><span class="inline-code">update_value(..)</span></code> which issues the commands needed to update both <code class="inline-code-box"><span class="inline-code">value</span></code> and <code class="inline-code-box"><span class="inline-code">updates</span></code>. Mutator methods must be declared inside a using block, have no return value, can take any number of arguments and can be polymorphich just like functions and ordinary read-only methods. They can be invoked only from message handlers and other mutator methods of the same automaton.</p>
+<p>Now each message handler just calculates the new value for <code class='inline-code-box'><span class='inline-code'>value</span></code>, which is then passed on to the mutator method <code class='inline-code-box'><span class='inline-code'>update_value(..)</span></code> which issues the commands needed to update both <code class='inline-code-box'><span class='inline-code'>value</span></code> and <code class='inline-code-box'><span class='inline-code'>updates</span></code>. Mutator methods must be declared inside a using block, have no return value, can take any number of arguments and can be polymorphich just like functions and ordinary read-only methods. They can be invoked only from message handlers and other mutator methods of the same automaton.</p>
 
 <p>In order to better understand the respective roles of message handlers and mutator methods and the differences between them it's useful to review the life cycle of an update. Once an automaton receives a message, the corresponding handler is invoked. A message handler is the entry point for any update to any relational automaton: an update starts when a handler is invoked, and finishes when the handler returns, after which the state of the automaton is finally updated. Until the handler returns no other handler can be invoked, and therefore no other message can be received: the execution of two message handlers of the same automaton cannot be interleaved or nested, message handlers cannot invoke each other in any way, and automata cannot send messages to themselves. Mutators on the other hand can only be run as part of the execution of a message handler, and cannot be invoked in any other context. The update commands they issue are only applied when their enclosing handler returns, and if they fail they cause the entire handler to fail. Message handlers can only be invoked from the outside, and they constitute the public interface of relational automata with regards to updates, while mutators are only meant to provide a way to implement message handlers in a modular way.</p>
 
@@ -345,7 +356,7 @@
 </figure>
 </code></pre>
 
-<p><code class="inline-code-box"><span class="inline-code">CounterPair</span></code> has only one message handler, which basically takes as argument a message for one of its nested <code class="inline-code-box"><span class="inline-code">Counter</span></code>s, along with the identifier of the counter it has to be dispatched to, and just forwards the message to its intended target. This is, incidentally, an example of the extra flexibility you get by using messages: <code class="inline-code-box"><span class="inline-code">update_counter(..)</span></code> act as a dispatch hub for any type of message <code class="inline-code-box"><span class="inline-code">Counter</span></code> can accept, no matter how many of them there are.</p>
+<p><code class='inline-code-box'><span class='inline-code'>CounterPair</span></code> has only one message handler, which basically takes as argument a message for one of its nested <code class='inline-code-box'><span class='inline-code'>Counter</span></code>s, along with the identifier of the counter it has to be dispatched to, and just forwards the message to its intended target. This is, incidentally, an example of the extra flexibility you get by using messages: <code class='inline-code-box'><span class='inline-code'>update_counter(..)</span></code> act as a dispatch hub for any type of message <code class='inline-code-box'><span class='inline-code'>Counter</span></code> can accept, no matter how many of them there are.</p>
 
 <p>You're currently allowed to send only one message to each nested automaton during the entire execution of a message handler, just like you can assign any member variable only once. In this case, though, being able to send a sequence of messages would actually be useful, and it doesn't necessarily have to cause any ambiguity: it's currently not supported only because it's more complex to implement efficiently in the presence of transactions.</p>
 
@@ -393,15 +404,15 @@
 </figure>
 </code></pre>
 
-<p>but it doesn't in Cell. The problem lies in the way <code class="inline-code-box"><span class="inline-code">level_up()</span></code> and <code class="inline-code-box"><span class="inline-code">top_up_health()</span></code> interact, or rather fail to interact. The <code class="inline-code-box"><span class="inline-code">level</span></code> member variable is updated in <code class="inline-code-box"><span class="inline-code">level_up()</span></code> but since that change is not put into effect until later <code class="inline-code-box"><span class="inline-code">top_up_health()</span></code> erroneously calculates the maximum health based on the old value of <code class="inline-code-box"><span class="inline-code">level</span></code>, with the result that the player's health bar ends up not being properly refilled.</p>
+<p>but it doesn't in Cell. The problem lies in the way <code class='inline-code-box'><span class='inline-code'>level_up()</span></code> and <code class='inline-code-box'><span class='inline-code'>top_up_health()</span></code> interact, or rather fail to interact. The <code class='inline-code-box'><span class='inline-code'>level</span></code> member variable is updated in <code class='inline-code-box'><span class='inline-code'>level_up()</span></code> but since that change is not put into effect until later <code class='inline-code-box'><span class='inline-code'>top_up_health()</span></code> erroneously calculates the maximum health based on the old value of <code class='inline-code-box'><span class='inline-code'>level</span></code>, with the result that the player's health bar ends up not being properly refilled.</p>
 
 <p>The choice of such an execution model is probably the most puzzling design decision in the entire language since it makes update code more difficult to write, it adversely affects its modularity, and was not, in any way, dictated by other features of the language. But in spite of its issues, it also has a couple of important advantages.</p>
 
-<p>One major problem with imperative code is that it doesn't lend itself to parallel execution: it's notoriously difficult to write concurrent imperative programs, and even more so for a compiler to (semi-)automatically and safely parallelize the execution of existing code. One much hyped advantage of pure functional programming on the other hand is that it is very well suited to parallel execution: since functions are referentially transparent and have no side effects, two function calls can always be executed in parallel, as long as neither depends on the other's result. And in spite of their imperative syntax, message handlers in Cell are, in fact, pure functions: the only thing that's different about them (apart from the syntax) is the fact that instead of explicitly returning an ordinary value they implicitly return a set of <code class="inline-code-box"><span class="inline-code">set</span></code>/<code class="inline-code-box"><span class="inline-code">insert</span></code>/<code class="inline-code-box"><span class="inline-code">delete</span></code> commands that are then checked and executed by some compiler-generated code. Both the execution of the message handler and the subsequent checking and execution of the resulting commands can potentially be made to take advantage of multi-core processors safely and with little effort on the programmer's part. That's in addition to the potential inter-automata parallelism: since automata cannot share any mutable state (thanks to the combination of immutability for some data structures and the impossibility of aliasing for others) they can potentially be safely updated concurrently, unless they are nested inside one another or in a dependant/dependee relationship. Now, just to be clear, what we're talking about here is just leaving the door open for a future implementation to take advantage of parallelism: currently there's no support for concurrency at all, and a fully parallel implementation is going to be a long-term effort.</p>
+<p>One major problem with imperative code is that it doesn't lend itself to parallel execution: it's notoriously difficult to write concurrent imperative programs, and even more so for a compiler to (semi-)automatically and safely parallelize the execution of existing code. One much hyped advantage of pure functional programming on the other hand is that it is very well suited to parallel execution: since functions are referentially transparent and have no side effects, two function calls can always be executed in parallel, as long as neither depends on the other's result. And in spite of their imperative syntax, message handlers in Cell are, in fact, pure functions: the only thing that's different about them (apart from the syntax) is the fact that instead of explicitly returning an ordinary value they implicitly return a set of <code class='inline-code-box'><span class='inline-code'>set</span></code>/<code class='inline-code-box'><span class='inline-code'>insert</span></code>/<code class='inline-code-box'><span class='inline-code'>delete</span></code> commands that are then checked and executed by some compiler-generated code. Both the execution of the message handler and the subsequent checking and execution of the resulting commands can potentially be made to take advantage of multi-core processors safely and with little effort on the programmer's part. That's in addition to the potential inter-automata parallelism: since automata cannot share any mutable state (thanks to the combination of immutability for some data structures and the impossibility of aliasing for others) they can potentially be safely updated concurrently, unless they are nested inside one another or in a dependant/dependee relationship. Now, just to be clear, what we're talking about here is just leaving the door open for a future implementation to take advantage of parallelism: currently there's no support for concurrency at all, and a fully parallel implementation is going to be a long-term effort.</p>
 
 <p>Another problem is that the execution model of imperative languages, while undoubtedly convenient in simple cases like the example shown above, leads to nasty spaghetti code when programming in the large. Even in a moderately complex real world application, an update may well involve mutating the data structures that encode the state of the application in hundreds of different places. The goal of an update is to transition those data structures from the state they have before the update to the one they're supposed to have when the update is complete. But in order to do so they have to go through many different intermediate states each of which is the result of applying an atomic update to the previous one, and it's also common for specific pieces of information to be mutated several times during a single global update. The vast majority of those partially updated states are inconsistent, since they're by definition the result of updating only a part of the target data structures. But all those intermediate states are visible to the application code, with the result that's very difficult to know, when reading the value of a particular variable, whether such a value is the initial one, the final one, or just an intermediate one. The correctness of the code is highly dependendent on the order in which side effects are carried out, but such order is very difficult to control when updating a large object graph.</p>
 
-<p>Contrast that with what happens when a message handler is executed in Cell. The only observable states of the target automaton are the one before the message is received and the one after the handler has returned. There's no such thing as a temporary, partially updated state: all states are expected to be consistent. There are also no ambiguities either when reading the state of the automaton inside a message handler: it's always the initial state. Of course, that's not always what you want. Sometimes what you actually need is the final value of a variable after the update, as with <code class="inline-code-box"><span class="inline-code">level</span></code> in <code class="inline-code-box"><span class="inline-code">top_up_health</span></code>. Other times you need to update a certain piece of information more than once, and you actually need to be able to see those intermediate states. In cases like these the only option available in Cell at the moment is to make a copy of the data structures involved, which you can (functionally) update as many times as you need, and to explicitly pass them around.</p>
+<p>Contrast that with what happens when a message handler is executed in Cell. The only observable states of the target automaton are the one before the message is received and the one after the handler has returned. There's no such thing as a temporary, partially updated state: all states are expected to be consistent. There are also no ambiguities either when reading the state of the automaton inside a message handler: it's always the initial state. Of course, that's not always what you want. Sometimes what you actually need is the final value of a variable after the update, as with <code class='inline-code-box'><span class='inline-code'>level</span></code> in <code class='inline-code-box'><span class='inline-code'>top_up_health</span></code>. Other times you need to update a certain piece of information more than once, and you actually need to be able to see those intermediate states. In cases like these the only option available in Cell at the moment is to make a copy of the data structures involved, which you can (functionally) update as many times as you need, and to explicitly pass them around.</p>
 
 <p>I'm happy to admit that this execution model is unproven (it's not used by any other language I know of), and that I fully expect it to turn out to be too restrictive in at least some circumstances. But one thing to keep in mind is that the current model is just a starting point. There are a lot of things that can be done to make it more flexible, without sliding into the complete caos that is one of the most distinctive features of imperative languages. As an example, it would be relatively easy to add the ability to explicitly commit, during the execution of a message handler, all update instructions that have been issued up until a certain point before executing the remaining part of the handler. The overall goal is to try to deviate as little as possible from standard functional programming: to allow observable destructive updates, in order to improve both flexibility and performance, but at the same time to restrict such operations in various ways in order to minimize the unwanted consequences of mutability.</p>
 
@@ -416,7 +427,9 @@
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
             <li>The Basics
@@ -437,6 +450,7 @@
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>
                 <li><a href='interface.html'>Interfacing with C++</a></li>
+                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
               </ul>
             </li>
 

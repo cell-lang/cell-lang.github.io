@@ -9,6 +9,17 @@
 
   <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
   <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
 </head>
 
 <body>
@@ -33,7 +44,7 @@
 </figure>
 </code></pre>
 
-<p>The new type, <code class="inline-code-box"><span class="inline-code">Bool</span></code>, contains only two values, the two (special) symbols <code class="inline-code-box"><span class="inline-code">true</span></code> and <code class="inline-code-box"><span class="inline-code">false</span></code>. Type names can contain both letters and numbers but not underscores, and must begin with an uppercase letter and contain at least a lowercase one. Also, when including a symbol in a type definition, there's no need to prefix it with a colon, because the only purpose of the colon is to avoid ambiguities that cannot arise in this context.</p>
+<p>The new type, <code class='inline-code-box'><span class='inline-code'>Bool</span></code>, contains only two values, the two (special) symbols <code class='inline-code-box'><span class='inline-code'>true</span></code> and <code class='inline-code-box'><span class='inline-code'>false</span></code>. Type names can contain both letters and numbers but not underscores, and must begin with an uppercase letter and contain at least a lowercase one. Also, when including a symbol in a type definition, there's no need to prefix it with a colon, because the only purpose of the colon is to avoid ambiguities that cannot arise in this context.</p>
 <p>Here are a few more type definitions, all of them defining types comprised of just symbols:</p>
 
 <figure class="highlight">
@@ -45,9 +56,9 @@
 </figure>
 </code></pre>
 
-<p>Again, each of these types contains only the symbols listed in its definition. But as you have noticed, the same symbols belong to more than one type. So this immediately begs the question, is the symbol <code class="inline-code-box"><span class="inline-code">sunday</span></code> (for example) that appears in the definition of <code class="inline-code-box"><span class="inline-code">DayOfTheWeek</span></code>, the same entity that appears in <code class="inline-code-box"><span class="inline-code">WeekEndDay</span></code>? And the answer is yes, it's exactly the same value. Any value (not just symbols) can belong to any number of types, and there's no such thing as a "most specific type" as in OOP.</p>
+<p>Again, each of these types contains only the symbols listed in its definition. But as you have noticed, the same symbols belong to more than one type. So this immediately begs the question, is the symbol <code class='inline-code-box'><span class='inline-code'>sunday</span></code> (for example) that appears in the definition of <code class='inline-code-box'><span class='inline-code'>DayOfTheWeek</span></code>, the same entity that appears in <code class='inline-code-box'><span class='inline-code'>WeekEndDay</span></code>? And the answer is yes, it's exactly the same value. Any value (not just symbols) can belong to any number of types, and there's no such thing as a "most specific type" as in OOP.</p>
 
-<p>Not just that, but as you can see, both <code class="inline-code-box"><span class="inline-code">WeekEndDay</span></code> and <code class="inline-code-box"><span class="inline-code">WorkWeekDay</span></code> are subsets of <code class="inline-code-box"><span class="inline-code">DayOfTheWeek</span></code>, and the compiler will recognize them as such. That is to say, if you have, for example, a function that takes a parameter whose formal type is <code class="inline-code-box"><span class="inline-code">DayOfTheWeek</span></code>, and you pass as actual argument a variable or an expression whose type is either <code class="inline-code-box"><span class="inline-code">WeekEndDay</span></code> or <code class="inline-code-box"><span class="inline-code">WorkWeekDay</span></code>, the typechecker will happily accept your code, because it recognizes that the type of the actual argument is a subset/subtype of the formal one.</p>
+<p>Not just that, but as you can see, both <code class='inline-code-box'><span class='inline-code'>WeekEndDay</span></code> and <code class='inline-code-box'><span class='inline-code'>WorkWeekDay</span></code> are subsets of <code class='inline-code-box'><span class='inline-code'>DayOfTheWeek</span></code>, and the compiler will recognize them as such. That is to say, if you have, for example, a function that takes a parameter whose formal type is <code class='inline-code-box'><span class='inline-code'>DayOfTheWeek</span></code>, and you pass as actual argument a variable or an expression whose type is either <code class='inline-code-box'><span class='inline-code'>WeekEndDay</span></code> or <code class='inline-code-box'><span class='inline-code'>WorkWeekDay</span></code>, the typechecker will happily accept your code, because it recognizes that the type of the actual argument is a subset/subtype of the formal one.</p>
 
 <p>That holds true not just for simple enumeration types like the ones above, but for all sorts of types, no matter how complex they are, and that includes recursive ones as well. In other words, the name of a type is completely immaterial; to decide whether one type is a subset of another, the compiler only compares their definitions, not their names. Two types are considered equivalent if and only if they define the same (extensional) set of values, regardless of how they are defined.</p>
 
@@ -62,7 +73,7 @@
 </figure>
 </code></pre>
 
-<p>The notation <code class="inline-code-box"><span class="inline-code">&lt;+&gt;</span></code> is itself a valid type, and can be used directly in your code. The above definition only create a more syntactically palatable alias for it. It denotes the (infinite) set of all symbols.</p>
+<p>The notation <code class='inline-code-box'><span class='inline-code'>&lt;+&gt;</span></code> is itself a valid type, and can be used directly in your code. The above definition only create a more syntactically palatable alias for it. It denotes the (infinite) set of all symbols.</p>
 <p>The set of all integer numbers is defined in a similar way:</p>
 
 <figure class="highlight">
@@ -72,7 +83,7 @@
 </figure>
 </code></pre>
 
-<p>Here, again, <code class="inline-code-box"><span class="inline-code">&lt;*..*&gt;</span></code> is a valid type that can be used directly in the code, and the above definition only creates an alias for it. You can also define subsets of the set of all integers:</p>
+<p>Here, again, <code class='inline-code-box'><span class='inline-code'>&lt;*..*&gt;</span></code> is a valid type that can be used directly in the code, and the above definition only creates an alias for it. You can also define subsets of the set of all integers:</p>
 
 <figure class="highlight">
 <section>
@@ -86,7 +97,7 @@
 </figure>
 </code></pre>
 
-<p><code class="inline-code-box"><span class="inline-code">Nat</span></code> is the set/type of natural numbers, that is, all non-negative integers. <code class="inline-code-box"><span class="inline-code">NzNat</span></code> is the set of non-zero natural numbers, that is, positive integers. <code class="inline-code-box"><span class="inline-code">Neg</span></code> includes all negative integer numbers, <code class="inline-code-box"><span class="inline-code">Byte</span></code> all integers that can fit into an (unsigned) byte, <code class="inline-code-box"><span class="inline-code">Bit</span></code> just 0 and 1 and <code class="inline-code-box"><span class="inline-code">Zero</span></code> is a singleton type that contains only 0. You're not restricted to a single range of integers. You can for example define the set of all non-zero integers:</p>
+<p><code class='inline-code-box'><span class='inline-code'>Nat</span></code> is the set/type of natural numbers, that is, all non-negative integers. <code class='inline-code-box'><span class='inline-code'>NzNat</span></code> is the set of non-zero natural numbers, that is, positive integers. <code class='inline-code-box'><span class='inline-code'>Neg</span></code> includes all negative integer numbers, <code class='inline-code-box'><span class='inline-code'>Byte</span></code> all integers that can fit into an (unsigned) byte, <code class='inline-code-box'><span class='inline-code'>Bit</span></code> just 0 and 1 and <code class='inline-code-box'><span class='inline-code'>Zero</span></code> is a singleton type that contains only 0. You're not restricted to a single range of integers. You can for example define the set of all non-zero integers:</p>
 
 <figure class="highlight">
 <section>
@@ -104,7 +115,7 @@
 </figure>
 </code></pre>
 
-<p>Since the name of the type is (conceptually at least) irrelevant. In general the comma in a type definition acts as the union operator. The following declaration defines a new type, <code class="inline-code-box"><span class="inline-code">MyType</span></code>, that is the union of four other types, <code class="inline-code-box"><span class="inline-code">MyType1</span></code> ... <code class="inline-code-box"><span class="inline-code">MyType4</span></code>, and is therefore a supertype/superset of all of them:</p>
+<p>Since the name of the type is (conceptually at least) irrelevant. In general the comma in a type definition acts as the union operator. The following declaration defines a new type, <code class='inline-code-box'><span class='inline-code'>MyType</span></code>, that is the union of four other types, <code class='inline-code-box'><span class='inline-code'>MyType1</span></code> ... <code class='inline-code-box'><span class='inline-code'>MyType4</span></code>, and is therefore a supertype/superset of all of them:</p>
 
 <figure class="highlight">
 <section>
@@ -147,7 +158,7 @@
 </figure>
 </code></pre>
 
-<p><code class="inline-code-box"><span class="inline-code">IntSeq</span></code> comprises all sequences whose elements are integer values, including the empty sequence. The following sequence values are all elements of <code class="inline-code-box"><span class="inline-code">IntSeq</span></code>:</p>
+<p><code class='inline-code-box'><span class='inline-code'>IntSeq</span></code> comprises all sequences whose elements are integer values, including the empty sequence. The following sequence values are all elements of <code class='inline-code-box'><span class='inline-code'>IntSeq</span></code>:</p>
 
 <figure class="highlight">
 <section>
@@ -158,7 +169,7 @@
 </figure>
 </code></pre>
 
-<p>The notation <code class="inline-code-box"><span class="inline-code">Int*</span></code> can here be used directly in your code (just like, for example, <code class="inline-code-box"><span class="inline-code">&lt;0..*&gt;</span></code> or <code class="inline-code-box"><span class="inline-code">&lt;!&gt;</span></code>) and that is actually the recommended style. In general, the type <code class="inline-code-box"><span class="inline-code">MyType*</span></code> is the type of all sequences whose elements belong to <code class="inline-code-box"><span class="inline-code">MyType</span></code>. If you want to exclude the empty sequence you just replace the asterisk with a plus sign:</p>
+<p>The notation <code class='inline-code-box'><span class='inline-code'>Int*</span></code> can here be used directly in your code (just like, for example, <code class='inline-code-box'><span class='inline-code'>&lt;0..*&gt;</span></code> or <code class='inline-code-box'><span class='inline-code'>&lt;!&gt;</span></code>) and that is actually the recommended style. In general, the type <code class='inline-code-box'><span class='inline-code'>MyType*</span></code> is the type of all sequences whose elements belong to <code class='inline-code-box'><span class='inline-code'>MyType</span></code>. If you want to exclude the empty sequence you just replace the asterisk with a plus sign:</p>
 
 <figure class="highlight">
 <section>
@@ -176,7 +187,7 @@
 </figure>
 </code></pre>
 
-<p><code class="inline-code-box"><span class="inline-code">NeIntSeq</span></code> is the same as <code class="inline-code-box"><span class="inline-code">IntSeq</span></code> minus the empty sequence, and is therefore a subtype/subset of <code class="inline-code-box"><span class="inline-code">Int*</span></code>, as is <code class="inline-code-box"><span class="inline-code">EmptySeq</span></code>. Both <code class="inline-code-box"><span class="inline-code">Int+</span></code> and <code class="inline-code-box"><span class="inline-code">()</span></code> notations can be used directly in the code as well. <code class="inline-code-box"><span class="inline-code">()</span></code> can denote, depending on the context, either the empty sequence (if it appears where an expression is expected) or the singleton type that contains only the empty sequence (if it appears where a type is expected).</p>
+<p><code class='inline-code-box'><span class='inline-code'>NeIntSeq</span></code> is the same as <code class='inline-code-box'><span class='inline-code'>IntSeq</span></code> minus the empty sequence, and is therefore a subtype/subset of <code class='inline-code-box'><span class='inline-code'>Int*</span></code>, as is <code class='inline-code-box'><span class='inline-code'>EmptySeq</span></code>. Both <code class='inline-code-box'><span class='inline-code'>Int+</span></code> and <code class='inline-code-box'><span class='inline-code'>()</span></code> notations can be used directly in the code as well. <code class='inline-code-box'><span class='inline-code'>()</span></code> can denote, depending on the context, either the empty sequence (if it appears where an expression is expected) or the singleton type that contains only the empty sequence (if it appears where a type is expected).</p>
 
 
 <h3>Tuple types</h3>
@@ -199,12 +210,12 @@
 </figure>
 </code></pre>
 
-<p>The type <code class="inline-code-box"><span class="inline-code">PersonData</span></code> includes only 5-element sequences whose first and second elements are strings, the third is a non-negative integer, the fourth a boolean value and the fifth a floating point number. Contrast that with the standard sequence type, which includes sequences of any length (with the possible exclusion of the empty sequence), but cannot constrain the type of the elements based on their position.</p>
+<p>The type <code class='inline-code-box'><span class='inline-code'>PersonData</span></code> includes only 5-element sequences whose first and second elements are strings, the third is a non-negative integer, the fourth a boolean value and the fifth a floating point number. Contrast that with the standard sequence type, which includes sequences of any length (with the possible exclusion of the empty sequence), but cannot constrain the type of the elements based on their position.</p>
 
 
 <h3>Set types</h3>
 
-<p>Set types are similar to sequence type. The type of the elements is written between brackets, with a <code class="inline-code-box"><span class="inline-code">+</span></code> sign before it if you want to exclude the empty set:</p>
+<p>Set types are similar to sequence type. The type of the elements is written between brackets, with a <code class='inline-code-box'><span class='inline-code'>+</span></code> sign before it if you want to exclude the empty set:</p>
 
 <figure class="highlight">
 <section>
@@ -219,7 +230,7 @@
 
 <h3>Binary relation types</h3>
 
-<p>Binary relation types too are written between brackets, with the two argument types separated by a comma. A type like <code class="inline-code-box"><span class="inline-code">[Int, String]</span></code> includes all the following relation values (among infinitely many others, of course):</p>
+<p>Binary relation types too are written between brackets, with the two argument types separated by a comma. A type like <code class='inline-code-box'><span class='inline-code'>[Int, String]</span></code> includes all the following relation values (among infinitely many others, of course):</p>
 
 <figure class="highlight">
 <section>
@@ -230,8 +241,8 @@
 </figure>
 </code></pre>
 
-<p>You can exclude the empty set/relation value from your type in the same way as set types: <code class="inline-code-box"><span class="inline-code">[+Int, String]</span></code> contains all the elements of <code class="inline-code-box"><span class="inline-code">[Int, String]</span></code> except the empty set/relation (and is therefore a subset/subtype of <code class="inline-code-box"><span class="inline-code">[Int, String]</span></code>).</p>
-<p>Relation types also have "polymorphic" variants: the type <code class="inline-code-box"><span class="inline-code">[Int, String; Symbol, Float]</span></code>, for example, includes the following values:</p>
+<p>You can exclude the empty set/relation value from your type in the same way as set types: <code class='inline-code-box'><span class='inline-code'>[+Int, String]</span></code> contains all the elements of <code class='inline-code-box'><span class='inline-code'>[Int, String]</span></code> except the empty set/relation (and is therefore a subset/subtype of <code class='inline-code-box'><span class='inline-code'>[Int, String]</span></code>).</p>
+<p>Relation types also have "polymorphic" variants: the type <code class='inline-code-box'><span class='inline-code'>[Int, String; Symbol, Float]</span></code>, for example, includes the following values:</p>
 
 <figure class="highlight">
 <section>
@@ -305,7 +316,7 @@
 </figure>
 </code></pre>
 
-<p>You can also tag some fields as being optional, by adding a question mark after their type. In the following type definition, for example, both <code class="inline-code-box"><span class="inline-code">middle_name</span></code> and <code class="inline-code-box"><span class="inline-code">date_of_death</span></code> are optional:</p>
+<p>You can also tag some fields as being optional, by adding a question mark after their type. In the following type definition, for example, both <code class='inline-code-box'><span class='inline-code'>middle_name</span></code> and <code class='inline-code-box'><span class='inline-code'>date_of_death</span></code> are optional:</p>
 
 <figure class="highlight">
 <section>
@@ -372,7 +383,7 @@
 </figure>
 </code></pre>
 
-<p>A type like <code class="inline-code-box"><span class="inline-code">TaggedInt</span></code> above includes, for example, all the following values (and infinitely many more, of course):</p>
+<p>A type like <code class='inline-code-box'><span class='inline-code'>TaggedInt</span></code> above includes, for example, all the following values (and infinitely many more, of course):</p>
 
 <figure class="highlight">
 <section>
@@ -387,7 +398,7 @@
 
 <h3>Inline types</h3>
 
-<p>In general, anything that can appear after the <code class="inline-code-box"><span class="inline-code">=</span></code> sign in a type definition is a type in its own right, and can be used directly in the code. All the following type expressions, for example, can not only be nested inside another type expression, but also used in places like function signatures:</p>
+<p>In general, anything that can appear after the <code class='inline-code-box'><span class='inline-code'>=</span></code> sign in a type definition is a type in its own right, and can be used directly in the code. All the following type expressions, for example, can not only be nested inside another type expression, but also used in places like function signatures:</p>
 
 <figure class="highlight">
 <section>
@@ -407,7 +418,7 @@
 </figure>
 </code></pre>
 
-<p>There are three exceptions to this rule: symbols, tagged types and type unions. To turn them into standalone types, they have to be enclosed by <code class="inline-code-box"><span class="inline-code">&lt;</span></code> and <code class="inline-code-box"><span class="inline-code">&gt;</span></code>. The following, for example, are valid types:</p>
+<p>There are three exceptions to this rule: symbols, tagged types and type unions. To turn them into standalone types, they have to be enclosed by <code class='inline-code-box'><span class='inline-code'>&lt;</span></code> and <code class='inline-code-box'><span class='inline-code'>&gt;</span></code>. The following, for example, are valid types:</p>
 
 <figure class="highlight">
 <section>
@@ -421,7 +432,7 @@
 </figure>
 </code></pre>
 
-<p>but they wouldn't be if the <code class="inline-code-box"><span class="inline-code">&lt;</span></code> and <code class="inline-code-box"><span class="inline-code">&gt;</span></code> signs where removed. Since they are types in their own right, they can also be nested inside other types:</p>
+<p>but they wouldn't be if the <code class='inline-code-box'><span class='inline-code'>&lt;</span></code> and <code class='inline-code-box'><span class='inline-code'>&gt;</span></code> signs where removed. Since they are types in their own right, they can also be nested inside other types:</p>
 
 <figure class="highlight">
 <section>
@@ -447,7 +458,7 @@
 
 <h3>Parametric type declarations</h3>
 
-<p>Let's say we need to define a data structure for binary trees of integer numbers. We could use the symbol <code class="inline-code-box"><span class="inline-code">empty_bin_tree</span></code> to denote the empty tree, and a tagged triple composed of an integer and two subtrees for internal nodes. Our type declaration would then look like this:</p>
+<p>Let's say we need to define a data structure for binary trees of integer numbers. We could use the symbol <code class='inline-code-box'><span class='inline-code'>empty_bin_tree</span></code> to denote the empty tree, and a tagged triple composed of an integer and two subtrees for internal nodes. Our type declaration would then look like this:</p>
 
 <figure class="highlight">
 <section>
@@ -467,7 +478,7 @@
 </figure>
 </code></pre>
 
-<p>Here <code class="inline-code-box"><span class="inline-code">T</span></code> is a type variable, and <code class="inline-code-box"><span class="inline-code">BinTree[T]</span></code> a parametric type. A type variables is represented by a standalone uppercase letter. To instantiate a parametric type, just replace the type variable between brackets with a normal type:</p>
+<p>Here <code class='inline-code-box'><span class='inline-code'>T</span></code> is a type variable, and <code class='inline-code-box'><span class='inline-code'>BinTree[T]</span></code> a parametric type. A type variables is represented by a standalone uppercase letter. To instantiate a parametric type, just replace the type variable between brackets with a normal type:</p>
 
 <figure class="highlight">
 <section>
@@ -498,7 +509,7 @@
 
 <h3>Subtyping</h3>
 
-<p>Let's now come back to the subject of subtyping. As mentioned before, a type <code class="inline-code-box"><span class="inline-code">T</span></code> is a subset/subtype of another type <code class="inline-code-box"><span class="inline-code">T'</span></code> if every element of <code class="inline-code-box"><span class="inline-code">T</span></code> is also an element of <code class="inline-code-box"><span class="inline-code">T'</span></code>, and the two are equivalent if they are both subtypes of each other, that is, if every element of <code class="inline-code-box"><span class="inline-code">T</span></code> belongs to <code class="inline-code-box"><span class="inline-code">T'</span></code> and vice versa.</p>
+<p>Let's now come back to the subject of subtyping. As mentioned before, a type <code class='inline-code-box'><span class='inline-code'>T</span></code> is a subset/subtype of another type <code class='inline-code-box'><span class='inline-code'>T'</span></code> if every element of <code class='inline-code-box'><span class='inline-code'>T</span></code> is also an element of <code class='inline-code-box'><span class='inline-code'>T'</span></code>, and the two are equivalent if they are both subtypes of each other, that is, if every element of <code class='inline-code-box'><span class='inline-code'>T</span></code> belongs to <code class='inline-code-box'><span class='inline-code'>T'</span></code> and vice versa.</p>
 <p>The problem with using the standard mathematical notion of subset and superset to define subtyping conformance is that such notion is, in the general case, undecidable: there's no algorithm, let alone an efficient one, that can decide, for all pairs of types/sets if one is a subset of the other. When the typechecker fails to prove a valid subtype relationship it simply rejects what might otherwise be a valid program, but it never accepts an invalid one, so the system is safe, just more restrictive that it should, in theory, be.</p>
 <p>Luckily, it turns out that, in practice, the types that are used in normal code are simple enough that even a not particularly sofisticated typechecker has no difficulty dealing with the vast majority of cases, and it can run into trouble only in situations that are far outside the reach of any nominative, deterministic type system I know of.</p>
 <p>As an example of what could trip up the compiler, consider the following type definitions:</p>
@@ -515,7 +526,7 @@
 </figure>
 </code></pre>
 
-<p>where <code class="inline-code-box"><span class="inline-code">Ta1</span></code>, <code class="inline-code-box"><span class="inline-code">Ta2</span></code>, <code class="inline-code-box"><span class="inline-code">Tb1</span></code> and <code class="inline-code-box"><span class="inline-code">Tb2</span></code> are types defined elsewhere. <code class="inline-code-box"><span class="inline-code">ProbType1</span></code> and <code class="inline-code-box"><span class="inline-code">ProbType2</span></code> are obviously the same type, but the typechecker is unable to figure that out. It can easily prove that <code class="inline-code-box"><span class="inline-code">ProbType1</span></code> is a subset of <code class="inline-code-box"><span class="inline-code">ProbType2</span></code>, but not the other way round. The same problem can present itself with record types:</p>
+<p>where <code class='inline-code-box'><span class='inline-code'>Ta1</span></code>, <code class='inline-code-box'><span class='inline-code'>Ta2</span></code>, <code class='inline-code-box'><span class='inline-code'>Tb1</span></code> and <code class='inline-code-box'><span class='inline-code'>Tb2</span></code> are types defined elsewhere. <code class='inline-code-box'><span class='inline-code'>ProbType1</span></code> and <code class='inline-code-box'><span class='inline-code'>ProbType2</span></code> are obviously the same type, but the typechecker is unable to figure that out. It can easily prove that <code class='inline-code-box'><span class='inline-code'>ProbType1</span></code> is a subset of <code class='inline-code-box'><span class='inline-code'>ProbType2</span></code>, but not the other way round. The same problem can present itself with record types:</p>
 
 <figure class="highlight">
 <section>
@@ -529,7 +540,7 @@
 </figure>
 </code></pre>
 
-<p>Here too the compiler can figure out that <code class="inline-code-box"><span class="inline-code">ProbType3</span></code> is a subset of <code class="inline-code-box"><span class="inline-code">ProbType4</span></code>, but not vice versa.</p>
+<p>Here too the compiler can figure out that <code class='inline-code-box'><span class='inline-code'>ProbType3</span></code> is a subset of <code class='inline-code-box'><span class='inline-code'>ProbType4</span></code>, but not vice versa.</p>
 <p>In both cases the underlying problem is that when the supertype is a union type, like so:</p>
 
 <figure class="highlight">
@@ -539,7 +550,7 @@
 </figure>
 </code></pre>
 
-<p>what the typechecker currently does is to compare the subtype (or each of its alternatives, if the subtype is a type union) to each of <code class="inline-code-box"><span class="inline-code">Type1</span></code> ... <code class="inline-code-box"><span class="inline-code">TypeN</span></code>, and give up if none of them is actually a supertype, and this naive algorithm clearly doesn't cover cases like the ones above.</p>
+<p>what the typechecker currently does is to compare the subtype (or each of its alternatives, if the subtype is a type union) to each of <code class='inline-code-box'><span class='inline-code'>Type1</span></code> ... <code class='inline-code-box'><span class='inline-code'>TypeN</span></code>, and give up if none of them is actually a supertype, and this naive algorithm clearly doesn't cover cases like the ones above.</p>
 <p>Yet in practice these situations are very easy to avoid. For instance, during the development of the Cell compiler, which is currently the largest (by far) piece of software written in Cell, only twice did the typechecker fail to recognize a valid subtype relation, and, in both cases, the issue was resolved in a couple of minutes with a minor refactoring of the type declarations involved. And even that could have been avoided by just making the compiler a little smarter (which I hope to eventually do). For now though, just avoid type declarations like these (they are simplified versions of the ones I actually had problems with):</p>
 
 <figure class="highlight">
@@ -561,7 +572,7 @@
 </figure>
 </code></pre>
 
-<p>which are equivalent, but more typechecker-friendly, since the compiler can figure out that <code class="inline-code-box"><span class="inline-code">BadType1</span></code> and <code class="inline-code-box"><span class="inline-code">BadType2</span></code> are subsets of <code class="inline-code-box"><span class="inline-code">GoodType1</span></code> and <code class="inline-code-box"><span class="inline-code">GoodType2</span></code> (respectively), but not vice versa.</p>
+<p>which are equivalent, but more typechecker-friendly, since the compiler can figure out that <code class='inline-code-box'><span class='inline-code'>BadType1</span></code> and <code class='inline-code-box'><span class='inline-code'>BadType2</span></code> are subsets of <code class='inline-code-box'><span class='inline-code'>GoodType1</span></code> and <code class='inline-code-box'><span class='inline-code'>GoodType2</span></code> (respectively), but not vice versa.</p>
 
 
 <h3>Standard types</h3>
@@ -594,7 +605,7 @@
 </figure>
 </code></pre>
 
-<p>Singleton types like <code class="inline-code-box"><span class="inline-code">True</span></code> and <code class="inline-code-box"><span class="inline-code">False</span></code> may seem pointless at first, but they are actually pretty important (We'll see why when we discuss typechecking).</p>
+<p>Singleton types like <code class='inline-code-box'><span class='inline-code'>True</span></code> and <code class='inline-code-box'><span class='inline-code'>False</span></code> may seem pointless at first, but they are actually pretty important (We'll see why when we discuss typechecking).</p>
 <p>The following is the "universal" type, the one that includes all values. It is a superset of any other type:</p>
 
 <figure class="highlight">
@@ -611,7 +622,7 @@
 </figure>
 </code></pre>
 
-<p>The next types are useful when writing functions that can fail to produce a result. The <code class="inline-code-box"><span class="inline-code">Maybe</span></code> type is standard in any functional programming language:</p>
+<p>The next types are useful when writing functions that can fail to produce a result. The <code class='inline-code-box'><span class='inline-code'>Maybe</span></code> type is standard in any functional programming language:</p>
 
 <figure class="highlight">
 <section>
@@ -623,7 +634,7 @@
 </figure>
 </code></pre>
 
-<p>and the <code class="inline-code-box"><span class="inline-code">Result</span></code> type is a slightly more capable version of it, that can return either a result or an error:</p>
+<p>and the <code class='inline-code-box'><span class='inline-code'>Result</span></code> type is a slightly more capable version of it, that can return either a result or an error:</p>
 
 <figure class="highlight">
 <section>
@@ -635,7 +646,7 @@
 </figure>
 </code></pre>
 
-<p>An alternative to <code class="inline-code-box"><span class="inline-code">Maybe</span></code> is the <code class="inline-code-box"><span class="inline-code">Opt</span></code> type. It represents the absence of value with an empty sequence, and its presence with a 1-element tuple. It may be preferrable (in some cases, at least) because standard sequence manipulation constructs and functions can be applied to it as well. Here's the definition:</p>
+<p>An alternative to <code class='inline-code-box'><span class='inline-code'>Maybe</span></code> is the <code class='inline-code-box'><span class='inline-code'>Opt</span></code> type. It represents the absence of value with an empty sequence, and its presence with a 1-element tuple. It may be preferrable (in some cases, at least) because standard sequence manipulation constructs and functions can be applied to it as well. Here's the definition:</p>
 
 <figure class="highlight">
 <section>
@@ -653,7 +664,7 @@
 </figure>
 </code></pre>
 
-<p>and the type of all 7-bit ascii strings, which is obviously a subset of <code class="inline-code-box"><span class="inline-code">String</span></code>:</p>
+<p>and the type of all 7-bit ascii strings, which is obviously a subset of <code class='inline-code-box'><span class='inline-code'>String</span></code>:</p>
 
 <figure class="highlight">
 <section>
@@ -682,7 +693,9 @@
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
             <li>The Basics
@@ -703,6 +716,7 @@
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>
                 <li><a href='interface.html'>Interfacing with C++</a></li>
+                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
               </ul>
             </li>
 

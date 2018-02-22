@@ -9,6 +9,17 @@
 
   <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
   <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
 </head>
 
 <body>
@@ -24,15 +35,20 @@
 
 <p>Cell is a domain-specific programming language designed to integrate with your language of choice in order to provide a number of features that have no equivalent in more conventional languages.</p>
 
-<p>It offers, among other things, a very flexible, entirely structural type system; deterministic, repeatable execution; support for reactive programming; the ability to use relations to store data; transactions and propagation of undefined values for error handling; and ortogonal persistence.</p>
+<p>It offers, among other things, a very flexible, entirely structural type system; deterministic, repeatable execution; support for reactive programming; the ability to use relations to store data; transactions and propagation of undefined values for error handling; and orthogonal persistence.</p>
 
-<p>Cell's most important new language construct is automata, which come in two flavors: relational automata and reactive ones. For a high-level description of them, head to the <a href='overview.html'>overview</a> section.</p>
+<p>Cell's most important new language construct is automata, which come in two flavors: relational automata and reactive ones. For a high-level, but rather abstract, description head to the <a href='overview.html'>overview</a> section. If you prefer a hands-on tutorial, start with the introductory <a href='example.html'>example</a>.</p>
 
-<p>Altough Cell is, in and of itself, a general-purpose language, that can be used to write entire applications (the Cell compiler, for example, is entirely written in Cell), that's not what it is designed for. It is, instead, meant to be used as a domain-specific language, much like, for example, tools like Lex and Yacc (or their more modern alternatives) are used for parsing: from Cell source code you can generate a set of classes in your language of choice, and use them in your existing projects. The only target language that is currently available is C++, but Java and C# are coming soon, and other languages will follow.</p>
+<p>Although Cell is, in and of itself, a general-purpose language, that can be used to write entire applications (the Cell compiler, for example, is entirely written in Cell), that's not what it is designed for. It is, instead, meant to be used as a domain-specific language, much like, for example, tools like Lex and Yacc (or their more modern alternatives) are used for parsing: from Cell source code you can generate a set of classes in your language of choice, and use them in your existing projects. The target languages that are currently available are C++ and C#, Java is coming very soon, and other languages will follow.</p>
 
 <p>If you have any question, there's the <a href='https://groups.google.com/d/forum/cell-lang'>cell-lang</a> Google Group. For announcements, there's <a href='https://twitter.com/cell_lang'>cell_lang</a> on Twitter.</p>
 
 <p>The Cell compiler is open source software, and all source code is available on <a href='https://github.com/cell-lang'>github</a>.</p>
+
+
+<h3>News</h3>
+
+<p>26 Feb 2018: Initial version of the <a href='csharp-code-generator-0.1.html'>Cell-to-C# compiler</a> released.</p>
 
 
         </article>
@@ -45,7 +61,9 @@
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview <strong>NEW</strong></a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
             <li>The Basics
@@ -66,6 +84,7 @@
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>
                 <li><a href='interface.html'>Interfacing with C++</a></li>
+                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
               </ul>
             </li>
 
