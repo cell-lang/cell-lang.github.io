@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Interfacing with Java</h2>
+
+<p>When you compile a Cell program, the compiler does not generate a binary executable. Instead, it generates a number of text files containing code in the chosen output language. We'll examine the Java code generator here. If you define a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure in you Cell code, the generated code can then be handed over to a Java compiler to generate a jar file (or just a set of class files). That's how for instance the Cell compiler itself is built, and also the simplest way to build a program that tests your automata. But if you don't define a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure, the compiler will just generate a set of classes, one for each type of automaton in your Cell code, that can be used to instantiate and manipulate the corresponding automata from your Java code. The compiler will also generate a text file named <code class='inline-code-box'><span class='inline-code'>interfaces.txt</span></code> which documents the interfaces of the generated classes in pseudo-Java code. In this chapter we'll go through the interface of the generated classes and explain how to use them, and what each of their methods is for.</p>
+
+<p>It's often a good idea not to use the classes that are generated for each Cell automaton directly, but to derive your own classes from them, and add new methods (and/or member or class variables, if needed) there. Among other things, if a method of the generated classes requires some sort of manual data conversion, you really don't want to repeatedly perform those conversions all over your codebase: it's much better to have all of them in just one place. The best thing to do is probably to define an overloaded version of the same method, or a similar one, in the derived class, and have it take care of all data conversions before and/or after invoking the generated one.</p>
+
+
+<h3>Data conversion</h3>
+
+<p>The biggest issue one encounters when interfacing two languages as different as Cell and Java is converting data back and forth between the two native representations. Fortunately, the compiler does most of the heavy lifting for you. For starters, there's a number of simple Cell data types that are mapped directly to a corresponding Java type. They are shown in the following table:</p>
+
+<p><table class="types-table">
+  <tr>
+    <th>Cell</th>
+    <th>Java</th>
+  </tr>
+  <tr>
+    <td>Int</td>
+    <td>long</td>
+  </tr>
+  <tr>
+    <td>Float</td>
+    <td>double</td>
+  </tr>
+  <tr>
+    <td>Bool</td>
+    <td>boolean</td>
+  </tr>
+  <tr>
+    <td>String</td>
+    <td>String</td>
+  </tr>
+  <tr>
+    <td>T*</td>
+    <td>T'[]</td>
+  </tr>
+  <tr>
+    <td>[T]</td>
+    <td>T'[]</td>
+  </tr>
+  <tr>
+    <td>any_tag(T)</td>
+    <td>T'</td>
+</table>
+</p>
+
+<p>The above table should be mostly self-explanatory, except for the last entry: tagged types can be mapped directly to a Java type only if the tag is a known symbol and the type of the untagged value in turn has a direct mapping to a Java type. In this case, the tag is simply ignored and the mapping of the  untagged value is used. A type like <code class='inline-code-box'><span class='inline-code'>&lt;person_id(Nat)&gt;</span></code>, for example, will be mapped to a <code class='inline-code-box'><span class='inline-code'>long</span></code> in Java, and the generated code will take care of adding or removing the <code class='inline-code-box'><span class='inline-code'>person_id</span></code> tag as needed.</p>
+
+<p>For data types that are not in the above table, the compiler tries to generate a Java class for them. It does so for symbols, tuples, records and union types. All the generated types are documented in the <code class='inline-code-box'><span class='inline-code'>interface.txt</span></code> file. As an example, given the following Cell code:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Point</span> = point(<span class='m'>Int</span>, <span class='m'>Int</span>);
+
+<span class='k'>type</span> <span class='m'>Shape</span> = square(left: <span class='m'>Int</span>, bottom: <span class='m'>Int</span>, side: <span class='m'>Nat</span>),
+             rectangle(left: <span class='m'>Int</span>, bottom: <span class='m'>Int</span>, width: <span class='m'>Nat</span>, height: <span class='m'>Nat</span>),
+             circle(center: <span class='m'>Point</span>, radius: <span class='m'>Float</span>);
+
+<span class='k'>type</span> <span class='m'>List</span>[<span class='u'>T</span>] = empty_list, list(<span class='u'>T</span>, <span class='m'>List</span>[<span class='u'>T</span>]);
+
+<span class='k'>schema</span> <span class='m'>DrawingBoard</span> {
+  ref_point(<span class='m'>Point</span>):
+    shapes : <span class='m'>List</span>[<span class='m'>Shape</span>];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>this is what the compiler will generate, in the pseudo-Java code used in <code class='inline-code-box'><span class='inline-code'>interfaces.txt</span></code>:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>package</span> net.cell_lang;
+
+<span class='c'>// Point type</span>
+<span class='k'>class</span> <span class='m'>Point</span> {
+  <span class='b'>long</span> item1;
+  <span class='b'>long</span> item2;
+}
+
+<span class='c'>// Shape type and its subtypes</span>
+<span class='k'>interface</span> <span class='m'>Shape</span> {
+
+}
+
+<span class='k'>class</span> <span class='m'>Square</span> <span class='k'>implements</span> Shape {
+  <span class='b'>long</span> left;
+  <span class='b'>long</span> bottom;
+  <span class='b'>long</span> side;
+}
+
+<span class='k'>class</span> <span class='m'>Rectangle</span> <span class='k'>implements</span> Shape {
+  <span class='b'>long</span> left;
+  <span class='b'>long</span> bottom;
+  <span class='b'>long</span> height;
+  <span class='b'>long</span> width;
+}
+
+<span class='k'>class</span> <span class='m'>Circle</span> <span class='k'>implements</span> Shape {
+  <span class='m'>Point</span>  center;
+  <span class='b'>double</span> radius;
+}
+
+<span class='c'>// List[Shape] and its subtypes</span>
+<span class='k'>interface</span> <span class='m'>List_Shape</span> {
+
+}
+
+<span class='k'>class</span> <span class='m'>EmptyList</span> <span class='k'>implements</span> List_Shape {
+  <span class='k'>final</span> <span class='k'>static</span> EmptyList singleton;
+}
+
+<span class='k'>class</span> <span class='m'>List</span> <span class='k'>implements</span> List_Shape {
+  Shape      item1;
+  List_Shape item2;
+}
+</code></pre></section></figure>
+</p>
+
+<p>The first Cell type, <code class='inline-code-box'><span class='inline-code'>Point</span></code>, is mapped to a Java class by the same name. The member variables <code class='inline-code-box'><span class='inline-code'>item1</span></code> and <code class='inline-code-box'><span class='inline-code'>item2</span></code> correspond to the first and second field of the tuple respectively. For a union type like <code class='inline-code-box'><span class='inline-code'>Shape</span></code> an empty interface is created, and each of the alternatives in the union is mapped to its own type, which implements the interface. The mapping for records and tagged records like <code class='inline-code-box'><span class='inline-code'>Square</span></code> or <code class='inline-code-box'><span class='inline-code'>Circle</span></code> is obvious. Symbols like <code class='inline-code-box'><span class='inline-code'>empty_list</span></code> are mapped to their own singleton class, <code class='inline-code-box'><span class='inline-code'>EmptyList</span></code> in this case. Such classes have a private constructor, and their only instance can be accessed through the <code class='inline-code-box'><span class='inline-code'>singleton</span></code> class variable. Generic types like <code class='inline-code-box'><span class='inline-code'>List[T]</span></code> are never mapped directly to Java types, only their instances are. In this specific case <code class='inline-code-box'><span class='inline-code'>List[Shape]</span></code> is mapped to <code class='inline-code-box'><span class='inline-code'>List_Shape</span></code>. All generated classes and their member or class variables are public, and they're part of the <code class='inline-code-box'><span class='inline-code'>net.cell_lang</span></code> package. They also overload the <code class='inline-code-box'><span class='inline-code'>toString()</span></code> method so that it returns the standard textual representation for the corresponding Cell value. <code class='inline-code-box'><span class='inline-code'>Point.toString()</span></code>, for example, will returns strings like <code class='inline-code-box'><span class='inline-code'>"point(12, -5)"</span></code>.</p>
+
+<p>The exact rules that are used to map a Cell type to a corresponding Java type are rather complex, and not yet final, so they won't be described here, but the final result is generally just what you would expect. There's only a couple things that need explaining. If you use "inline" tuple or record types the compiler will get a bit creative with their names. For example, for an inline tuple type like <code class='inline-code-box'><span class='inline-code'>(Int, Point, String)</span></code> the compiler will generate a Java class named <code class='inline-code-box'><span class='inline-code'>Long_Point_String</span></code>, and an inline record type like <code class='inline-code-box'><span class='inline-code'>(x: Float, y: Float, z: Float)</span></code> will be mapped to a Java class named <code class='inline-code-box'><span class='inline-code'>X_Y_Z</span></code>. Union types can be mapped to a generated native type only if they only contain symbols or tagged values. The compiler for example will not be able to generated a Java equivalent for the following type:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Point</span> = (x: <span class='m'>Int</span>, y: <span class='m'>Int</span>), point(x: <span class='m'>Int</span>, y: <span class='m'>Int</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>Finally, when any type of naming conflict arises, the compiler fixes it by adding underscores and/or a unique number at the end of the type name, so don't be surprised if you find generated types with names like <code class='inline-code-box'><span class='inline-code'>MyType_</span></code> or <code class='inline-code-box'><span class='inline-code'>MyType_2</span></code>.</p>
+
+<p>Every generated type is declared in its own file, and of course there's nothing stopping you from replacing the generated classes with your own, as long as they have the same names, are part of the same <code class='inline-code-box'><span class='inline-code'>net.cell_lang</span></code> package, and you don't remove or change the type of its member variables. You can of course add all the member variables and methods you need, which will be ignored by the generated code. Just be careful because the Cell compiler will regenerate those classes every time, and will overwrite your own if they are in the wrong directory. The simplest thing to do is probably to delete the generated classes you want to replace right after running the Cell compiler, as part of the build process, and keep their replacements somewhere else in the <code class='inline-code-box'><span class='inline-code'>CLASSPATH</span></code>.</p>
+
+<p>When everything else fails, the exchange format depends on the direction data is moving in. When passing data from Java to Cell you're expected to pass a string that contains the textual representation of a Cell value. That's neither elegant nor particularly efficient, but at least it's simple and straightforward. When data moves in the other direction, from Cell to Java, it is returned as an object of type <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code>. Its declaration is shown here:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>package</span> net.cell_lang;
+
+<span class='k'>interface</span> <span class='m'>Value</span> {
+  <span class='b'>boolean</span> isSymb();
+  <span class='b'>boolean</span> isInt();
+  <span class='b'>boolean</span> isFloat();
+  <span class='b'>boolean</span> isSeq();
+  <span class='b'>boolean</span> isSet();
+  <span class='b'>boolean</span> isBinRel();
+  <span class='b'>boolean</span> isTernRel();
+  <span class='b'>boolean</span> isTagged();
+
+  <span class='b'>boolean</span> isString();
+  <span class='b'>boolean</span> isRecord();
+
+  <span class='b'>String</span> asSymb();
+  <span class='b'>long</span>   asLong();
+  <span class='b'>double</span> asDouble();
+
+  <span class='b'>String</span> asString();
+
+  <span class='b'>int</span> size();
+  <span class='m'>Value</span> item(<span class='b'>int</span> index);
+  <span class='m'>Value</span> arg1(<span class='b'>int</span> index);
+  <span class='m'>Value</span> arg2(<span class='b'>int</span> index);
+  <span class='m'>Value</span> arg3(<span class='b'>int</span> index);
+
+  <span class='b'>String</span> tag();
+  <span class='m'>Value</span> untagged();
+
+  <span class='m'>Value</span> lookup(<span class='b'>string</span> field);
+
+  <span class='b'>void</span> print(<span class='m'>Writer</span> writer);
+}
+</code></pre></section></figure>
+</p>
+
+<p>This interface is implemented by a number of concrete classes each of which is used to represent a particular type of Cell value: symbols, integers, floating point numbers, sequences, sets, binary and ternary relations and tagged values. These concrete classes are hidden from the user, and they can be manipulated only through their common "fat" interface, whose methods can be divided into three groups. The first one comprises all the <code class='inline-code-box'><span class='inline-code'>boolean is*()</span></code> methods, which are used to discover the type of the value represented by the target object. Then there's a group of methods that are used to actually access the data held by those objects:</p>
+
+<p><figure class="highlight"><section><pre><code>
+  <span class='c'>// Defined only for symbols. Returns a string that</span>
+  <span class='c'>// contains the textual representation of the symbol</span>
+  <span class='b'>String</span> asSymb();
+
+  <span class='c'>// Defined only for integers</span>
+  <span class='c'>// Returns the value as a 64-bit signed integer</span>
+  <span class='b'>long</span> asLong();
+
+  <span class='c'>// Defined only for floating point numbers</span>
+  <span class='c'>// Returns the value as a double precision floating point number</span>
+  <span class='b'>double</span> asFloat();
+
+  <span class='c'>// Defined only for strings</span>
+  <span class='b'>String</span> asString();
+
+  <span class='c'>// Defined for all collection types:</span>
+  <span class='c'>// sequences, sets, binary and ternary relations</span>
+  <span class='b'>int</span> size();
+
+  <span class='c'>// Defined only for sequences and sets</span>
+  <span class='c'>// Returns the i-th value in the collection</span>
+  <span class='c'>// In the case of sets, elements are arranged</span>
+  <span class='c'>// in an implementation-defined order</span>
+  <span class='m'>Value</span> item(<span class='b'>int</span> index);
+
+  <span class='c'>// Defined only for binary and ternary relations</span>
+  <span class='c'>// Return the first or second element of the i-th tuple in the relation</span>
+  <span class='c'>// Tuples are arranged in an implementation-defined order</span>
+  <span class='m'>Value</span> arg1(<span class='b'>int</span> index);
+  <span class='m'>Value</span> arg2(<span class='b'>int</span> index);
+
+  <span class='c'>// Defined only for ternary relations</span>
+  <span class='c'>// Returns the third element of the i-th tuple in the relation</span>
+  <span class='c'>// Tuples are arranged in an implementation-defined order</span>
+  <span class='m'>Value</span> arg3(<span class='b'>int</span> index);
+
+  <span class='c'>// Defined only for tagged values</span>
+  <span class='c'>// Returns the textual representation of the tag</span>
+  <span class='b'>String</span> tag();
+
+  <span class='c'>// Defined only for tagged values</span>
+  <span class='c'>// Returns the value without the tag</span>
+  <span class='m'>Value</span> untagged();
+
+  <span class='c'>// Defined only for records</span>
+  <span class='c'>// Returns the value of the corresponding field</span>
+  <span class='c'>// The only argument is the textual representation of the</span>
+  <span class='c'>// field symbol, e.g. point.lookup("x")</span>
+  <span class='m'>Value</span> lookup(<span class='b'>String</span> field);
+</code></pre></section></figure>
+</p>
+
+<p>Each of these methods is actually implemented only in some of the classes that can hide behind the <code class='inline-code-box'><span class='inline-code'>Value</span></code> interface, and if used with the wrong concrete class they will throw an exception. <code class='inline-code-box'><span class='inline-code'>long asLong()</span></code>, for example, can only be used if the target object actually holds an integer value, which can be checked using the <code class='inline-code-box'><span class='inline-code'>boolean isInt()</span></code> query method.</p>
+
+<p>The last method, <code class='inline-code-box'><span class='inline-code'>void print(Writer)</span></code>, is used to generate the textual representation of the value, which is written to the provided <code class='inline-code-box'><span class='inline-code'>java.io.Writer</span></code> object.</p>
+
+
+<h3>Relational automata</h3>
+
+<p>Let's take a look at the interface of the classes produced by the compilation of a relational automaton. We'll use a number of automata we've seen in the previous chapters, and we will start with a very simple one, <code class='inline-code-box'><span class='inline-code'>Counter</span></code>:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>package</span> net.cell_lang;
+
+<span class='k'>class</span> <span class='m'>Counter</span> {
+  Counter();
+
+  <span class='m'>Value</span> readState();
+  <span class='b'>void</span> setState(<span class='m'>String</span> newState);
+  <span class='b'>void</span> execute(<span class='m'>String</span> message);
+
+  <span class='b'>long</span> value();
+  <span class='b'>long</span> updates();
+}
+</code></pre></section></figure>
+
+<!-- <span class='b'>long</span> newValue(<span class='m'>CounterMsg</span> msg);
+
+interface CounterMsg {
+
+}
+
+class Decr implements CounterMsg {
+  final static Decr singleton;
+}
+
+class Incr implements CounterMsg {
+  final static Incr singleton;
+}
+
+class Reset implements CounterMsg {
+  final static Reset singleton;
+}
+
+class Reset_Long implements CounterMsg {
+  long inner;
+} --></p>
+
+<p>As you can see, the generated Java class has the same name of the Cell automaton it derives from, and it belongs to the <code class='inline-code-box'><span class='inline-code'>net.cell_lang</span></code> package. The first three methods, <code class='inline-code-box'><span class='inline-code'>readState()</span></code>, <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code>, are the same for all relational automata. All other methods are just accessors that are specific to a particular automaton, and can be used to read pieces of its state, or to invoke its methods.</p>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>readState()</span></code> method is the equivalent of the <code class='inline-code-box'><span class='inline-code'>read</span></code> instruction in Cell: it takes a snapshot of the state of the automaton and returns it as a <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code> object. Saving the state of an automaton to a file in text form can be done with the instruction <code class='inline-code-box'><span class='inline-code'>counter.readState().print(writer);</span></code>, where <code class='inline-code-box'><span class='inline-code'>writer</span></code> is a valid instance of <code class='inline-code-box'><span class='inline-code'>java.io.Writer</span></code>.</p>
+
+<p><code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> is used to set the state of an automaton instance, and is the equivalent of the <code class='inline-code-box'><span class='inline-code'>write</span></code> instruction in Cell. It can be used at any time in the life of the automaton instance, any number of times. The new state has to be provided in text form. Here's an example:</p>
+
+<p><figure class="highlight">
+<section>
+<pre><code>counter.setState(<span class='s'>"(value: -10, updates: 0)"</span>);</code></pre>
+</section>
+</figure>
+</p>
+
+<p>If the provided state is not a valid one, <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> will throw an exception. In that case, the automaton instance will just retain the state it had before, and will still be perfectly functional.</p>
+
+<p><code class='inline-code-box'><span class='inline-code'>execute(..)</span></code> is used to send the automaton a message, which has to be passed in text form. A few examples:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>counter.execute(<span class='s'>"incr"</span>);
+counter.execute(<span class='s'>"decr"</span>);
+counter.execute(<span class='s'>"reset"</span>);
+counter.execute(<span class='s'>"reset(-1)"</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>Errors handling works in the same way as with <code class='inline-code-box'><span class='inline-code'>setState()</span></code>. If an error occurs an exception will be thrown, but the automaton will remain fully operational, and its state will be left untouched.</p>
+
+<p>The two methods <code class='inline-code-box'><span class='inline-code'>value()</span></code> and <code class='inline-code-box'><span class='inline-code'>updates()</span></code> are <code class='inline-code-box'><span class='inline-code'>Counter</span></code>-specific accessors that return the values of the <code class='inline-code-box'><span class='inline-code'>value</span></code> and <code class='inline-code-box'><span class='inline-code'>updates</span></code> member variables respectively. Note that the types of such variables is just <code class='inline-code-box'><span class='inline-code'>Int</span></code>, which can be mapped directly to <code class='inline-code-box'><span class='inline-code'>long</span></code> in Java, with no need to use <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code>.</p>
+
+<p>Let's now take a look at a more complex automaton, <code class='inline-code-box'><span class='inline-code'>Supply</span></code>. Here's the declaration of the generated Java class:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>package</span> net.cell_lang;</span>
+
+<span class='k'>class</span> <span class='m'>Supply</span> {
+  Supply();
+
+  <span class='m'>Value</span> readState();
+  <span class='k'>void</span> setState(<span class='b'>String</span>);
+  <span class='k'>void</span> execute(<span class='b'>String</span>);
+
+  <span class='b'>long</span> nextPartId();
+  <span class='b'>long</span> nextSupplierId();
+
+  <span class='b'>boolean</span> part(<span class='b'>long</span>);
+  <span class='b'>long</span>[] part();
+
+  <span class='b'>boolean</span> supplier(<span class='b'>long</span>);
+  <span class='b'>long</span>[] supplier();
+
+  <span class='b'>boolean</span> code(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='m'>Pair</span>&lt;<span class='b'>long</span>[], <span class='b'>String</span>[]&gt; code();
+
+  <span class='b'>boolean</span> phone(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='m'>Pair</span>&lt;<span class='b'>long</span>, <span class='b'>String</span>&gt;[] phone();
+
+  <span class='b'>boolean</span> sells(<span class='b'>long</span>, <span class='b'>long</span>);
+  <span class='m'>Pair</span>&lt;<span class='b'>long</span>, <span class='b'>long</span>&gt;[] sells();
+
+  <span class='b'>boolean</span> availability(<span class='b'>long</span>, <span class='b'>long</span>, <span class='b'>long</span>);
+  <span class='m'>Triplet</span>&lt;<span class='b'>long</span>, <span class='b'>long</span>, <span class='b'>long</span>&gt;[] availability();
+
+  <span class='b'>boolean</span> unitPrice(<span class='b'>long</span>, <span class='b'>long</span>, <span class='b'>long</span>);
+  <span class='m'>Triplet</span>&lt;<span class='b'>long</span>, <span class='b'>long</span>, <span class='b'>long</span>&gt;[] unitPrice();
+
+  <span class='b'>boolean</span> name(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='b'>String</span> name(<span class='b'>long</span>);
+  <span class='m'>Pair</span>&lt;<span class='b'>long</span>, <span class='b'>String</span>&gt;[] name();
+
+  <span class='b'>boolean</span> address(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='b'>String</span> address(<span class='b'>long</span>);
+  <span class='m'>Pair</span>&lt;<span class='b'>long</span>, <span class='b'>String</span>&gt;[] address();
+
+  <span class='b'>boolean</span> description(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='b'>String</span> description(<span class='b'>long</span>);
+  <span class='m'>Pair</span>&lt;<span class='b'>long</span>, <span class='b'>String</span>&gt;[] description();
+
+  <span class='m'>Value</span> lowestPriceSuppliers();
+  <span class='b'>long</span>[] lowestPriceSuppliers(<span class='b'>long</span>);
+}
+</code></pre></section></figure>
+</p>
+
+<p>The first three methods of the <code class='inline-code-box'><span class='inline-code'>Supply</span></code> class, <code class='inline-code-box'><span class='inline-code'>readState()</span></code>, <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code>, are the same as before. The two methods <code class='inline-code-box'><span class='inline-code'>nextPartId()</span></code> and <code class='inline-code-box'><span class='inline-code'>nextSupplierId()</span></code> are just accessors for the corresponding member variables, just like <code class='inline-code-box'><span class='inline-code'>value()</span></code> and <code class='inline-code-box'><span class='inline-code'>updates()</span></code> in <code class='inline-code-box'><span class='inline-code'>Counter</span></code>. All the other methods are new, and are either accessors for some mutable relation variable or wrappers for a Cell method. A first set of boolean methods check whether a relation contains a given tuple (or value, for unary relations):</p>
+
+<p><figure class="highlight"><section><pre><code><span class='c'>// Checks whether the <span class="inline-code">part</span> unary relation</span>
+<span class='c'>// contains the value <span class="inline-code">part_id(1)</span></span>
+supplyInstance.part(<span class='n'>1</span>)
+
+<span class='c'>// Checks whether the <span class="inline-code">sells</span> binary relation contains</span>
+<span class='c'>// the pair <span class="inline-code">supplier_id(8)</span>, <span class="inline-code">part_id(2)</span></span>
+supplyInstance.sells(<span class='n'>8</span>, <span class='n'>2</span>)
+
+<span class='c'>// Checks whether <span class="inline-code">availability</span> contains the</span>
+<span class='c'>// triple <span class="inline-code">supplier_id(7)</span>, <span class="inline-code">part_id(3)</span>, <span class="inline-code">25</span></span>
+supplyInstance.availability(<span class='n'>7</span>, <span class='n'>3</span>, <span class='n'>25</span>)
+</code></pre></section></figure>
+</p>
+
+<p>A second group of methods, like <code class='inline-code-box'><span class='inline-code'>supplier()</span></code> or <code class='inline-code-box'><span class='inline-code'>unitPrice()</span></code>, return the entire content of a given relations. In the case of unary relation they return an array of values corresponding to the elements of the relations. In the case of binary or ternary relations they return an object of type <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Pair</span></code> and <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Triplet</span></code> respectively, that contain the columns of the relations. The <code class='inline-code-box'><span class='inline-code'>Pair</span></code> and <code class='inline-code-box'><span class='inline-code'>Triplet</span></code> types are defined as follow:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>package</span> net.cell_lang;
+
+<span class='k'>public</span> <span class='k'>class</span> <span class='m'>Pair</span>&lt;<span class='u'>X</span>, <span class='u'>Y</span>&gt; {
+  <span class='k'>public</span> <span class='u'>X</span> item1;
+  <span class='k'>public</span> <span class='u'>Y</span> item2;
+}
+
+<span class='k'>public</span> <span class='k'>class</span> <span class='m'>Triplet</span>&lt;<span class='u'>X</span>, <span class='u'>Y</span>, <span class='u'>Z</span>&gt; {
+  <span class='k'>public</span> <span class='u'>X</span> item1;
+  <span class='k'>public</span> <span class='u'>Y</span> item2;
+  <span class='k'>public</span> <span class='u'>Z</span> item3;
+}
+</code></pre></section></figure>
+</p>
+
+<p>It would be of course nicer to return an array of tuples, rather than a pair/triplet of arrays, and that's how it is in other languages, but given the restrictions of Java's type system this is probably the simplest and most efficient way to do it.</p>
+
+<p>Binary relations with a key on the first column (that is, maps) also have accessors that return the value corresponding to a given key, provided that the relation/map contains such key:</p>
+
+<p><figure class="highlight">
+<section>
+<pre><code><span class='c'>// Looks up the name of the supplier identified by the value</span>
+<span class='c'>// <span class="inline-code">supplier_id(21)</span> if the <span class="inline-code">name</span> relation contains an entry</span>
+<span class='c'>// for such supplier. Throws an exception otherwise</span>
+<span class='b'>string</span> name = supplyInstance.name(<span class='n'>21</span>);
+</code></pre>
+</section>
+</figure>
+</p>
+
+<p>The last group of methods (<code class='inline-code-box'><span class='inline-code'>lowestPriceSuppliers(..)</span></code>) are just the compiled Java version of the corresponding Cell methods of the <code class='inline-code-box'><span class='inline-code'>Supply</span></code> automaton.</p>
+
+
+<h3>Reactive automata</h3>
+
+<p>We'll use <code class='inline-code-box'><span class='inline-code'>Switch</span></code> as our first example. This is the interface of the corresponding generated class:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>package</span> net.cell_lang;
+
+<span class='k'>class</span> <span class='m'>Switch</span> {
+  <span class='k'>enum</span> <span class='m'>Input</span> {<span class='u'>SWITCH_OFF</span>, <span class='u'>SWITCH_ON</span>};
+
+  <span class='k'>enum</span> <span class='m'>Output</span> {<span class='u'>IS_ON</span>};
+
+  Switch();
+
+  <span class='k'>void</span> setInput(<span class='m'>Input</span> input, <span class='m'>String</span> value);
+  <span class='m'>Value</span> readOutput(<span class='m'>Output</span> output);
+
+  <span class='k'>void</span> apply();
+  <span class='m'>Value</span> readState();
+  <span class='k'>void</span> setState(<span class='m'>String</span> newState);
+
+  <span class='m'>Output</span>[] changedOutputs;
+
+  <span class='c'>// Inputs</span>
+  <span class='k'>void</span> setSwitchOff(<span class='b'>boolean</span> value);
+  <span class='k'>void</span> setSwitchOn(<span class='b'>boolean</span> value);
+
+  <span class='c'>// Outputs</span>
+  <span class='k'>boolean</span> isOn();
+};
+</code></pre></section></figure>
+</p>
+
+<p>The first thing to note here is the two enumerations <code class='inline-code-box'><span class='inline-code'>Input</span></code> and <code class='inline-code-box'><span class='inline-code'>Output</span></code>, whose elements are the uppercase version of the names of the inputs and outputs of <code class='inline-code-box'><span class='inline-code'>Switch</span></code>. These are used in conjunction with the methods <code class='inline-code-box'><span class='inline-code'>setInput()</span></code> and <code class='inline-code-box'><span class='inline-code'>readOutput()</span></code> as shown here:</p>
+
+<p><figure class="highlight">
+<section>
+<pre><code><span class='c'>// Setting the value of the two inputs</span>
+switchInstance.setInput(<span class='m'>Switch</span>.<span class='m'>Input</span>.<span class='u'>SWITCH_ON</span>, <span class='s'>"true"</span>);
+switchInstance.setInput(<span class='m'>Switch</span>.<span class='m'>Input</span>.<span class='u'>SWITCH_OFF</span>, <span class='s'>"false"</span>);
+
+<span class='c'>// Propagating the changes to the inputs</span>
+<span class='c'>// throughout the automaton instance</span>
+switchInstance.apply();
+
+<span class='c'>// Reading and printing the value of the only output</span>
+<span class='m'>Value</span> isOn = switchInstance.readOutput(<span class='m'>Switch</span>.<span class='m'>Output</span>.<span class='u'>IS_ON</span>);
+<span class='m'>System</span>.out.println(isOn.toString());
+</code></pre></section></figure>
+</p>
+
+<p>As an alternative to <code class='inline-code-box'><span class='inline-code'>setInput(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>readOutput(..)</span></code>, which can operate on any input or output and use the textual representation of a value or <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code> respectively as an exchange format, the generated class also provides another set of methods each of which can manipulate a single input or output, but that are more convenient to use in most cases. The above code snippet can be rewritten as follow:</p>
+
+<p><figure class="highlight">
+<section>
+<pre><code><span class='c'>// Setting the value of the two inputs</span>
+switchInstance.setSwitchOn(<span class='k'>true</span>);
+switchInstance.setSwitchOff(<span class='k'>false</span>);
+
+<span class='c'>// Propagating the changes to the inputs</span>
+<span class='c'>// throughout the automaton instance</span>
+switchInstance.apply();
+
+<span class='c'>// Reading and printing the value of the only output</span>
+<span class='k'>boolean</span> isOn = switchInstance.isOn();
+<span class='m'>System</span>.out.println(<span class='m'>Boolean</span>.toString(isOn));
+</code></pre></section></figure>
+</p>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>readState()</span></code> and <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> methods work in the same way as with relational automata, but with the limitations we've already discussed for time-aware automata. The method <code class='inline-code-box'><span class='inline-code'>changedOutputs()</span></code> returns a list of outputs that have changed (or have been activated, in the case of discrete outputs) as a result of the last call to <code class='inline-code-box'><span class='inline-code'>apply()</span></code>:</p>
+
+<p><figure class="highlight">
+<section>
+<pre><code><span class='c'>// Changing inputs here</span>
+...
+
+<span class='c'>// Propagating those changes</span>
+switchInstance.apply();
+
+<span class='c'>// Iterating through the outputs that have changed</span>
+<span class='c'>// if continuous or have been activated if discrete</span>
+<span class='b'>for</span> (<span class='m'>Switch</span>.<span class='m'>Output</span> outputId : switchInstance.changedOutputs()) {
+  <span class='c'>// Reading the value of the changed output</span>
+  <span class='m'>Value</span> outputValue = switchInstance.readOutput(outputId);
+
+  <span class='c'>// Now time to do something with the value of the output</span>
+  ...
+}
+</code></pre></section></figure>
+</p>
+
+<p>The last thing we need to see is how to deal with time-aware automata. We'll use <code class='inline-code-box'><span class='inline-code'>WaterSensor</span></code>:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>package</span> net.cell_lang;
+
+<span class='k'>class</span> <span class='m'>WaterSensor</span> {
+  <span class='k'>enum</span> <span class='m'>Input</span> {<span class='u'>RAW_READING</span>};
+
+  <span class='k'>enum</span> <span class='m'>Output</span> {<span class='u'>SENSOR_STATE</span>};
+
+  WaterSensor();
+
+  <span class='k'>void</span> setInput(<span class='m'>Input</span> input, <span class='m'>String</span> value);
+  <span class='m'>Value</span> readOutput(<span class='m'>Output</span> output);
+
+  <span class='k'>void</span> setElapsedMillisecs(<span class='b'>int</span>);
+  <span class='k'>void</span> setElapsedSecs(<span class='b'>int</span>);
+
+  <span class='b'>boolean</span> apply();
+  <span class='m'>Value</span> readState();
+  <span class='k'>void</span> setState(<span class='m'>String</span>);
+
+  <span class='m'>Output</span>[] changedOutputs;
+
+  <span class='c'>// Inputs</span>
+  <span class='k'>public void</span> setRawReading(<span class='m'>Maybe_Bool</span> value);
+
+  <span class='c'>// Outputs</span>
+  <span class='k'>public</span> <span class='m'>WaterSensorState</span> sensorState();
+}
+
+
+<span class='k'>interface</span> <span class='m'>Maybe_Bool</span> {
+
+}
+
+<span class='k'>class</span> <span class='m'>Nothing</span> <span class='k'>implements</span> <span class='m'>Maybe_Bool</span> {
+  <span class='k'>final</span> <span class='k'>static</span> <span class='m'>Nothing</span> singleton;
+}
+
+<span class='k'>class</span> <span class='m'>Just_Bool</span> <span class='k'>implements</span> <span class='m'>Maybe_Bool</span> {
+  <span class='b'>boolean</span> inner;
+}
+
+
+<span class='k'>interface</span> <span class='m'>WaterSensorState</span> {
+
+}
+
+<span class='k'>class</span> <span class='m'>Unknown</span> <span class='k'>implements</span> <span class='m'>WaterSensorState</span> {
+  <span class='k'>final</span> <span class='k'>static</span> <span class='m'>Unknown</span> singleton;
+}
+
+<span class='k'>class</span> <span class='m'>Submerged</span> <span class='k'>implements</span> <span class='m'>WaterSensorState</span> {
+  <span class='b'>boolean</span> inner;
+}
+
+<span class='k'>class</span> <span class='m'>Initializing</span> <span class='k'>implements</span> <span class='m'>WaterSensorState</span> {
+  <span class='k'>final</span> <span class='k'>static</span> <span class='m'>Initializing</span> singleton;
+}
+</code></pre></section></figure>
+</p>
+
+<p>The only differences here, apart from the input setters and output getters which are obviously specific to each automaton type and the generated types for <code class='inline-code-box'><span class='inline-code'>Maybe[Bool]</span></code> and <code class='inline-code-box'><span class='inline-code'>WaterSensorState</span></code>, are the two extra methods <code class='inline-code-box'><span class='inline-code'>setElapsedSecs(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>setElapsedMillisecs(..)</span></code> and the fact that <code class='inline-code-box'><span class='inline-code'>apply()</span></code> now returns a boolean value. The former are the equivalent of the <code class='inline-code-box'><span class='inline-code'>elapsed</span></code> instruction in Cell, and the value now returned by <code class='inline-code-box'><span class='inline-code'>apply()</span></code> has the same meaning as the one returned by the <code class='inline-code-box'><span class='inline-code'>apply</span></code> instruction in a Cell procedure. Here's an example of how to update an instance of <code class='inline-code-box'><span class='inline-code'>WaterSensor</span></code>:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='c'>// Updating the values of the inputs here</span>
+...
+
+<span class='c'>// Setting the amount of time that has elapsed</span>
+<span class='c'>// since the last call to <span class="inline-code">waterSensor.apply()</span></span>
+waterSensor.setElapsedMillisecs(<span class='n'>100</span>);
+
+<span class='k'>do</span> {
+  <span class='c'>// Repeatedly calling <span class="inline-code">apply()</span> until it returns true</span>
+  <span class='c'>// That happens only once all pending timers have</span>
+  <span class='c'>// been processed and the changes in the values of</span>
+  <span class='c'>// the inputs propagated throughout the automaton</span>
+  <span class='b'>boolean</span> done = waterSensor.apply();
+
+  <span class='c'>// Iterating through the outputs that have changed</span>
+  <span class='c'>// if countinuous or have been activated if discrete</span>
+  <span class='k'>for</span> (<span class='m'>WaterSensor</span>.<span class='m'>Output</span> outputId : waterSensor.changedOutputs) {
+    <span class='c'>// Reading the value of the changed output</span>
+    <span class='m'>Value</span> outputValue = waterSensor.readOutput(outputId);
+
+    <span class='c'>// Now time to do something with the value of the output</span>
+    ...
+  }
+} <span class='k'>while</span> (!done);
+</code></pre></section></figure>
+</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='quick.html'>Quick overview</a></li>
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>The Basics
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+              </ul>
+            </li>
+
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+
+<!--             <li>Rationale
+              <ul class="toc">
+                <li><a href='state.html'>State</a></li>
+                <li><a href='functional.html'>Functional programming</a></li>
+                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
+              </ul>
+            </li>
+ -->
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

@@ -37,9 +37,9 @@
 
 <p>It offers, among other things, a very flexible, entirely structural type system; deterministic, repeatable execution; support for reactive programming; the ability to use relations to store data; transactions and propagation of undefined values for error handling; and orthogonal persistence.</p>
 
-<p>Cell's most important new language construct is automata, which come in two flavors: relational automata and reactive ones. For a high-level, but rather abstract, description head to the <a href='overview.html'>overview</a> section. If you prefer a hands-on tutorial, start with the introductory <a href='example.html'>example</a>.</p>
+<p>Cell's most important new language construct is automata, which come in two flavors: relational automata and reactive ones. For a high-level, but rather abstract, description head to the <a href='overview.html'>overview</a> section. If you prefer a hands-on tutorial, start with either the introductory <a href='example.html'>example</a> to find out more about relational automata, or this <a href='reactive.html'>page</a> to learn about reactive ones.</p>
 
-<p>Although Cell is, in and of itself, a general-purpose language, that can be used to write entire applications (the Cell compiler, for example, is entirely written in Cell), that's not what it is designed for. It is, instead, meant to be used as a domain-specific language, much like, for example, tools like Lex and Yacc (or their more modern alternatives) are used for parsing: from Cell source code you can generate a set of classes in your language of choice, and use them in your existing projects. The target languages that are currently available are C++ and C#, Java is coming very soon, and other languages will follow.</p>
+<p>Although Cell is, in and of itself, a general-purpose language, that can be used to write entire applications (the Cell compiler, for example, is entirely written in Cell), that's not what it is designed for. It is, instead, meant to be used as a domain-specific language, much like, for example, tools like Lex and Yacc (or their more modern alternatives) are used for parsing: from Cell source code you can generate a set of classes in your language of choice, and use them in your existing projects. Code generators for C++, Java and C# are already available, and other languages will follow.</p>
 
 <p>If you have any question, there's the <a href='https://groups.google.com/d/forum/cell-lang'>cell-lang</a> Google Group. For announcements, there's <a href='https://twitter.com/cell_lang'>cell_lang</a> on Twitter.</p>
 
@@ -48,7 +48,8 @@
 
 <h3>News</h3>
 
-<p>26 Feb 2018: Initial version of the <a href='csharp-code-generator-0.1.html'>Cell-to-C# compiler</a> released.</p>
+<p>25 Apr 2018: Version 0.1 of <a href='java-code-generator-0.1.html'>Cell &#x279e; Java compiler</a> released.</p>
+<p>26 Feb 2018: Version 0.1 of <a href='csharp-code-generator-0.1.html'>Cell &#x279e; C# compiler</a> released.</p>
 
 
         </article>
@@ -83,8 +84,14 @@
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>
-                <li><a href='interface.html'>Interfacing with C++</a></li>
-                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
+              </ul>
+            </li>
+
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
 

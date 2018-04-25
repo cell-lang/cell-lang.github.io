@@ -33,7 +33,7 @@
         <article class="content">
 <h2>An overview of Cell</h2>
 
-<p>The purpose of this section is to provide a bird's eye view of the Cell programming language, by emphasizing its unique features and explaining how it differs from every other programming language I know, in order to give you a sense of what it can be useful for. You may also want to read the <a href='quick.html'>quick overview</a> either before or after reading this. Note though that both overviews are rather long, abstract and contain no code. If you are just curious to find out what the language looks like and what it can be used for, start with the introductory <a href='example.html'>example</a>.</p>
+<p>The purpose of this section is to provide a bird's eye view of the Cell programming language, by emphasizing its unique features and explaining how it differs from every other programming language I know, in order to give you a sense of what it can be useful for. You may also want to read the <a href='quick.html'>quick overview</a> either before or after reading this. Note though that both overviews are rather long, abstract and contain no code. If you are just curious to find out what the language looks like and what it can be used for, start with the introductory <a href='example.html'>example</a> instead.</p>
 
 
 <h3>The functional sublanguage</h3>
@@ -61,9 +61,9 @@
 
 <p>Orthogonal persistence is made possible, and practical, by a combination of some of the language features we've already examined, like Cell's value-based data model; the fact that automata are self-contained; the deterministic nature of the language; and its structural data model, which not only makes serialization and deserialization trivial, but also makes it (a lot) easier to deal with the equivalent of schema changes in databases.</p>
 
-<p>The current implementation forces you to explicity save and restore the whole state of the automata you want to persist, which of course is not feasible in the presence of large amounts of data. But note that if an application keeps a message log, it's not necessary to save its state after every single update, because in the event of a crash the most recent state can always be reconstructed by starting from the last saved one and replaying all the messages that were received after that. A better persistence implementation, one that can automatically store just the part of the data that has changed during an update is planned, and actually pretty high up in the list of priorities.</p>
+<p>The current implementation forces you to explicity save and restore the whole state of the automata you want to persist, which of course is not feasible in the presence of large amounts of data. But note that if an application keeps a message log, it's not necessary to save its state after every single update, because in the event of a crash the most recent state can always be reconstructed by starting from the last saved one and replaying all the messages that were received after that. A better persistence implementation, one that can automatically store just the part of the data that has changed during an update is of course possible, but since the implementation is non-trivial, it's only part of the long term plans for the language.</p>
 
-<p>In the long term, the aim is also to gradually integrate into the language elements of a (Datalog-like) query language, although the focus will be on the simple queries typical of OLTP systems, rather than the arbitrarily complex, long-running queries used in data analysis.</p>
+<p>Future versions of Cell will also gradually integrate into the language Datalog-style inference rules of increased complexity, although the focus will be on the simple queries typical of OLTP systems, rather than the arbitrarily complex, long-running queries used in data analysis.</p>
 
 <p>The implementation of relations is not yet complete: first of all, only unary, binary and ternary relations are supported (although there's a lot that can be done with just these, since with the particular flavor of the relational model used in Cell, relations with arity greater than three are not needed very often). There's also limited support for integrity constraints: primary and non-primary (possibly composite) keys are already supported, but foreign keys are not, and neither are a number of additional integrity constraints and other features that are planned but have no equivalent in SQL databases.</p>
 
@@ -89,30 +89,47 @@
 
 <h3>A domain-specific language, not a general-purpose one</h3>
 
-<p>While it is possible to use Cell to write complete programs (or at least it would be, if it provided a comprehensive I/O library), that's not what the language is designed for. The Cell compiler is actually a code generator: it outputs a source file in any of the supported target languages, which you can then include in an existing application written in the same language. For each automaton in your Cell code, the compiler produces a corresponding native class that allows you to instantiate and interact with those automata, by doing things like sending messages to, invoking methods on and reading, saving and restoring the state of a relational automata, or setting the inputs and being notified of changes in the values of the outputs of a reactive one.</p>
+<p>While it is possible to use Cell to write complete programs (or at least it would be, if it provided a comprehensive I/O library), that's not what the language is designed for. The Cell compiler is actually a code generator: it outputs a source file in any of the supported target languages, which you can then include in an existing application. For each automaton in your Cell code, the compiler produces a corresponding native class that allows you to instantiate and interact with those automata, by doing things like sending messages to, invoking methods on and reading, saving and restoring the state of a relational automaton, or setting the inputs and being notified of changes in the values of the outputs of a reactive one.</p>
 
-<p>The interface between Cell and the host language is obviously a bit clunky, as moving data from one language to the other always requires some sort of conversion. Everything works smoothly if the data that is passed back and forth can be automatically mapped, on the host language side, to built-in data types like numbers, vectors or strings, or any other data type defined in the standard libraries, but things become more complicated when dealing with complex user-defined types. In this latter case, passing data from the host language to Cell is still pretty easy, although not particularly elegant, while a bit more work is required in the other direction. The interface is still a work in progress, and feedback and suggestions on how to improve it are of course always very welcome.</p>
+<p>The most complicated part of interfacing Cell with the host language is of course converting the data that is passed back and forth between them from one representation to the other. The compiler/code generator here first tries to map the Cell data types to build-in data types of the host language, or types that are defined in its standard libraries, like integers, floating point numbers, strings or arrays. Failing that, it tries to generate classes in the host language that can be mapped to the native Cell types. This approach is mostly used to deal with records and union types, and, in the case of Java, with tuples. When everything else fails (which doesn't happen very often) the language resorts to a generic format that is less convenient to use but that has the advantage of being universal.</p>
 
-<p>The output languages that are currently supported are C++ and C#, with Java coming very soon. In the longer term, other interesting targets are plain C, JavaScript and maybe Swift, if there's demand for them. All those implementations will march along at different speeds, so don't expect them to ever be perfectly aligned in terms of functionalities or performance.</p>
+<p>The interface is still a work in progress, and feedback and suggestions on how to improve it are of course always very welcome. The eventual goal is to make the generated classes almost as easy to use as hand-coded ones, even though it may not be possible to completely eliminate every source of friction between Cell and the host language.</p>
 
-<p>The reason Cell was designed to be a domain-specific language, and its compiler to be a code generator, should be  obvious. Choosing the main language for your application has usually more to do with the tools, libraries and support that are available for it than it has with the language itself, and one generally has to be, by necessity, very conservative there. But a domain-specific language that integrates with your primary language, instead of replacing it, stands a much better chance of actually being useful, as it can be adopted gradually, and only when, and to the extent that, it provides a clear advantage. It's just another tool in your toolbox. You can start by identifying a small part of your application that could benefit from being written in Cell: it could be a viable alternative, for example, to an embedded SQL database for small amounts of persistent data, providing a better data model, full programmability, a better interface with the host language and, once the implementation has matured, probably better performance. Or it could be used to implement a reactive subsystem of your application, as an alternative to a reactive library, or to the tedious (and error-prone) hand-coded propagation of changes. These are just examples. Cell is nothing if not different: its strengths and weaknesses don't have a lot of overlap with those of more conventional languages, and object-oriented ones in particular, and there's no shortage of areas where it can complement them effectively.</p>
+<p>The output languages that are currently supported are C++, Java and C#. In the longer term, other interesting targets are plain C, JavaScript and maybe Swift, if there's demand for them. All those implementations will march along at different speeds, so don't expect them to ever be perfectly aligned in terms of functionalities or performance.</p>
+
+<p>The reason Cell was designed to be a domain-specific language, and its compiler to be a code generator, should be  obvious. Choosing the main language for your application has usually more to do with the tools, libraries and support that are available for it than it has with the language itself, and one generally has to be, by necessity, very conservative there. But a domain-specific language that integrates with your primary language, instead of replacing it, stands a much better chance of actually being useful, as it can be adopted gradually, and only when, and to the extent that, it provides a clear advantage. It's just another tool in your toolbox. You can start by identifying a small part of your application that could benefit from being written in Cell: it could be a viable alternative, for example, to an embedded SQL database for small amounts of persistent data, providing a better data model, full programmability, a better interface with the host language and, once the implementation has matured, probably better performance (possibly much better performance). Or it could be used to implement a reactive subsystem of your application, as an alternative to a reactive library, or to the tedious (and error-prone) hand-coded propagation of changes. These are just examples. Cell is nothing if not different: its strengths and weaknesses don't have a lot of overlap with those of more conventional languages, and object-oriented ones in particular, and there's no shortage of areas where it can complement them effectively.</p>
 
 
 <h3>Current status</h3>
 
-<p>Remember, this is version 0.1. I'm not aware, at the time of this writing, of any major bug, but the compiler just hasn't been tested enough. Use it at your own risk!</p>
+<p>Remember, this is version 0.1. I'm not aware, at the time of writing, of any major bug, but the compiler just hasn't been tested enough. Use it at your own risk!</p>
 
-<p>More in detail, the functional subset of the language is the only part that has been been used to write a non-trivial application (the Cell compiler itself), and it has been working reliably for me for more than a year, but I've no doubt that once other people, with different programming styles, start to use it they will find bugs I never came across.</p>
+<p>More in detail, the functional subset of the language is the only part that has been been used to write a non-trivial application (the Cell compiler itself), and it has been working reliably for me for at least a couple years now, but I've no doubt that once other people, with different programming styles, start to use it they will find bugs I never came across.</p>
 
 <p>Relational automata have so far been used only to write small toy applications, and still need to be tested extensively.</p>
 
 <p>Reactive automata are at this stage very experimental. Not only they too haven't been tested anywhere enough but unlike their relational counterpart their design is still tentative and in a state of flux, and their implementation much more complex.</p>
 
-<p>Performance also leaves a lot to be desired at the moment. Even though Cell is a compiled language, in terms of speed right now it's closer to, say, Python that is it to Java. But I see no reason why it shouldn't be able to at least approach the speed of fast languages, once type-driven optimization is implemented. Work on that will start once the code generator for Java has been released.</p>
+<p>Performance also leaves a lot to be desired at the moment. Even though Cell is a compiled language, in terms of speed right now it's closer to, say, Python that is it to Java. But I see no reason why it shouldn't be able to at least approach the speed of fast languages, once type-driven optimization is implemented.</p>
 
 <p>The documentation on this website is another work in progress. It covers almost all the features of the language, but rational, design guidelines and examples are still missing at this stage.</p>
 
 <p>So, again, this is a beta version, don't use it for anything important quite yet.</p>
+
+
+<h3>Road map</h3>
+
+<p>The next version of Cell, 0.2, will focus on performance optimization, and in particular on making use of types to improve both execution speed and memory footprint of the generated code.</p>
+
+<p>Version 0.3 will be about implementing the basic features of relational automata that are still missing. Most of these features are described either in the introductory <a href='example.html'>example</a> or in the chapter on <a href='relational.html'>relational automata</a>: things like foreign keys, better support for hierarchical classification and polymorphic entities, less verbose delete statements, support for symmetric relations, maybe (just maybe) aggregate query operators, and so on.</p>
+
+<p>Version 0.4 will be the first version of the language meant for actual use. It won't introduce any new major language feature, but it will focus on things like testing, providing a minimal standard library with documentation, and improving the interface with the host language. It will also provide a code generator for C and maybe (again, emphasis on "maybe") other languages.</p>
+
+<p>After that, for relational automata, the most important new features will be Datalog-like inference rules with memoization, and more powerful update models. The current update model has clear limitations, but it has a couple of important properties: state transitions are atomic (that is, only the states before and after the transition can be observed, and all intermediate ones are just an implementation detail that is hidden from the developer) and it is amenable to a parallel implementation. The new models will preserve these properties, while adding more flexibility and modularity.</p>
+
+<p>As for reactive automata, the list of new features is simply too long, too weird and too tentative to be discussed extensively here. Suffice it to say that reactive automata in their current form are just a preview, and that there's a lot more to come.</p>
+
+<p>Longer term plans are still hazy at this point, but they include an implementation that can deal efficiently with large persistent data sets, and declarative ways to build distributed applications, among other things.</p>
 
 
         </article>
@@ -147,8 +164,14 @@
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='reactive.html'>Reactive automata</a></li>
                 <li><a href='commands.html'>Using automata</a></li>
-                <li><a href='interface.html'>Interfacing with C++</a></li>
-                <li><a href='interface-cs.html'>Interfacing with C#</a></li>
+              </ul>
+            </li>
+
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
 
