@@ -77,7 +77,7 @@
 </table>
 </p>
 
-<p>The above table should be mostly self-explanatory, except for the last entry: tagged types can be mapped directly to a Java type only if the tag is a known symbol and the type of the untagged value in turn has a direct mapping to a Java type. In this case, the tag is simply ignored and the mapping of the  untagged value is used. A type like <code class='inline-code-box'><span class='inline-code'>&lt;person_id(Nat)&gt;</span></code>, for example, will be mapped to a <code class='inline-code-box'><span class='inline-code'>long</span></code> in Java, and the generated code will take care of adding or removing the <code class='inline-code-box'><span class='inline-code'>person_id</span></code> tag as needed.</p>
+<p>The above table should be mostly self-explanatory, except for the last entry: tagged types can be mapped directly to a Java type only if the tag is a known symbol and the type of the untagged value in turn has a direct mapping to a Java type. In this case, the tag is simply ignored and the mapping of the  untagged value is used. A type like <code class='inline-code-box'><span class='inline-code'>&lt;person_id(Int)&gt;</span></code>, for example, will be mapped to a <code class='inline-code-box'><span class='inline-code'>long</span></code> in Java, and the generated code will take care of adding or removing the <code class='inline-code-box'><span class='inline-code'>person_id</span></code> tag as needed.</p>
 
 <p>For data types that are not in the above table, the compiler tries to generate a Java class for them. It does so for symbols, tuples, records and union types. All the generated types are documented in the <code class='inline-code-box'><span class='inline-code'>interface.txt</span></code> file. As an example, given the following Cell code:</p>
 
@@ -673,6 +673,7 @@ waterSensor.setElapsedMillisecs(<span class='n'>100</span>);
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>
             </li>
