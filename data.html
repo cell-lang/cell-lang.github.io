@@ -90,24 +90,7 @@
 </figure>
 </code></pre>
 
-<p>As an aside, when parentheses are used to specify the order of evaluation in a complex expression, in order to avoid ambiguities with one-element sequences, you have to write a <code class='inline-code-box'><span class='inline-code'>#</span></code> symbol before the opening parenthesis:</p>
-
-<figure class="highlight">
-<section>
-<pre><code>w = x * #(y + z);
-</section>
-</figure>
-</code></pre>
-
-<p>The only exception to this rule is boolean expressions, which cannot contain sequences so in that particular case you are free to omit the initial <code class='inline-code-box'><span class='inline-code'>#</span></code> symbol. The following two expressions are both valid, and completely equivalent:</p>
-
-<figure class="highlight">
-<section>
-<pre><code>  e = (a <span class='k'>and</span> b) <span class='k'>or</span> (c <span class='k'>and</span> d);
-  e = #(a <span class='k'>and</span> b) <span class='k'>or</span> #(c <span class='k'>and</span> d);
-</section>
-</figure>
-</code></pre>
+<p>As an aside, parentheses can also be used to specify the order of evaluation in a complex expression, and this creates an ambiguity in the case of expressions like <code class='inline-code-box'><span class='inline-code'>(x + y)</span></code>, which could interpreted either as the one-element sequence containing the value <code class='inline-code-box'><span class='inline-code'>x + y</span></code>, or just a parenthesized sum. How the compiler resolves the ambiguity is explained in one of the next chapters, but if you wanted to force it to parse such an expression as a single-element sequence, one (admittedly ugly) way to do it is to add a comma just before the closing parenthesis, just like in Python or Perl: <code class='inline-code-box'><span class='inline-code'>(x + y,)</span></code>. That's hardly ever necessary, though.</p>
 
 <p>Like all collection types, sequences can hold any kind of values, and can therefore also be used as tuples, that is, fixed-length sequences of heterogeneous values.</p>
 
@@ -332,11 +315,11 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
 
 <p>Now, many of the design goals of Cell depend on it being a very data-oriented language, in the sense of having a simple, uniform, human-readable and ideally unique representation for (almost) any piece of information. And exposing all these implementation details (list vs rope vs array vs something else) obviously goes against those goals. So the task of choosing the actual implementation at any given time has to necessarily fall on the compiler and the language runtime, and the programmer can control it only indirectly by carefully choosing (if need be) which operations to use in his or her algorithms.</p>
 
-<p>Sequences, for instance, are currently implemented as arrays, and consequently support fast random access and (functional) insertion at the end. But in the future the runtime will make use of either arrays or ropes, and will be able to switch dynamically between these two forms, depending on how these data structures are used. For example, if you are creating a long sequence by recursively concatenating smaller sequences, the runtime might choose to represent them as ropes, in order to make concatenation O(1). But the moment you start accessing its elements by index, it might rearrange the content of the sequence into an array, in order to support fast random access. If you wanted, for example, to induce the runtime to use only arrays (for whatever reason), one way to do so would be to build that long sequence by only appending new elements at the end, an operation that can be performed efficiently with arrays.</p>
+<p>Sequences, for instance, are currently implemented as arrays, and consequently support fast random access and (functional) insertion at the end. But in the future the runtime will make use of either arrays or ropes, and will be able to switch dynamically between these two forms, depending on how these data structures are used. For example, if you are creating a long sequence by recursively concatenating smaller ones, the runtime might choose to represent them as ropes, in order to make concatenation O(1). But the moment you start accessing its elements by index, it might rearrange the content of the sequence into an array, in order to support fast random access. If you wanted, for example, to induce the runtime to use only arrays (for whatever reason), one way to do so would be to build that long sequence by only appending new elements at the end, an operation that can be performed efficiently with arrays.</p>
 
 <p>That doesn't mean of course that you cannot implement you own data structures on top of the existing ones, if the circumstances require it. You could, for example, define a your own set or map types using the language provided types as primitives, if the native versions don't meet your needs, and there are indeed times when you would actually have to do so. But in all other cases, letting the compiler/runtime do the low-level work will make your code simpler, and your data easier to inspect and manipulate.</p>
 
-<p>Another data structure (or, rather, set of data structures) that benefits greatly from a clear distinction between logical definition and physical implementation is records. Remember that records in Cell are just a special case of maps, which in turn are just a special case of binary relations. This provides the ability to treat records as generic maps and, for example, to merge them (in a type-safe way: more on this later) or to build them up dynamically. On the other hand, though, representing records as maps at the physical level (which is what the compiler currently does) is nowhere as efficient as using ad-hoc data structures. But a future version of the compiler will be able to take advantage of type information (since Cell is statically typed) to store each type of records in its own specific low-level data structure, just like all statically typed languages do, and to transparently switch between the optimized and generic representations whenever needed.</p>
+<p>Another data structure (or, rather, set of data structures) that benefits greatly from a clear distinction between logical definition and physical implementation is records. Remember that records in Cell are just a special case of maps, which in turn are just a special case of binary relations. This provides the ability to treat records as generic maps and, for example, to merge them (in a type-safe way: more on this later) or to build them up dynamically. On the other hand, though, representing records as maps at the physical level is nowhere as efficient as using ad-hoc data structures. So (starting with version 0.2) the compiler creates (subject to a number of conditions that are discussed elsewhere) specific low-level data structures for all record types that are explicitly declared in your code, which are just as efficient as structs or classes in languages like C or Java, and transparently switches between the optimized and generic representations whenever needed.</p>
 
 <p>Similar considerations apply to all other collection types as well. Sets are currently implemented as sorted arrays of their elements, which is reasonably efficient when building immutable sets in just one go, but does not allow (functional) insertion or removal of elements (removing or adding an element requires rebuilding the entire set). This is of course only temporary, and the final implementation will make use of either sorted arrays or balanced trees (or a combination of them), depending on the circumstances.</p>
 
@@ -382,15 +365,19 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
                 <li><a href='example.html'>Introductory example</a></li>
                 <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
-            <li>The Basics
+            <li>Values and Types
               <ul class="toc">
                 <li><a href='data.html'>Data</a></li>
                 <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
                 <li><a href='functions.html'>Functions</a></li>
                 <li><a href='imperative.html'>Imperative code</a></li>
                 <li><a href='procedures.html'>Procedures</a></li>
@@ -426,6 +413,7 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

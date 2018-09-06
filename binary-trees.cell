@@ -1,0 +1,69 @@
+type TreeNode     = node(left: OptTreeNode, right: OptTreeNode);
+type OptTreeNode  = null, TreeNode;
+
+
+TreeNode node(TreeNode l, TreeNode r) = node(left: l, right: r);
+// TreeNode leaf_node = node(left: :null, right: :null);
+
+
+Int item_check(TreeNode node) =
+  if node.left != :null and node.right != :null then
+    1 + item_check(node.left) + item_check(node.right)
+  else
+    1;
+
+
+TreeNode bottom_up_tree(Int depth) =
+  if depth > 0 then
+    node(bottom_up_tree(depth-1), bottom_up_tree(depth-1))
+  else
+    node(left: :null, right: :null);
+
+
+Int pow2(Int exp) {
+  res = 1;
+  for exp:
+    res = 2 * res;
+  ;
+  return res;
+}
+
+
+Int min_depth = 4;
+
+
+Main(String* args) {
+  n = 0;
+  if args != ():
+    res = _parse_(args(0));
+    fail if not res :: Success[Int];
+    n = _untag_(res);
+  ;
+
+  max_depth = if n < min_depth + 2 then min_depth + 2 else n;
+  stretch_depth = max_depth + 1;
+
+  Print("stretch tree of depth " & _print_(stretch_depth) & "\0009 check: " & _print_(item_check(bottom_up_tree(stretch_depth))));
+  Print("\n");
+
+  long_lived_tree = bottom_up_tree(max_depth);
+
+  results = ({
+    depth = min_depth + 2 * i;
+    check = 0;
+    iterations = pow2(max_depth - depth + min_depth);
+    for iterations:
+      tree_node_1 = bottom_up_tree(depth);
+      check = check + item_check(tree_node_1);
+    ;
+    return _print_(iterations) & "\0009 trees of depth " & _print_(depth) & "\0009 check: " & _print_(check);
+  } : i < (max_depth - min_depth) / 2 + 1);
+
+  for r <- results:
+    Print(r);
+    Print("\n");
+  ;
+
+  Print("long lived tree of depth " & _print_(max_depth) & "\0009 check: " & _print_(item_check(long_lived_tree)));
+  Print("\n");
+}

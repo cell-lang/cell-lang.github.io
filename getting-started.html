@@ -33,7 +33,7 @@
         <article class="content">
 <h2>Getting started</h2>
 
-<p>The Cell compiler can be downloaded <a href='download.zip'>here</a>. After you unzip the file, you'll see five directories: <code class='inline-code-box'><span class='inline-code'>bin</span></code>, <code class='inline-code-box'><span class='inline-code'>stdlib</span></code>, <code class='inline-code-box'><span class='inline-code'>examples</span></code>, <code class='inline-code-box'><span class='inline-code'>src</span></code> and <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code>. The first one contains the Cell compilers/code generators (there's one for each target language), the second one the standard library (which at the moment consists of just one file, <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code>), and the third one a few ready-to-build examples to get you started. To create your own project, just pick the one of them and start making changes to it. You can find more information about them in <code class='inline-code-box'><span class='inline-code'>examples/README.txt</span></code>.</p>
+<p>The Cell code generators can be downloaded here: <a href='cellc-java.zip'>Java</a>,  <a href='cellc-cpp-linux.zip'>C++ (Linux)</a> and <a href='cellc-cs.zip'>C#</a>. The Java code generator is at version 0.2, while the C++ and C# ones are still stuck at version 0.1. After you unzip the file, you'll see five directories: <code class='inline-code-box'><span class='inline-code'>bin</span></code>, <code class='inline-code-box'><span class='inline-code'>stdlib</span></code>, <code class='inline-code-box'><span class='inline-code'>examples</span></code>, <code class='inline-code-box'><span class='inline-code'>src</span></code> (only for C++) and <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code>. The first one contains the Cell compilers/code generators (there's one for each target language), the second one the standard library (which at the moment consists of just one file, <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code>), and the third one a few ready-to-build examples to get you started. To create your own project, just pick the one of them and start making changes to it. You can find more information about them in <code class='inline-code-box'><span class='inline-code'>examples/README.txt</span></code>.</p>
 
 <p>Each of the code generators produces, when the compilation process is successful, one or more source files in the target language. These files can then be fed directly to a compiler for the corresponding language if your Cell source code includes a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure, or otherwise included in an existing project.</p>
 
@@ -90,15 +90,19 @@
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
                 <li><a href='example.html'>Introductory example</a></li>
                 <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
-            <li>The Basics
+            <li>Values and Types
               <ul class="toc">
                 <li><a href='data.html'>Data</a></li>
                 <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
                 <li><a href='functions.html'>Functions</a></li>
                 <li><a href='imperative.html'>Imperative code</a></li>
                 <li><a href='procedures.html'>Procedures</a></li>
@@ -134,6 +138,7 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

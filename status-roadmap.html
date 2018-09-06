@@ -33,28 +33,24 @@
         <article class="content">
 <h2>Current status</h2>
 
-<p>Remember, this is version 0.1. I'm not aware, at the time of writing, of any major bug, but the compiler just hasn't been tested enough. Use it at your own risk!</p>
+<p>We're now at version 0.2, but this is every bit as much of a beta as version 0.1, since large chunks of the most important part of the compiler, the code generator, have been entirely rewritten.</p>
 
-<p>More in detail, the functional subset of the language is the only part that has been been used to write a non-trivial application (the Cell compiler itself), and it has been working reliably for me for at least a couple years now, but I've no doubt that once other people, with different programming styles, start to use it they will find bugs I never came across.</p>
+<p>More in detail, the functional subset of the language is the only part that has been been used to write a non-trivial application (the Cell compiler itself), and it has been working reliably for me for at least a couple years now, but it needs to be tested by more people, with different programming styles.</p>
 
 <p>Relational automata have so far been used only to write small toy applications, and still need to be tested extensively.</p>
 
 <p>Reactive automata are at this stage very experimental. Not only they too haven't been tested anywhere enough but unlike their relational counterparts their design is still tentative and in a state of flux, and their implementation much more complex.</p>
 
-<p>Performance also leaves a lot to be desired at the moment. Even though Cell is a compiled language, in terms of speed right now it's closer to, say, Python that is it to Java. But I see no reason why it shouldn't be able to at least approach the speed of fast languages, once type-based optimization is implemented.</p>
-
-<p>The documentation on this website is another work in progress. It covers almost all the features of the language, but rational, design guidelines and examples are still missing at this stage.</p>
+<p>The documentation on this website is another work in progress. It covers almost all the features of the language, but rational, design guidelines and examples are still incomplete at this stage. And there's no documentation for the standard library yet.</p>
 
 <p>So, again, this is a beta version, don't use it for anything important quite yet.</p>
 
 
 <h3>Road map</h3>
 
-<p>The next version of Cell, 0.2, will focus on performance optimization, and in particular on making use of types to improve both execution speed and memory footprint of the generated code.</p>
+<p>The next version of Cell, 0.3, will be about implementing the basic features of relational automata that are still missing. Most of these features are described either in the introductory <a href='example.html'>example</a> or in the <a href='relational.html'>relational automata</a> page: things like foreign keys, better support for hierarchical classification and polymorphic entities, less verbose delete statements, support for symmetric relations, maybe (just maybe) aggregate query operators, and so on.</p>
 
-<p>Version 0.3 will be about implementing the basic features of relational automata that are still missing. Most of these features are described either in the introductory <a href='example.html'>example</a> or in the <a href='relational.html'>relational automata</a> page: things like foreign keys, better support for hierarchical classification and polymorphic entities, less verbose delete statements, support for symmetric relations, maybe (just maybe) aggregate query operators, and so on.</p>
-
-<p>Version 0.4 will be the first version of the language meant for actual use. It won't introduce any new major language feature, but it will focus on things like testing, providing a minimal standard library with documentation, and improving the interface with the host language. It will also provide a code generator for C and maybe (again, emphasis on "maybe") other languages.</p>
+<p>Version 0.4 will be the first version of the language meant for actual use. It won't introduce any new major language feature, but it will focus on things like testing, providing a minimal standard library with documentation, and improving the interface with the host language. It will also provide a code generator for C. Other languages may also be considered at that point.</p>
 
 <p>After that, for relational automata, the most important new features will be Datalog-like inference rules with memoization, and more powerful update models. The current update model has clear limitations, but it has a couple of important properties: state transitions are atomic (that is, only the states before and after the transition can be observed, and all intermediate ones are just an implementation detail that is hidden from the developer) and it is amenable to a parallel implementation. The new models will preserve these properties, while adding more flexibility and modularity.</p>
 
@@ -73,15 +69,19 @@
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
                 <li><a href='example.html'>Introductory example</a></li>
                 <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
-            <li>The Basics
+            <li>Values and Types
               <ul class="toc">
                 <li><a href='data.html'>Data</a></li>
                 <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
                 <li><a href='functions.html'>Functions</a></li>
                 <li><a href='imperative.html'>Imperative code</a></li>
                 <li><a href='procedures.html'>Procedures</a></li>
@@ -117,6 +117,7 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

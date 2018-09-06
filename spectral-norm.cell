@@ -1,0 +1,61 @@
+Main(String* args) {
+  n = 100;
+  if args != ():
+    res = _parse_(args(0));
+    fail if not res :: Success[Nat];
+    n = _untag_(res);
+  ;
+
+  x = approximate(n);
+
+  Print(_print_(x));
+  Print("\n");
+}
+
+
+Float approximate(Int n) {
+  u = (1.0 : i < n);
+  v = (0.0 : i < n);
+
+  for i < 10:
+    v = multiply_atav(n, u);
+    u = multiply_atav(n, v);
+  ;
+
+  v_bv = 0.0;
+  v_v = 0.0;
+  for i < n:
+    v_bv = v_bv + u(i) * v(i);
+    v_v  = v_v  + v(i) * v(i);
+  ;
+
+  return _fsqrt_(v_bv / v_v);
+}
+
+
+// Return element i,j if infinite matrix A
+Float a(Int i, Int j) = 1.0 / ((i+j) * (i+j+1) / 2 + i + 1);
+
+
+// Multiply vector v by matrix A
+Float* multiply_av(Int n, Float* v) = ({
+  x = 0.0;
+  for j < n:
+    x = x + a(i, j) * v(j);
+  ;
+  return x;
+} : i < n);
+
+
+// Multiply vector v by matrix A transposed
+Float* multiply_atv(Int n, Float* v) = ({
+  x = 0.0;
+  for j < n:
+    x = x + a(j, i) * v(j);
+  ;
+  return x;
+} : i < n);
+
+
+// Multiply vector v by matrix A and then by matrix A transposed
+Float* multiply_atav(Int n, Float* v) = multiply_atv(n, multiply_av(n, v));

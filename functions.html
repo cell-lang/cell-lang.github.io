@@ -236,7 +236,7 @@ a_bin_rel(*, arg1)
 </figure>
 </code></pre>
 
-<p>and lookups (but note that this syntax is temporary, it will change in a future version of the language):</p>
+<p>and lookups:</p>
 
 <figure class="highlight">
 <section>
@@ -253,7 +253,7 @@ a_bin_rel(!!, arg1)
 </figure>
 </code></pre>
 
-<p>A future version of the compiler will provide a more compact notation for the first of the above two operations:</p>
+<p>There's also (starting with version 0.2 of the compiler) some syntactic sugar for the first of the above two operations:</p>
 
 <figure class="highlight">
 <section>
@@ -261,8 +261,6 @@ a_bin_rel(!!, arg1)
 </section>
 </figure>
 </code></pre>
-
-<p>and this notation is already available for mutable relation variables defined inside relational automata (we'll discuss them in the following chapters).</p>
 
 <p>Records support all binary relation and map operations, plus access by field and field membership test:</p>
 
@@ -672,6 +670,70 @@ my_var :: <span class='m'>MyType</span>
 </code></pre>
 
 
+<h3>Evaluation order</h3>
+
+<p>When specifying the order of evaluation in complex expressions, you can use either parentheses or braces. The following two expressions are equivalent:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>x * (y + z)
+x * {y + z}
+</section>
+</figure>
+</code></pre>
+
+<p>but while braces can be used in any context, the use of parentheses is restricted, because parenthesized expressions are inherently ambiguous: an expression of the form <code class='inline-code-box'><span class='inline-code'>(y + z)</span></code> could be interpreted as either a one-element sequence containing the value <code class='inline-code-box'><span class='inline-code'>y + z</span></code>, or just the parenthesized form of <code class='inline-code-box'><span class='inline-code'>y + z</span></code>. So how does the compiler resolve the ambiguity? The rule is very simple: parentheses are used for grouping if and only if they appears as an argument to one of the binary operators <code class='inline-code-box'><span class='inline-code'>+</span></code>, <code class='inline-code-box'><span class='inline-code'>-</span></code>, <code class='inline-code-box'><span class='inline-code'>*</span></code>, <code class='inline-code-box'><span class='inline-code'>/</span></code>, <code class='inline-code-box'><span class='inline-code'>&amp;</span></code>, <code class='inline-code-box'><span class='inline-code'>^</span></code> or the unary <code class='inline-code-box'><span class='inline-code'>-</span></code>, and if the expression they enclose is also an invocation of one of the above binary operators. They are also used for grouping in boolean expressions, with the <code class='inline-code-box'><span class='inline-code'>and</span></code>, <code class='inline-code-box'><span class='inline-code'>or</span></code> and <code class='inline-code-box'><span class='inline-code'>not</span></code> operators. A few examples can help clarify this. In the following examples parentheses are used for grouping:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>x * (y + z)
+-(x + y)
+x ^ (y + z)
+<span class='k'>not</span> (a <span class='k'>and</span> b)
+(a <span class='k'>or</span> b) <span class='k'>and</span> (c <span class='k'>or</span> d)
+</section>
+</figure>
+</code></pre>
+
+<p>In all other cases, they are used to build single-element sequences:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// The expression <span class='inline-code'>(x + y)</span> does not appear as the argument of one of</span>
+<span class='c'>// the operators listed above, so it's parsed as a single-element sequence</span>
+f((x + y))
+
+<span class='c'>// <span class='inline-code'>x</span> is not a binary operator application</span>
+(x) &amp; xs
+
+<span class='c'>// Neither <span class='inline-code'>x</span> nor <span class='inline-code'>f(y, z)</span> are binary operator invocations</span>
+(x) &amp; (f(y, z))
+</section>
+</figure>
+</code></pre>
+
+<p>The above rules cover most of the cases in which you need to group expressions, but you may sometimes still have to use braces for grouping. An example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>{<span class='k'>if</span> c <span class='k'>then</span> x <span class='k'>else</span> y} + z
+</section>
+</figure>
+</code></pre>
+
+<p>If you want to force the compiler to parse a parenthesized expression as a single-element sequence in a contexts where the parentheses would be normally used for grouping you can do so by adding a comma before the closing parenthesis:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// <span class='inline-code'>str1</span> and <span class='inline-code'>str2</span> are strings, and <span class='inline-code'>strs</span> is a sequence of strings</span>
+(str1 &amp; str2,) &amp; strs
+</section>
+</figure>
+</code></pre>
+
+<p>These rules may seem unnecessarily complicated, and maybe they are, but in practice they seem to work just fine, with the typechecker being almost always able to catch any errors that may occur in practice.</p>
+
+
 <h3>Closures</h3>
 
 <p>Cell has support for closures, although it is very limited compared to what truly functional languages like Haskell (or even some object-oriented languages) can offer. The only thing you can do with closures at the moment is pass them as parameters to a function. This is the definition of one staple of every functional programming language, the <code class='inline-code-box'><span class='inline-code'>map()</span></code> function (note that it's just syntactic sugar for sequence comprehension, so it's not particularly useful in and of itself. It's just an example):</p>
@@ -1078,15 +1140,19 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
-                <li><a href='quick.html'>Quick overview</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
                 <li><a href='example.html'>Introductory example</a></li>
                 <li><a href='comparison.html'>A comparison with OOP</a></li>
               </ul>
             </li>
-            <li>The Basics
+            <li>Values and Types
               <ul class="toc">
                 <li><a href='data.html'>Data</a></li>
                 <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
                 <li><a href='functions.html'>Functions</a></li>
                 <li><a href='imperative.html'>Imperative code</a></li>
                 <li><a href='procedures.html'>Procedures</a></li>
@@ -1122,6 +1188,7 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

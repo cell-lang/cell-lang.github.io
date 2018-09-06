@@ -1,0 +1,97 @@
+( next_id: 7,
+  
+  user: [user_id(0), user_id(1), user_id(2), user_id(3), user_id(4), user_id(5), user_id(6)],
+  chat_group: [group_id(0), group_id(1)],
+  
+  username: [
+    user_id(0) -> "miki",
+    user_id(1) -> "jonny",
+    user_id(2) -> "charlie",
+    user_id(3) -> "jack",
+    user_id(4) -> "luke",
+    user_id(5) -> "ed",
+    user_id(6) -> "neil"
+  ],
+  signup_date: [
+    user_id(0) -> date(day: 12, month:  4, year: 2016),
+    user_id(1) -> date(day:  7, month: 10, year: 2016),
+    user_id(2) -> date(day: 15, month:  7, year: 2016),
+    user_id(3) -> date(day: 21, month: 12, year: 2016),
+    user_id(4) -> date(day:  4, month:  2, year: 2016),
+    user_id(5) -> date(day: 11, month:  7, year: 2016),
+    user_id(6) -> date(day:  2, month:  1, year: 2017)
+  ],
+  first_name: [
+    user_id(0) -> "Michael",
+    user_id(1) -> "John",
+    user_id(2) -> "Charles",
+    user_id(3) -> "Jack",
+    user_id(4) -> "Luke",
+    user_id(5) -> "Edward",
+    user_id(6) -> "Neil"
+  ],
+  last_name: [
+    user_id(0) -> "Taylor",
+    user_id(1) -> "Taylor",
+    user_id(2) -> "Wang",
+    user_id(3) -> "Evans",
+    user_id(4) -> "Brown",
+    user_id(5) -> "Harris",
+    user_id(6) -> "Jackson"
+  ],
+  date_of_birth: [
+    user_id(0) -> date(day: 12, month:  2, year: 1995),
+    user_id(1) -> date(day: 27, month:  6, year: 1997),
+    user_id(2) -> date(day: 19, month:  8, year: 1988),
+    user_id(3) -> date(day:  4, month:  5, year: 1992),
+    user_id(4) -> date(day: 19, month: 12, year: 1986),
+    user_id(5) -> date(day: 30, month:  8, year: 2000),
+    user_id(6) -> date(day:  3, month:  5, year: 1995)
+  ],
+
+  name: [group_id(0) -> "Politics", group_id(1) -> "Football"],
+  admin: [group_id(0) -> user_id(0), group_id(1) -> user_id(5)],
+
+  member: [
+    user_id(0) -> group_id(0),
+    user_id(1) -> group_id(0),
+    user_id(2) -> group_id(0),
+    user_id(3) -> group_id(1),
+    user_id(4) -> group_id(1),
+    user_id(5) -> group_id(1),
+    user_id(6) -> group_id(0)
+  ],
+  joined_on: [
+    user_id(0), group_id(0), date(day: 13, month: 2, year: 2017);
+    user_id(1), group_id(0), date(day: 13, month: 2, year: 2017);
+    user_id(2), group_id(0), date(day: 15, month: 2, year: 2017);
+    user_id(3), group_id(1), date(day: 24, month: 6, year: 2017);
+    user_id(4), group_id(1), date(day: 24, month: 6, year: 2017);
+    user_id(5), group_id(1), date(day: 25, month: 6, year: 2017);
+    user_id(6), group_id(0), date(day: 28, month: 2, year: 2017)
+  ],
+  karma: [
+    user_id(0), group_id(0), 10;
+    user_id(1), group_id(0), 4;
+    user_id(2), group_id(0), 6;
+    user_id(3), group_id(1), 10;
+    user_id(4), group_id(1), 4;
+    user_id(5), group_id(1), 6;
+    user_id(6), group_id(0), 2
+  ],
+
+  friends: [
+    user_id(0), user_id(1);
+    user_id(0), user_id(2);
+    user_id(0), user_id(6);
+    user_id(1), user_id(2);
+    user_id(1), user_id(6)
+  ],
+  since: [
+    user_id(0), user_id(1), date(day: 27, month:  6, year: 2017);
+    user_id(0), user_id(2), date(day:  8, month:  9, year: 2017);
+    user_id(0), user_id(6), date(day: 13, month:  2, year: 2017);
+    user_id(1), user_id(2), date(day:  7, month: 11, year: 2017);
+    user_id(1), user_id(6), date(day: 10, month:  9, year: 2017)
+  ]
+)
