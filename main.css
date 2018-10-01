@@ -847,6 +847,10 @@ blockquote.posterous_long_quote {
   margin-bottom: 0px;
 }
 
+.content h3 a {
+  color: #756;
+}
+
 .types-table {
   border-collapse: collapse;
   width: 80%;

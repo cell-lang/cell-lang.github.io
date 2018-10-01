@@ -405,14 +405,12 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>OnlineForum</span>.<span class='m'>AddUser</span> {
-  <span class='k'>insert</span> user(
-    <span class='k'>self</span>.id,
-    username:       <span class='k'>self</span>.username,
-    first_name:     <span class='k'>self</span>.first_name,
-    last_name:      <span class='k'>self</span>.last_name,
-    signup_date:    <span class='k'>self</span>.signup_date,
-    date_of_birth:  <span class='k'>self</span>.date_of_birth <span class='k'>if</span> <span class='k'>self</span>.date_of_birth?
-  );
+  <span class='k'>insert</span> user(<span class='k'>self</span>.id):
+    username      = <span class='k'>self</span>.username,
+    first_name    = <span class='k'>self</span>.first_name,
+    last_name     = <span class='k'>self</span>.last_name,
+    signup_date   = <span class='k'>self</span>.signup_date,
+    date_of_birth = <span class='k'>self</span>.date_of_birth <span class='k'>if</span> <span class='k'>self</span>.date_of_birth?;
 }
 </section>
 </figure>
@@ -433,8 +431,7 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
   <span class='c'>// If the user is the administrator of one or more chat groups,</span>
   <span class='c'>// we need to choose a new administrator for them, or delete</span>
   <span class='c'>// them altogether, if there's nobody left</span>
-  administered_groups = [g : g &lt;- admin(?, u)];
-  <span class='k'>for</span> g &lt;- isort(administered_groups):
+  <span class='k'>for</span> g &lt;- admin(?, u):
     members = [u : u &lt;- member(?, g), u != id];
     <span class='k'>if</span> members != []:
       <span class='c'>// The new administrator is randomly chosen</span>
@@ -621,9 +618,18 @@ try (FileWriter writer = new FileWriter(<span class='s'>&quot;final-state.txt&qu
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
                 <!-- <li><a href='quick.html'>Quick overview</a></li> -->
                 <li><a href='example.html'>Introductory example</a></li>
                 <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
               </ul>
             </li>
             <li>Values and Types
@@ -657,15 +663,6 @@ try (FileWriter writer = new FileWriter(<span class='s'>&quot;final-state.txt&qu
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
-
-<!--             <li>Rationale
-              <ul class="toc">
-                <li><a href='state.html'>State</a></li>
-                <li><a href='functional.html'>Functional programming</a></li>
-                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
-              </ul>
-            </li>
- -->
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>

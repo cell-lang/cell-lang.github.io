@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Why relations are better than objects</h2>
+
+<p>The title of this post is a bit misleading, as the first thing the word "object" brings to mind (in this context) is OOP. Here instead we'll be using said word in a looser sense, one that includes, but is not specific to OOP. For our purposes, an object is any mutable record that can be referenced and manipulated through a pointer or object id. So everything we will be saying applies not only to object-oriented languages, but also to procedural languages like C or Pascal, and even some impure functional ones.</p>
+
+<p>In what follows, we'll be talking specifically about the particular flavor of the relational model that is used in Cell (which is very different from the one used in relational databases) and we'll assume the reader has a basic familiarity with it, so you'll need to read the introductory <a href='example.html'>example</a> first. It would also be useful, but not strictly necessary, to take a look at the chapter on <a href='relational.html'>relational automata</a>.</p>
+
+
+<h3>Values vs objects</h3>
+
+<p>Some of the benefits conferred by the relational model are just a consequence of the fact that the relational model is value-based, that is, it has no notion of pointers. For a good overview of why it's better to avoid pointers in a high-level language, I recommend that you watch, if you haven't already, this talk by Rich Hickey (the creator of Clojure and Datomic): <a href='https://www.youtube.com/watch?v=-6BsiVyC1kM'>The Value of Values</a>. He explains it much better than I ever could. We'll take all that for granted, and we'll be focusing here instead on several aspects that are either not discussed in that talk, or that are specific to the relational model.</p>
+
+<p>Of course, just removing pointers from your data model is going to cripple its expressiveness. As an example, try to implement in a value-only language (like, for example, Haskell) a set of data structures that are more or less equivalent to the <code class='inline-code-box'><span class='inline-code'>OnlineForum</span></code> automaton shown in the introductory <a href='example.html'>example</a>. There's several ways to do it, but in all cases the resulting data structures will be, compared to their OOP equivalents, both more difficult to navigate and less reliable, since they will contain more redundancy. So you need to replace pointers with some other type of construct that provides the same functionalities, but without the disadvantages. The most obvious candidate for that role is of course relations.</p>
+
+
+<h3>Redundancy</h3>
+
+<p>In the database community it has been conventional wisdom for nearly half a century now (basically since the invention of the relational model) that in designing your database schema you should be careful to avoid any kind of redundancy. That's what database normalization theory is all about. For some unfathomable reason, the same kind of thinking is never (or almost never) applied to software construction, even though it would be as beneficial (possibly even more so) as it is for databases. So, before we start our discussion, it's a good idea to talk a bit about redundancy, and to explain what's so harmful about it.</p>
+
+<p>The simplest form of redundancy is when a given piece of information is stored in more than one place. In a relational database, it may for example appear in multiple rows of the same table if the database is not normalized. In an object model, it may be stored inside different objects, or it may appear in slightly subtler forms (see the <code class='inline-code-box'><span class='inline-code'>works_for()</span></code> example in the next paragraph).</p>
+
+<p>This type of redundancy causes two main problems. The first one is that if a piece of information is stored in multiple locations, those locations have to be kept in sync: every time you update one of them, you've to update all of them, or you'll put your dataset in an inconsistent state. While consistency is no guarantee of correctness, the former is certainly a prerequisite for the latter. So getting rid of redundancy increases the reliability of your code by avoiding an entire class of bugs.</p>
+
+<p>The second main reason that makes redundancy harmful, one that is more relevant to software construction than database design, is that having to update a piece of information that is stored in multiple locations requires more work, which makes your code more complex than it should be. This is especially true for object systems, where these redundant pieces of data may be scattered all over a difficult-to-navigate object graph, and where an artificial barrier like encapsulation often stands in the way.</p>
+
+<p>This first type of redundancy is pretty easy to get rid of with the relational model. In relational databases you may still occasionally have to denormalize your schema for performance, but in Cell, due to the different flavor of the relational model and the fact that Cell is a programming language and not a database system, that simply doesn't apply.</p>
+
+<p>But there's also a slightly less obvious and much more toxic form of redundancy, that occurs when a piece of data is not the exact copy of another, but can still be computed from data that's already there. This second type of redundancy is much more difficult to avoid, for the simple reason that those calculations can be computationally expensive. On top of that, its consequences are a lot worse. As an example, let's say that we have a redundant (in the second sense) piece of data, <code class='inline-code-box'><span class='inline-code'>y</span></code>, which can be derived from the non-redundant pieces of data <code class='inline-code-box'><span class='inline-code'>x1 .. xn</span></code> using the formula <code class='inline-code-box'><span class='inline-code'>y = f(x1, .. xn)</span></code>. First of all, it's obvious that this situation is more error-prone that the one we had before, for the simple reason that <code class='inline-code-box'><span class='inline-code'>y</span></code> has to be updated every time any of the <code class='inline-code-box'><span class='inline-code'>xi</span></code> changes. The number of dependencies is multiplied by <code class='inline-code-box'><span class='inline-code'>n</span></code>, so the chances of making a mistake go up.</p>
+
+<p>The second, more important reason, is that in many situations you simply cannot afford to reevaluate the <code class='inline-code-box'><span class='inline-code'>f(x1, .. xn)</span></code> expression, because that may be computationally expensive (if it isn't, reactive programming and memoization can easily solve the problem). What you need to do, instead, is to efficiently update only the part of the derived data structures (<code class='inline-code-box'><span class='inline-code'>y</span></code>, in this case) that has changed, and that is almost invariably a lot more complex than recalculating everything from scratch. We'll see a non-trivial example of this later.</p>
+
+<p>A more in-depth discussion of these issues can be found in this paper: <a href='https://www.google.com/search?q=out+of+the+tar+pit'>Out of the Tar Pit</a>. Starting from the observation that the primary source of complexity in most programs is mutable state, the authors advocate minimizing it, moving whatever remains into relations, and then manipulating said relations using a declarative programming language. The discussion about essential and derived state is especially relevant here.</p>
+
+
+<h3>Relations are can be navigated in any direction</h3>
+
+<p>Say your domain model contains entities like companies and employees/contractors/freelancers, you may have a relation like the following one:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>works_for(<span class='m'>PersonId</span>, <span class='m'>CompanyId</span>)
+</section>
+</figure>
+</code></pre>
+
+<p>You can easily navigate from a company to its employees/contractors/freelancers using <code class='inline-code-box'><span class='inline-code'>works_for(?, a_company)</span></code> or from a person to its employers with <code class='inline-code-box'><span class='inline-code'>works_for(a_person, ?)</span></code> or just <code class='inline-code-box'><span class='inline-code'>works_for(a_person)</span></code> if a person has only one employer.</p>
+
+<p>With pointers, you've to set up two of them, one for each direction. One of them will be redundant, in the sense that it doesn't add any information that is not already there, and that will cause all the redundancy-related problems mentioned before: more work to do when updating your data, and the possibility that a bug in the code may leave it in an inconsistent state: a situation, for example, where an employee object "thinks" it works for a certain company, but that company doesn't have him or her in its list of employees.</p>
+
+
+<h3>Relations can be searched efficiently on any combination of their arguments</h3>
+
+<p>Using the domain model described in the introductory <a href='example.html'>example</a>, you could, for example, easily retrieve:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// All users who signed up on day <span class='inline-code'>d</span></span>
+signup_date(?, d)
+
+<span class='c'>// All users whose last name is <span class='inline-code'>n</span></span>
+last_name(?, n)
+
+<span class='c'>// All users that joined a chat group <span class='inline-code'>g</span> on a day <span class='inline-code'>d</span></span>
+joined_on(?, g, d)
+</section>
+</figure>
+</code></pre>
+
+<p>The first result of those searches would be retrieved in constant time (on average: it's basically a hashtable lookup), and retrieving subsequent ones would be approximately equivalent in terms of performance to iterating through the elements of a linked list. With objects, you would need to create and maintain ad-hoc data structures for each of those searches, if you wanted them to be efficient. That means more code, more redundancy and more opportunities for bugs to slip in.</p>
+
+
+<h3>No need to wire an object graph</h3>
+
+<p>When designing your object model, you've to make sure that every object is wired to all the other objects it needs to have access to in order to perform the tasks that have been assigned to it. This wiring can easily get complex, and it tends to be rather unstable, in the sense that as the application grows, you'll often find yourself spending a not insignificant amount of time adding extra wiring to it. You mileage may vary here of course, but in my experience it's pretty common for a new feature to be difficult to implement not so much because it involves complex algorithms, but rather because it requires several objects/classes to cooperate for its implementation, in a way that requires them to be all wired to one another, and if that wiring is not already in place adding it may involve making significant changes all over your code base.</p>
+
+<p>With the relational model, on the other hand, the wiring problem simply disappears. That's in part a consequence of the fact that relations can be navigated in any direction, and in part stems from the fact that every piece of data is always accessible from the automaton that contains it. The end result, anyway, is that, just like with searches, you get navigation for free.</p>
+
+
+<h3>Relations can elegantly encode complex facts that are awkward to represent with objects</h3>
+
+<p>Take, for example, the following statements:</p>
+
+<ul><li>Supplier S sells part P at price C (with every supplier charging a different price for the same part)</li><li>Supplier S sells part P at price C for orders of at least N items</li><li>Person A was introduced to person B by person C</li><li>User U joined chat group G on date D</li></ul>
+
+<p>In the relational world, they can be model by the following relations:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>sells_for(<span class='m'>SupplierId</span>, <span class='m'>PartId</span>, <span class='m'>Money</span>)        [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+sells_for(<span class='m'>SupplierId</span>, <span class='m'>PartId</span>, <span class='m'>Money</span>, <span class='m'>Int</span>)   [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>:<span class='n'>3</span>];
+introduced_by(<span class='m'>PersonId</span>, <span class='m'>PersonId</span>, <span class='m'>PersonId</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+joined_on(<span class='m'>UserId</span>, <span class='m'>ChatGroupId</span>, <span class='m'>Date</span>)        [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+</section>
+</figure>
+</code></pre>
+
+<p>where each entry in a relation represents an instance of the corresponding informal statement. I can't imagine a more natural way of encoding that information.</p>
+
+<p>With objects, what you can model naturally is attributes of an entity. If, for example, every supplier charged the same price for the same part, you could model price as an attribute of parts, which could be represented as member variable <code class='inline-code-box'><span class='inline-code'>price</span></code> of class <code class='inline-code-box'><span class='inline-code'>Part</span></code>. But in a more complex case where every supplier charges a different price, you'll have to bend over backwards to do it.</p>
+
+<p>If you're not convinced, just try to write the equivalent data structures using objects for one of the above facts (let's say it's the first one), remembering that you'll need to be able to, among other things:</p>
+
+<ul><li>Given a supplier <code class='inline-code-box'><span class='inline-code'>s</span></code> and a part <code class='inline-code-box'><span class='inline-code'>p</span></code> to check if the supplier sells a given part, and if so to retrieve its price (<code class='inline-code-box'><span class='inline-code'>sells_for(s, p, *)</span></code> and <code class='inline-code-box'><span class='inline-code'>sells_for(s, p)</span></code> in Cell, respectively)</li><li>Given a supplier <code class='inline-code-box'><span class='inline-code'>s</span></code>, to retrieve all the parts it sells, and their prices (<code class='inline-code-box'><span class='inline-code'>sells_for(p, ?, ?)</span></code> in Cell)</li><li>Given a part <code class='inline-code-box'><span class='inline-code'>p</span></code>, to retrieve all the suppliers that sell it, and the price they charge (<code class='inline-code-box'><span class='inline-code'>sells_for(?, p, ?)</span></code> in Cell)</li><li>To make sure that there cannot be duplicate entries for the same supplier/part combination (that's what the <code class='inline-code-box'><span class='inline-code'>[key: 0:1]</span></code> is for)</li></ul>
+
+<p>Of course you'll need to do all those things efficiently, since you might have a lot of parts and suppliers, so linear searches are out of the question. In the best-case scenario, you'll end up building an <a href='https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule'>ad-hoc, informally-specified, bug-ridden, slow implementation</a> of a relation.</p>
+
+
+<h3>Integrity constraints</h3>
+
+<p>With the relational model you can express declarative integrity constraints on your data: using the domain model described in the introductory <a href='example.html'>example</a>, you can for instance enforce the facts that no two users can have the same username, or that for every combination of user and chat group there can be only one join date and karma. That's in addition to the fact that the relational model allows you to squeeze most redundancy out of your data structures, thereby reducing the likelihood that they'll end up in an inconsistent state.</p>
+
+<p>With object you've don't have such a simple, declarative and reliable way to enforce the consistency of your data, which deprives you of a powerful mechanism to avoid and to defend yourself against programming errors.</p>
+
+
+<h3>Declarative query languages</h3>
+
+<p>With relations you can have declarative query languages (think Datalog, not SQL). I've never seen anything similar for any other data model. A language like Datalog is not Turing complete, of course, but for the kind of computation it allows, its simplicity and expressiveness are simply unrivaled.</p>
+
+<p>I can't quite put my finger on why there's nothing remotely equivalent for any other data model, but I think that the fact that relations can be easily searched, and that their tuples/entries are not ordered (unlike what happens, for example, with sequences, where some of the information is conveyed by the order in which elements are arranged, not just by the elements themselves) are both crucial to that.</p>
+
+<p>The availability of a declarative query language is not important only because it simplifies some types of computation. Another reason is that the result of certain classes of declarative expressions can be recalculated incrementally and automatically whenever the input data changes. That's especially important in a programming language, as opposed to a database system.</p>
+
+<p>Let's illustrate this with an (admittedly contrived) example. Let's say you're building a massively multiplayer online game, where each player gets to build their own base/town, and where they need to extract resources of some sort (oil/timber/ore/...) to do so, and to build their armies. Let's also say that players can sign bilateral trade agreements, that allow them to buy the resources they need and sell those they have an excess of. Trade can be done through intermediaries: if Alice has a trade agreement with Bob, and Bob has one with Charlie, then Alice and Charlie can trade even if they don't have a direct trade agreement, although in this case Bob will be charging a fee for his services. For simplicity, every trade will be allowed to go through only one or maybe two intermediaries at most (things would get a lot more complicated if we allowed intermediary chains of arbitrary length).</p>
+
+<p>In the game, we want every player to be able to see in real time if any given resource can be purchased, what's the best price for it, what's the second best one and so on, and how much of it can be bought at each price.</p>
+
+<p>Expressing this logic in a Datalog-like language is straightforward: it's almost as easy as stating it in natural language. Computing the same information from scratch in either an imperative or functional language is significantly more complex that that, although still not excessively so.</p>
+
+<p>But what we would probably want to do in a case like this is not to recompute everything from scratch every time something in the (massively multiplayer) game changes, but to update the results incrementally as the game progresses. In a declarative query language, all the queries involved in this particular case can be updated incrementally and automatically by a reasonably sophisticated query engine (or by code generated under the hood by a reasonably sophisticated compiler) without any extra effort on the part of the developer. But in an imperative (or functional) one, incrementally recomputing the output map is significantly more complex than computing it from scratch, and a lot more error-prone. That's because there's a lot of factors than can change the results, all of which have to be accounted for. The stocks of resources for sale can be replenished, or they can decrease and run out. Prices can change. So can the fees that players charge for acting as intermediaries in a trade. New trade agreements can be signed, and existing ones can expire or be canceled. All of these changes have to propagated to all pieces of information that depend on them, and the exact propagation paths are different in each case.</p>
+
+
+<h3>Attributes can be modeled in a uniform way independently of their cardinality</h3>
+
+<p>Let's say in your data model you want to store the telephone numbers of your users. If you want to allow multiple phone numbers for each user, you can declare a binary relation like the following one:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>phone(<span class='m'>UserId</span>, <span class='m'>String</span>)
+</section>
+</figure>
+</code></pre>
+
+<p>If on the other hand you want each user to have at most one phone number, you'll declare the relation as follow:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>phone(<span class='m'>UserId</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>]
+</section>
+</figure>
+</code></pre>
+
+<p>In both cases the data representation is exactly the same, and the only thing that changes is that in the latter case you'll have to declare a key for the relation, that is, an integrity constraint. The same goes for relationships: the <code class='inline-code-box'><span class='inline-code'>works_for</span></code> relation we saw before, for instance, can encode either a many-to-many or a many-to-one relationship (it could also become a one-to-one relationship of course, if it weren't for the fact that that doesn't make any sense in this context) depending on the integrity constraints that are applied to it, and the same happens with mandatory and optional attributes.</p>
+
+<p>There's at least a couple of benefits in having such a uniform representation for attributes or relationships with different cardinalities. The first one is that code written in a declarative language like Datalog will keep working without changes even as those integrity constraints change over time. The second one is that this uniformity will make it easier for new code to work with old data: if an attribute that used to have only one value becomes multivalued, you'll be able to reuse the old data without having to do any sort of conversion (of course that's not going to work in the opposite direction, since the data model in that case becomes more restrictive). The same happens when a mandatory attribute suddenly becomes optional.</p>
+
+<p>This is, by the way, one of the reasons why in Cell every attribute or relationship is stored in a separate relation. In SQL databases, all single-valued attributes are stored in the same table, while multivalued ones require a separate table, and optional attributes require the use of a problematic feature like NULLs.</p>
+
+
+<h3>Controlling the scope of side effects</h3>
+
+<p>Since the relational model is value-based, you can have mutability and control over the scope of side effects at the same time: when you update the state of an automaton instance in Cell you've the guarantee that nothing else is affected, because automata don't share mutable state (and also because state mutation and I/O cannot be mixed, of course). That combines the advantages of functional and imperative programming, while mostly avoiding the problems of both: when you can control the scope of side effects it becomes much easier to reason about your code, and you can safely update different automata concurrently, but with most of the convenience and performance that comes from being able to update the application's state in place.</p>
+
+<p>But once you introduce pointers in your data model, it becomes very difficult to retain any amount of control over the scope of the side effects (if there's an effective way to do it, I'm not aware of it). By mutating an object, you affect any part of your program from which such object can be reached, either directly or indirectly.</p>
+
+
+<h3>Pointer aliasing is incompatible with reactive programming</h3>
+
+<p>Let's illustrate that with an example. Say you've two variables, <code class='inline-code-box'><span class='inline-code'>x</span></code> and <code class='inline-code-box'><span class='inline-code'>y</span></code>, and you want <code class='inline-code-box'><span class='inline-code'>y = f(x)</span></code> to hold in your program at any time. Moreover, let's say that evaluating <code class='inline-code-box'><span class='inline-code'>f(x)</span></code> is computationally expensive, so that you cannot afford to do it every time you need to read the value of <code class='inline-code-box'><span class='inline-code'>y</span></code>. That's the kind of task reactive programming is for. In a reactive system, every time <code class='inline-code-box'><span class='inline-code'>x</span></code> changes, <code class='inline-code-box'><span class='inline-code'>f(x)</span></code> is automatically reevaluated and the result stored in <code class='inline-code-box'><span class='inline-code'>y</span></code>. But in order for the compiler to insert the under-the-hood code that does so, it must be able to detect when <code class='inline-code-box'><span class='inline-code'>x</span></code> changes. With a value-based data model that's easy to to: a variable can change only if a new value is explicitly assigned to it. But in the presence of <a href='https://en.wikipedia.org/wiki/Pointer_aliasing'>pointer aliasing</a> that's not possible anymore, at least in the general case. That's because there can be other references to whatever object <code class='inline-code-box'><span class='inline-code'>x</span></code> is pointing to, and any of them can be used to mutate it. Moreover, any change of state of any object that is reachable from <code class='inline-code-box'><span class='inline-code'>x</span></code> even indirectly can be enough to change the result of the evaluation of <code class='inline-code-box'><span class='inline-code'>f(x)</span></code>.</p>
+
+<p>There are, of course, reactive frameworks for object-oriented languages. For the most part, they just pretend that the above problem can't happen, and typically place the burden of detecting when a given data structure has changed on the programmer. The end result is that the code ends up being a lot more complex than it needs to be, thereby obfuscating the much simpler underlying logic. There are also other, more subtle (and insidious) problems: for example, when dealing with non-trivial reactive systems, where changes are propagated through several layers of state, all recalculations have to be done in a very specific order to ensure that they never make use of "stale" values (check the Wikipedia article on <a href='https://en.wikipedia.org/wiki/Reactive_programming'>reactive</a> programming for more details). In a value-based language, the compiler can easily figure out the correct order, but with objects that's not possible anymore and those recalculations end up being done in what is basically a random order.</p>
+
+<p>Other frameworks, like <a href='http://reactivex.io/'>ReactiveX</a>, eschew the notion of state altogether and go fully functional (even though they are designed for imperative languages), with computation being expressed as the composition of functions that transform streams of events. That's a sound and interesting approach, but it takes a rather restrictive view of reactive programming, whose underlying ideas are useful in many context where that specific approach cannot be employed.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+              </ul>
+            </li>
+
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

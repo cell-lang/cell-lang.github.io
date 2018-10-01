@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Frequently Asked Questions</h2>
+
+
+<h3>Why yet another programming language?</h3>
+
+<p>Because there's currently no high-level programming language for writing stateful software that I'm aware of.</p>
+
+<p>A useful way to think about software is to classify it into three main categories, based on the class of tasks it performs: pure computation, state and updates, and I/O.</p>
+
+<p>Pure computation is the process of computing a result from some input data. That's what <a href='https://en.wikipedia.org/wiki/Pure_function'>pure functions</a> do. Some types of software, like compilers or scripts that perform scientific calculations do hardly anything else.</p>
+
+<p>But in many cases pure computation is only a (relatively small) part of what software does. Most applications are stateful: they sit there, idle or semi-idle, and wait for some sort of input from the external world. When that happens they change their state in response (and usually also perform some I/O). Think, for example, of desktop, web or mobile application, which respond to user input, or some types of server applications, which respond to requests issued by the client across the network.</p>
+
+<p>Finally, there's I/O, which is what happens when a piece of software interacts with the external world.</p>
+
+<p>For pure computation, there's certainly a number of languages that can be regarded as high-level, at least in some specific niches. Languages like Matlab and Mathematica, for example, are very effective for things like numerical and scientific computation, and functional languages like Haskell do a decent enough job (although there's certainly a lot of room for improvement there) when implementing things like parsers, compilers and other types of data-transformation software.</p>
+
+<p>But when it comes to managing state, we're still living in the stone age. The programming paradigm that has been by far the most popular for the last twenty years or so, OOP, is a complete disaster, hampered by, among (many) other things, a very low-level way of representing information, one that makes data difficult to inspect, manipulate and update with the result that code ends up being far more complex that it should be, and much less reliable. Functional programming's sins, on the other hand, are mainly of omission: in its pure form it simply doesn't have a satisfactory way to deal with state, which I suspect is the main reason it never expanded outside a few niches. Impure functional programming is probably the best thing we've at the moment, and a language like Clojure is certainly a huge step forward compared to OOP. But we're not there yet, not by a long shot.</p>
+
+<p>The situation is even worse, if possible, for I/O. Even task that could be carried out automatically in any kind of sane programming language/environment, often end up being a huge drag on developers. Think for example of how much much effort goes into writing code that only moves data into and out of databases. Or how much more complex it is to implement a client/server application, compared to a local application with similar functionalities, and how tedious and time consuming it often is to implement even trivial things like sending data from the client to the server and vice-versa. Yet the majority of these task could be performed automatically by the compiler under the hood, if one starts with a properly designed language and network architecture.</p>
+
+<p>So while there's certainly a lot that could be done to improve the ability of today's programming languages to perform pure computation, it's rather obvious that the low-hanging fruit in language design is in the other two areas, state and I/O.</p>
+
+<p>Cell is not about pure computation, and it's a rather conventional language in that regard: it's basically a combination of ideas from Matlab and functional programming. Its aim instead is to improve the way state is managed, and to enable the compiler and runtime environment to automatically perform many I/O tasks that are managed by the developer in conventional languages.</p>
+
+
+<h3>How does Cell improve on existing languages?</h3>
+
+<p>The single most important improvement is in the way information is represented. Cell's data model combines a staple of functional programming, <a href='https://en.wikipedia.org/wiki/Algebraic_data_type'>algebraic data types</a>, with relations and other ideas from relational databases. That alone goes a long way toward simplifying (drastically, in some cases) both the data structures used to encode the state of an application and the code that manipulates them. The data model and type systems are also entirely structural, which brings a number of benefits that are discussed elsewhere, and most importantly enables one of the language's major features: orthogonal persistence.</p>
+
+<p>There's also a strict separation between pure computation and state updates, and the developer is encouraged to shift as much complexity as possible into the purely functional part of the code, which is intrinsically less problematic to deal with. That provides many of the benefits of functional programming, while avoiding the difficulties the latter paradigm has in dealing with state. That's made more effective by the fact that the state of the application can be partitioned in separate compartments (called automata) that do not share any mutable state and can be safely updated concurrently. Future versions of the language will provide additional tools that will help simplifying the part of the codebase that mutates the application's internal state.</p>
+
+<p>The combination of all the above properties, plus the fact that I/O is also separate from pure computation and updates, enables a number of features that are not found in conventional languages.</p>
+
+<p>The first one is the ability to "replay" the execution of a Cell program. One can easily reconstruct the exact state of a Cell program at any point in time. Obviously that's very useful for debugging, but there are others, more interesting ways of taking advantage of that. It's for example possible to run identical replicas of the same Cell process on different machines over a network, and that's something that will be crucial in Cell's future network architecture.</p>
+
+<p>The second one is orthogonal persistence, that is, the ability to take a snapshot of the state of the application (or part of it), which can then later be used to create with minimal effort an identical copy of it, that will behave in exactly the same way. In Cell, you don't save your data the way you do it in conventional languages. Instead, you simply declare which parts of your application's data structures have to be persisted, and the compiler generates for you all the code needed to save and load them.</p>
+
+<p>The third one is a very robust error-handling mechanism, based on transaction. If an exception is thrown during an update, or if your code violates any of the integrity constraints that are placed on your data model, the entire update is simply rolled back and discarded, and the state of your application is left untouched.</p>
+
+
+<h3>What is functional/relational programming?</h3>
+
+<p>The term "functional/relational programming" was coined (I believe) in a paper that came out more than a decade ago, <a href='https://www.google.com/search?q=out+of+the+tar+pit'>Out of the Tar Pit</a>. It refers to a programming paradigm that combines functional programming with some version of the relational model (in the case of Cell one that is very different from the one used in SQL databases), with the former providing the general purpose programming capabilities, and the latter the ability to encode, navigate, query and update large and complex application states or datasets.</p>
+
+
+<h3>What is reactive programming?</h3>
+
+<p>I'm not sure there's a generally agreed upon definition, as reactive programming has been implemented in many different forms. One thing they all have in common, though, is the automatic propagation of change. It is designed to solve one specific problem: very often, in a stateful application, you end up having two (or more) variables or, more generally, pieces of the application's state (let's call them <code class='inline-code-box'><span class='inline-code'>A</span></code> and <code class='inline-code-box'><span class='inline-code'>B</span></code> in what follows) that depend on each other, in the sense that whenever one of them changes, the other has to change as well.</p>
+
+<p>The simplest form of dependency is when one of the two can be derived from the other, that is, <code class='inline-code-box'><span class='inline-code'>B = f(A)</span></code>, where <code class='inline-code-box'><span class='inline-code'>f(..)</span></code> is a pure functions. One large scale example of this is the <a href='https://guide.elm-lang.org/architecture/'> The Elm Architecture</a> (which is basically a functional version of the Model/View/Controller architecture), where <code class='inline-code-box'><span class='inline-code'>A</span></code> is the model, <code class='inline-code-box'><span class='inline-code'>B</span></code> the HTML code that describe the (current state of the) UI, and <code class='inline-code-box'><span class='inline-code'>f(..)</span></code> is the view function. Every time the model changes, the view function is automatically recalculated and UI is refreshed.</p>
+
+<p>In less trivial cases the dependency between <code class='inline-code-box'><span class='inline-code'>A</span></code> and <code class='inline-code-box'><span class='inline-code'>B</span></code> may take the form <code class='inline-code-box'><span class='inline-code'>B' = f(A, B)</span></code> (with <code class='inline-code-box'><span class='inline-code'>B</span></code> and <code class='inline-code-box'><span class='inline-code'>B'</span></code> being the old and new values of <code class='inline-code-box'><span class='inline-code'>B</span></code> respectively), that is, every time <code class='inline-code-box'><span class='inline-code'>A</span></code> changes, the value of <code class='inline-code-box'><span class='inline-code'>B</span></code> is updated but not entirely reset. As an example, say that you're implementing a software thermostat that controls your air conditioner. You want to switch it on when the temperature exceeds 28°C, and to switch it off when it goes back below 24°C. The state of the air conditioner is not entirely determined by the current temperature, because between 24°C and 28°C it could be either on or off, depending on the the history of the temperature signal/variable. Here's the Cell code for that:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>Thermostat</span> {
+  <span class='k'>input</span>:
+    temperature: <span class='m'>Float</span>;
+
+  <span class='k'>output</span>:
+    on: <span class='m'>Bool</span>;
+
+  <span class='k'>state</span>:
+    <span class='c'>// When the system is initialized, <span class='inline-code'>on</span> is true if</span>
+    <span class='c'>// and only if the current temperature exceeds 28°C</span>
+    on: <span class='m'>Bool</span> = temperature &gt; <span class='n'>28.0</span>;
+
+  <span class='k'>rules</span>:
+    <span class='c'>// Switching on the air conditioner when</span>
+    <span class='c'>// the temperature exceeds 28°C</span>
+    on = <span class='k'>true</span> <span class='k'>when</span> temperature &gt; <span class='n'>28.0</span>;
+
+    <span class='c'>// Switching it off when it falls below 24°C</span>
+    on = <span class='k'>false</span> <span class='k'>when</span> temperature &lt; <span class='n'>24.0</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>These dependencies can become a lot more complex that this, of course. The dependency between <code class='inline-code-box'><span class='inline-code'>A</span></code> and <code class='inline-code-box'><span class='inline-code'>B</span></code> can, for example, be mutual, with a change to <code class='inline-code-box'><span class='inline-code'>A</span></code> triggering an update/recalculation of <code class='inline-code-box'><span class='inline-code'>B</span></code> and vice-versa. This is not something the reactive layer of Cell is equipped to deal with at the moment, but this kind of situation will be arise in the future network architecture, and the language will need special constructs to deal with that.</p>
+
+<p>Note that reactive programming is not in and of itself a general-purpose programming paradigms, but rather a set of capabilities that augment an existing paradigm. It works a lot better when the paradigm it's applied to is a functional or declarative one, because in languages with side effects and <a href='https://en.wikipedia.org/wiki/Pointer_aliasing'>pointer aliasing</a> it becomes impossible to figure out statically when a variable has changed, and in what order the recalculations should be done, and in order to compensate for that, reactive frameworks for imperative languages have to introduce a number of restrictions and/or resort to baroque architectures that make the code significantly more complex, and obscure the much simpler underlying logic.</p>
+
+<p>If you want to learn more, check out the Wikipedia pages on <a href='https://en.wikipedia.org/wiki/Reactive_programming'>reactive</a> and <a href='https://en.wikipedia.org/wiki/Functional_reactive_programming'>functional reactive</a> programming.</p>
+
+
+<h3>Are functional/relational programming and relational automata only for <a href='https://en.wikipedia.org/wiki/Create,_read,_update_and_delete'>CRUD</a> applications?</h3>
+
+<p>Absolutely not, although you might be excused for getting that impression.</p>
+
+<p>The vast majority of developers regard the relational model as some sort of legacy, obsolete technology, and believe that modeling a given problem or domain in terms of objects/classes is somehow superior to modeling it using relations. In fact, that's completely backwards. Objects are a clumsy and very low-level technology, and I'm not aware of any type of information that cannot be modeled much better with the relational model than with objects (<a href='relations.html'>Why relations are better than objects</a> explains this claim in more detail).</p>
+
+<p>In all likelihood, the relational model gets it bad rap from the fact that the only implementation of it developers are familiar with is the one found in SQL databases. That particular implementation was appalling to begin with and has not really evolved since its initial design nearly half a century ago. On top of that, it was designed specifically for databases, and it's not well-suited for general purpose programming. But all those flaws and limitations are specific to a particular implementation, not the relational model itself.</p>
+
+<p>The best way to illustrate the advantages of functional/relational programming over OOP is through a case study. Once version 0.3 is out and the basic set of features of the language is finally complete, I'll post and compare the implementations of a small but realistic application in the two paradigms (for a problem that is universally regarded as especially well-suited to OOP) and that will show how much shorter, simpler and elegant the functional/relational implementation can be, even when such a comparison is made on OOP's home turf.</p>
+
+
+<h3>Why are there no minimal "Hello world"-style examples anywhere on the website?</h3>
+
+<p>Because they would serve no purpose. Cell is not yet another stale take on OOP, or Lisp dialect, or ML/Haskell derivative. It's based on a radically different programming paradigm, one very few developers are familiar with. The learning curve is inevitably going to be steeper.</p>
+
+<p>Just imagine having to explain to a programmer that only knows procedural languages like C or Pascal what OOP is, what it's for, and why it's better. Could you do it with a "Hello world" or other minimal examples? Or would you need something more complex than that?</p>
+
+<p>That said, I do want to improve the documentation and to make it easier for other developers to quickly grasp what Cell is about, and if you've any ideas, I'm open to suggestions.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='commands.html'>Using automata</a></li>
+              </ul>
+            </li>
+
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

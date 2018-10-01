@@ -49,9 +49,11 @@
 
 <p>Although Cell is, in and of itself, a general-purpose language, that can be used to write entire applications (the Cell compiler, for example, is entirely written in Cell), that's not what it is designed for. It is, instead, meant to be used as a domain-specific language, that complements your primary language, instead of replacing it. Compiling a Cell codebase produces a set of classes in your language of choice, which can be easily integrated into an existing project. Code generators for C++, Java and C# are already available, and other languages will follow.</p>
 
+<p>The long term goal of the Cell project is to define and implement a programming model that can be used to write client/server software so as to have the compiler generate code for both client and server (in different languages if need be) and automatically take care of all aspect of network programming that can be abstracted away (things like communication between client and server, error handling and persistence) and to minimize the developer intervention when dealing with those issues (mainly concurrency) that cannot be completely hidden by the language and the network infrastructure. Such programming model will depend heavily on the unconventional capabilities of Cell, like orthogonal persistence and the ability to replay and rewind the execution of a program. You can read more about it <a href='https://github.com/cell-lang/network-model'>here</a>.</p>
+
 <p>If you have any question, there's the <a href='https://groups.google.com/d/forum/cell-lang'>cell-lang</a> Google Group. For announcements, there's <a href='https://twitter.com/cell_lang'>cell_lang</a> on Twitter.</p>
 
-<p>The Cell compiler is open source software, and all source code is available on <a href='https://github.com/cell-lang'>github</a>.</p>
+<p>The Cell compiler is free and open source software, and all source code is available on <a href='https://github.com/cell-lang'>github</a>.</p>
 
 
 <h3>News</h3>
@@ -71,9 +73,18 @@
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
                 <!-- <li><a href='quick.html'>Quick overview</a></li> -->
                 <li><a href='example.html'>Introductory example</a></li>
                 <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
               </ul>
             </li>
             <li>Values and Types
@@ -107,15 +118,6 @@
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
-
-<!--             <li>Rationale
-              <ul class="toc">
-                <li><a href='state.html'>State</a></li>
-                <li><a href='functional.html'>Functional programming</a></li>
-                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
-              </ul>
-            </li>
- -->
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>

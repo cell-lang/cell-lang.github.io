@@ -682,7 +682,7 @@ x * {y + z}
 </figure>
 </code></pre>
 
-<p>but while braces can be used in any context, the use of parentheses is restricted, because parenthesized expressions are inherently ambiguous: an expression of the form <code class='inline-code-box'><span class='inline-code'>(y + z)</span></code> could be interpreted as either a one-element sequence containing the value <code class='inline-code-box'><span class='inline-code'>y + z</span></code>, or just the parenthesized form of <code class='inline-code-box'><span class='inline-code'>y + z</span></code>. So how does the compiler resolve the ambiguity? The rule is very simple: parentheses are used for grouping if and only if they appears as an argument to one of the binary operators <code class='inline-code-box'><span class='inline-code'>+</span></code>, <code class='inline-code-box'><span class='inline-code'>-</span></code>, <code class='inline-code-box'><span class='inline-code'>*</span></code>, <code class='inline-code-box'><span class='inline-code'>/</span></code>, <code class='inline-code-box'><span class='inline-code'>&amp;</span></code>, <code class='inline-code-box'><span class='inline-code'>^</span></code> or the unary <code class='inline-code-box'><span class='inline-code'>-</span></code>, and if the expression they enclose is also an invocation of one of the above binary operators. They are also used for grouping in boolean expressions, with the <code class='inline-code-box'><span class='inline-code'>and</span></code>, <code class='inline-code-box'><span class='inline-code'>or</span></code> and <code class='inline-code-box'><span class='inline-code'>not</span></code> operators. A few examples can help clarify this. In the following examples parentheses are used for grouping:</p>
+<p>but while braces can be used in any context, the use of parentheses is restricted, because parenthesized expressions are inherently ambiguous: an expression of the form <code class='inline-code-box'><span class='inline-code'>(y + z)</span></code> could be interpreted as either a one-element sequence containing the value <code class='inline-code-box'><span class='inline-code'>y + z</span></code>, or just the parenthesized form of <code class='inline-code-box'><span class='inline-code'>y + z</span></code>. So how does the compiler resolve the ambiguity? The rule is very simple: parentheses are used for grouping if and only if they appears as an argument to one of the binary operators <code class='inline-code-box'><span class='inline-code'>+</span></code>, <code class='inline-code-box'><span class='inline-code'>-</span></code>, <code class='inline-code-box'><span class='inline-code'>*</span></code>, <code class='inline-code-box'><span class='inline-code'>/</span></code>, <code class='inline-code-box'><span class='inline-code'>&amp;</span></code>, <code class='inline-code-box'><span class='inline-code'>^</span></code> or the unary <code class='inline-code-box'><span class='inline-code'>-</span></code>, and if the expression they enclose is also an invocation of one of the above binary operators. They are also used for grouping in boolean expressions, with the <code class='inline-code-box'><span class='inline-code'>and</span></code>, <code class='inline-code-box'><span class='inline-code'>or</span></code> and <code class='inline-code-box'><span class='inline-code'>not</span></code> operators. A few examples can help clarify this. In the following expressions parentheses are used for grouping:</p>
 
 <figure class="highlight">
 <section>
@@ -712,11 +712,11 @@ f((x + y))
 </figure>
 </code></pre>
 
-<p>The above rules cover most of the cases in which you need to group expressions, but you may sometimes still have to use braces for grouping. An example:</p>
+<p>The above rules cover most of the cases in which you need to group expressions, but you may occasionally still have to use braces for grouping. An example:</p>
 
 <figure class="highlight">
 <section>
-<pre><code>{<span class='k'>if</span> c <span class='k'>then</span> x <span class='k'>else</span> y} + z
+<pre><code>{<span class='k'>if</span> c <span class='k'>then</span> x <span class='k'>else</span> y} / z
 </section>
 </figure>
 </code></pre>
@@ -731,7 +731,7 @@ f((x + y))
 </figure>
 </code></pre>
 
-<p>These rules may seem unnecessarily complicated, and maybe they are, but in practice they seem to work just fine, with the typechecker being almost always able to catch any errors that may occur in practice.</p>
+<p>These rules may seem unnecessarily complicated, and maybe they are, but in practice they seem to work just fine, with the typechecker being almost invariably able to catch any errors that may occur in practice.</p>
 
 
 <h3>Closures</h3>
@@ -893,7 +893,7 @@ f((x + y))
   rect(
     point(x1?, y1?),
     point(x2?, y2?)
-  ) = abs({x1 - x2} * {y1 - y2});
+  ) = abs((x1 - x2) * (y1 - y2));
 </section>
 </figure>
 </code></pre>
@@ -1140,9 +1140,18 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
               <ul class="toc">
                 <li><a href='index.html'>Home</a></li>
                 <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
                 <!-- <li><a href='quick.html'>Quick overview</a></li> -->
                 <li><a href='example.html'>Introductory example</a></li>
                 <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
               </ul>
             </li>
             <li>Values and Types
@@ -1176,15 +1185,6 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
-
-<!--             <li>Rationale
-              <ul class="toc">
-                <li><a href='state.html'>State</a></li>
-                <li><a href='functional.html'>Functional programming</a></li>
-                <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li>
-              </ul>
-            </li>
- -->
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
