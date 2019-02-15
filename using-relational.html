@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Creating and using relational automata</h2>
+
+<p>We're now going to see how relational automata are created and used. While we will focus here on how to do that in Cell, as opposed to doing it from the host language in mixed-language applications, all the commands we're going to describe have close equivalents in the interface of the generated code.</p>
+
+<p>Automata of either type can only be created inside procedures and not functions. A procedure can declare any number of automaton variables, but it cannot create automata dynamically: all automaton variables are instantiated when a procedure is called, and automatically destroyed when it returns. Automaton instances are also only visible inside the procedure they're declared in and they cannot be passed to other procedures.</p>
+
+<p>In order to see how to use relational automata, we'll write a tiny command line tool that is actually useful in practice. Our application will create a relational automaton, read an initial state for it from a file and a list of messages from another, send each message to the automaton instance in the given order, and save its final state in another file. We'll make use of the <code class='inline-code-box'><span class='inline-code'>Counter</span></code> automaton we saw in the previous chapters, but the code can be made to work with any automaton type with only trivial changes.</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> <span class='m'>Main</span>(<span class='m'>String</span>* args) {
+  instance : <span class='m'>Counter</span>;
+
+  <span class='c'>// Checking the argument list</span>
+  <span class='k'>if</span> |args| != <span class='n'>3</span>:
+    <span class='m'>Print</span>(<span class='s'>"Invalid arguments\n"</span>);
+    <span class='k'>return</span> <span class='n'>1</span>;
+  ;
+  init_state_fname, msg_list_fname, final_state_fname = args;
+
+  <span class='c'>// Reading and checking the initial state</span>
+  res = <span class='m'>ReadValueFromFile</span>(init_state_fname);
+  <span class='k'>return</span> <span class='n'>1</span> <span class='k'>if</span> res == nothing;
+  init_state = value(res);
+
+  <span class='c'>// Making sure the value is a record</span>
+  <span class='c'>// Without this check the code won't compile</span>
+  <span class='k'>if</span> <span class='k'>not</span> init_state :: [<span class='m'>Symbol</span> -&gt; <span class='m'>Any</span>]:
+    <span class='m'>Print</span>(<span class='s'>"Invalid initial state\n"</span>);
+    <span class='k'>return</span> <span class='n'>1</span>;
+  ;
+
+  <span class='c'>// Setting the initial state of the automaton</span>
+  ok = <span class='k'>write</span> instance &lt;- init_state;
+  <span class='k'>if</span> <span class='k'>not</span> ok:
+    <span class='m'>Print</span>(<span class='s'>"Invalid initial state\n"</span>);
+    <span class='k'>return</span> <span class='n'>1</span>;
+  ;
+
+  <span class='c'>// Reading and checking the message list</span>
+  res = <span class='m'>ReadValueFromFile</span>(msg_list_fname);
+  <span class='k'>return</span> <span class='n'>1</span> <span class='k'>if</span> res == nothing;
+  msg_list = value(res);
+  <span class='k'>if</span> <span class='k'>not</span> msg_list :: <span class='m'>CounterMsg</span>*:
+    <span class='m'>Print</span>(<span class='s'>"Invalid message list\n"</span>);
+    <span class='k'>return</span> <span class='n'>1</span>;
+  ;
+
+  <span class='c'>// Sending all messages in the list</span>
+  <span class='k'>for</span> msg @ i &lt;- msg_list:
+    ok = instance &lt;- msg;
+    <span class='k'>if</span> <span class='k'>not</span> ok:
+      <span class='m'>Print</span>(<span class='s'>"Message number "</span> &amp; _print_(i) &amp; <span class='s'>" failed\n"</span>);
+    ;
+  ;
+
+  <span class='c'>// Saving the final state</span>
+  final_state = <span class='k'>read</span> instance;
+  ok = <span class='m'>FileWrite</span>(final_state_fname, untag(_print_(final_state)));
+  <span class='k'>if</span> <span class='k'>not</span> ok:
+    <span class='m'>Print</span>(<span class='s'>"Could not write to file "</span> &amp; final_state_fname &amp; <span class='s'>"\n"</span>);
+    <span class='k'>return</span> <span class='n'>1</span>;
+  ;
+
+  <span class='k'>return</span> <span class='n'>0</span>;
+}
+
+<span class='m'>Maybe</span>[<span class='m'>Any</span>] <span class='m'>ReadValueFromFile</span>(<span class='m'>String</span> fname) {
+  res = <span class='m'>FileRead</span>(fname);
+  <span class='k'>if</span> res == nothing:
+    <span class='m'>Print</span>(<span class='s'>"Cannot read file "</span> &amp; fname &amp; <span class='s'>"\n"</span>);
+    <span class='k'>return</span> nothing;
+  ;
+
+  res = _parse_(string(value(res)));
+  <span class='k'>if</span> failed(res):
+    <span class='m'>Print</span>(<span class='s'>"File "</span> &amp; fname &amp; <span class='s'>" does not contain a valid Cell value\n"</span>);
+    <span class='k'>return</span> nothing;
+  ;
+
+  <span class='k'>return</span> just(result(res));
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The first line in the body of <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> is the declaration of the automaton variable <code class='inline-code-box'><span class='inline-code'>instance</span></code>, which looks like an ordinary variable declaration. Automaton variables are instantiated and initialized as soon as the procedure that hosts them is called, and their initial state is the one that is provided with the schema declaration, which in the case of <code class='inline-code-box'><span class='inline-code'>Counter</span></code> is just <code class='inline-code-box'><span class='inline-code'>(value: 0, updates: 0)</span></code>.</p>
+
+<p>The first step is to load the initial state for <code class='inline-code-box'><span class='inline-code'>counter</span></code> from the given file, check that it's a valid one using the runtime type check <code class='inline-code-box'><span class='inline-code'>init_state :: Counter</span></code> and set the state of <code class='inline-code-box'><span class='inline-code'>instance</span></code> with the command:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>ok = <span class='k'>write</span> instance &lt;- init_state;
+</section>
+</figure>
+</code></pre>
+
+<p><code class='inline-code-box'><span class='inline-code'>ok</span></code> is a boolean variable that indicates whether the operation succeeded. Generally speaking, setting the state of an automaton instance can fail if the state that is provided is not a valid one. The typechecker tries to prevent you from using an invalid state in the first place, and that's why the <code class='inline-code-box'><span class='inline-code'>init_state :: Counter</span></code> check is actually necessary, but it doesn't verify that integrity constraints (which just means mutable relation variables' keys at the moment) are actually met, since that's rather hard to do with just a static analysis of the code, so those constraints are checked only when you actually try to set the state of an automaton instance.</p>
+
+<p>The state of any automaton can be set at any time, any number of times. It's just like setting the value of a variable of an atomic type (like booleans, integers or floating point numbers) in any other language. The next step is to load the list of messages and send them in the given order to <code class='inline-code-box'><span class='inline-code'>instance</span></code> with the instruction:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>ok = instance &lt;- msg;
+</section>
+</figure>
+</code></pre>
+
+<p>Here too the variable <code class='inline-code-box'><span class='inline-code'>ok</span></code> indicates whether the message was processed successfully. Also note the <code class='inline-code-box'><span class='inline-code'>msg_list :: CounterMsg*</span></code> check, which is required to verify that whatever data was loaded from the input file was indeed a valid sequence of messages for <code class='inline-code-box'><span class='inline-code'>Counter</span></code>.</p>
+
+<p>The last instruction we have to manipulate relational automata is used to take a snapshot of the state of an automaton instance:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>final_state = <span class='k'>read</span> instance;
+</section>
+</figure>
+</code></pre>
+
+<p>As already explained in the previous chapters the state of an automaton cannot be aliased in any way, so making a copy of it requires making a physical copy of at least some of the underlying data structures that are used to store it. How much data exactly has to be copied depends on the implementation and the target language, but it generally is a rather expensive operation, especially if the automaton contains mutable relation variables. In the worst case, the entirety of the data structures that encode its state will have to be physically copied.</p>
+
+
+<h3>Persistence and schema changes</h3>
+
+<p>One advantage of having a structural data model and type system is that it becomes a lot easier to manipulate data whose exact structure is unknown. An example is the <code class='inline-code-box'><span class='inline-code'>_parse_(..)</span></code> built-in function used in <code class='inline-code-box'><span class='inline-code'>ReadValueFromFile(..)</span></code> above: it can reconstruct any value from its textual representation, even if its type is unknown. Such a function cannot be implemented in most statically typed languages, which usually don't provide a way to create a value of a type (or an object of a class) that doesn't exist, or doesn't exist anymore.</p>
+
+<p>That comes in handy when trying to reconstruct a copy of an automaton instance from its serialized form. As your application evolves, and the schemas it defines change with it, sooner or later you'll have to load the serialized state of an old version of a relational automaton into the new one. The two versions will be incompatible, in the sense that a value that is a valid state for either of them will not be a valid state for the other.</p>
+
+<p>How do you deal with this problem in Cell? The first line of defense here is the structural data model. Even if the schema definition has changed or it has been renamed, and even if some of the types inside it are gone you'll still be able to easily reconstruct the value of its state.</p>
+
+<p>Then you'll need to convert the old state into a new one. There's no magic bullet here unfortunately, but there are a number of schema changes the persistence layer of Cell can deal with automatically:</p>
+
+<ul><li>If the new version of the schema contains a member variable that was not present in the old one, that variable is automatically initialized to its default value provided with its declaration.</li><li>A new mutable relation variable will be left empty. That means, for example, that you can add new entities, relationships and optional attributes to existing schemas without losing backward compatibility with your saved data</li><li>Any member variable or mutable relation variable that was removed from the schema is simply ignored.</li></ul>
+
+<p>Another type of change that is not yet supported but which poses no conceptual problem and will be implemented soon(-ish) is the addition of a mandatory attribute that has a default value, which is almost the same thing as an optional attribute.</p>
+
+<p>Other types of changes cannot be dealt with automatically and require the developer to provide the compiler with some extra information. The only option right now is to write a function that takes the value of the old state and converts into the new one. Other conversion mechanisms will be added at some point in the future: they probably won't save much effort compared to writing an explicit conversion function, but they might make the process more efficient in terms of memory usage, which would be an important advantage when dealing with large dataset or when operating in memory-constrained environments.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Relational Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
+              </ul>
+            </li>
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

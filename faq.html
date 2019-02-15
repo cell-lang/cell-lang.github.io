@@ -36,9 +36,9 @@
 
 <h3>Why yet another programming language?</h3>
 
-<p>Because there's currently no high-level programming language for writing stateful software that I'm aware of.</p>
+<p>Because there's currently no high-level programming language for writing stateful software that I'm aware of. That's the short answer.</p>
 
-<p>A useful way to think about software is to classify it into three main categories, based on the class of tasks it performs: pure computation, state and updates, and I/O.</p>
+<p>To elaborate a bit on that we need to discuss separately the three main types of what we generically refer to as "computation": pure computation, state and updates, and I/O.</p>
 
 <p>Pure computation is the process of computing a result from some input data. That's what <a href='https://en.wikipedia.org/wiki/Pure_function'>pure functions</a> do. Some types of software, like compilers or scripts that perform scientific calculations do hardly anything else.</p>
 
@@ -48,7 +48,9 @@
 
 <p>For pure computation, there's certainly a number of languages that can be regarded as high-level, at least in some specific niches. Languages like Matlab and Mathematica, for example, are very effective for things like numerical and scientific computation, and functional languages like Haskell do a decent enough job (although there's certainly a lot of room for improvement there) when implementing things like parsers, compilers and other types of data-transformation software.</p>
 
-<p>But when it comes to managing state, we're still living in the stone age. The programming paradigm that has been by far the most popular for the last twenty years or so, OOP, is a complete disaster, hampered by, among (many) other things, a very low-level way of representing information, one that makes data difficult to inspect, manipulate and update with the result that code ends up being far more complex that it should be, and much less reliable. Functional programming's sins, on the other hand, are mainly of omission: in its pure form it simply doesn't have a satisfactory way to deal with state, which I suspect is the main reason it never expanded outside a few niches. Impure functional programming is probably the best thing we've at the moment, and a language like Clojure is certainly a huge step forward compared to OOP. But we're not there yet, not by a long shot.</p>
+<p>But when it comes to managing state, we're still living in the stone age. The programming paradigm that has been by far the most popular for the last twenty years or so, OOP, is a complete disaster, hampered by, among (many) other things, a very low-level way of representing information, one that makes data difficult to inspect, manipulate and update with the result that code ends up being far more complex that it should be, and much less reliable. Functional programming's sins, on the other hand, are mainly of omission: in its pure form it simply doesn't have a satisfactory way to deal with state, which I suspect is the main reason it never expanded outside a few niches. Impure functional programming is probably the best thing we've at the moment, but it's still far from ideal.</p>
+
+<p>What's worse, innovation seems to be dead. With only one (admittedly important) <a href='https://clojure.org/'>exception</a> I'm aware of, there's been no real progress towards higher-level languages for this type of software for <a href='https://www.erlang.org/'>the last 30 years or so</a>.</p>
 
 <p>The situation is even worse, if possible, for I/O. Even task that could be carried out automatically in any kind of sane programming language/environment, often end up being a huge drag on developers. Think for example of how much much effort goes into writing code that only moves data into and out of databases. Or how much more complex it is to implement a client/server application, compared to a local application with similar functionalities, and how tedious and time consuming it often is to implement even trivial things like sending data from the client to the server and vice-versa. Yet the majority of these task could be performed automatically by the compiler under the hood, if one starts with a properly designed language and network architecture.</p>
 
@@ -61,7 +63,7 @@
 
 <p>The single most important improvement is in the way information is represented. Cell's data model combines a staple of functional programming, <a href='https://en.wikipedia.org/wiki/Algebraic_data_type'>algebraic data types</a>, with relations and other ideas from relational databases. That alone goes a long way toward simplifying (drastically, in some cases) both the data structures used to encode the state of an application and the code that manipulates them. The data model and type systems are also entirely structural, which brings a number of benefits that are discussed elsewhere, and most importantly enables one of the language's major features: orthogonal persistence.</p>
 
-<p>There's also a strict separation between pure computation and state updates, and the developer is encouraged to shift as much complexity as possible into the purely functional part of the code, which is intrinsically less problematic to deal with. That provides many of the benefits of functional programming, while avoiding the difficulties the latter paradigm has in dealing with state. That's made more effective by the fact that the state of the application can be partitioned in separate compartments (called automata) that do not share any mutable state and can be safely updated concurrently. Future versions of the language will provide additional tools that will help simplifying the part of the codebase that mutates the application's internal state.</p>
+<p>There's also a strict separation between pure computation and state updates, and the developer is encouraged to shift as much complexity as possible into the purely functional part of the code, which is intrinsically less problematic to deal with. That provides many of the benefits of functional programming, while avoiding the difficulties the latter paradigm has in dealing with state. That's made more effective by the fact that the state of the application can be partitioned in separate components (called automata) that do not share any mutable state and can be safely updated concurrently. Future versions of the language will provide additional tools that will help simplifying the part of the codebase that mutates the application's internal state.</p>
 
 <p>The combination of all the above properties, plus the fact that I/O is also separate from pure computation and updates, enables a number of features that are not found in conventional languages.</p>
 
@@ -70,6 +72,10 @@
 <p>The second one is orthogonal persistence, that is, the ability to take a snapshot of the state of the application (or part of it), which can then later be used to create with minimal effort an identical copy of it, that will behave in exactly the same way. In Cell, you don't save your data the way you do it in conventional languages. Instead, you simply declare which parts of your application's data structures have to be persisted, and the compiler generates for you all the code needed to save and load them.</p>
 
 <p>The third one is a very robust error-handling mechanism, based on transaction. If an exception is thrown during an update, or if your code violates any of the integrity constraints that are placed on your data model, the entire update is simply rolled back and discarded, and the state of your application is left untouched.</p>
+
+<p>Then there's support for reactive programming, which is still in its infancy. At the moment all the language provides is relational automata, which can be used to implement certain specific types of reactive software, but reactive programming itself is something much more general than that, and a lot more is coming in the future.</p>
+
+<p>The last major part of the language will be its network model/architecture, which hasn't been implemented yet.</p>
 
 
 <h3>What is functional/relational programming?</h3>
@@ -124,18 +130,9 @@
 
 <p>The vast majority of developers regard the relational model as some sort of legacy, obsolete technology, and believe that modeling a given problem or domain in terms of objects/classes is somehow superior to modeling it using relations. In fact, that's completely backwards. Objects are a clumsy and very low-level technology, and I'm not aware of any type of information that cannot be modeled much better with the relational model than with objects (<a href='relations.html'>Why relations are better than objects</a> explains this claim in more detail).</p>
 
-<p>In all likelihood, the relational model gets it bad rap from the fact that the only implementation of it developers are familiar with is the one found in SQL databases. That particular implementation was appalling to begin with and has not really evolved since its initial design nearly half a century ago. On top of that, it was designed specifically for databases, and it's not well-suited for general purpose programming. But all those flaws and limitations are specific to a particular implementation, not the relational model itself.</p>
+<p>In all likelihood, the relational model gets it bad rap from the fact that the only implementation of it developers are familiar with is the one found in SQL databases. That particular implementation was very lame to begin with and has not really evolved since its initial design nearly half a century ago. On top of that, it was designed specifically for databases, and it's not well-suited for general purpose programming. But all those flaws and limitations are specific to a particular implementation, not the relational model itself.</p>
 
-<p>The best way to illustrate the advantages of functional/relational programming over OOP is through a case study. Once version 0.3 is out and the basic set of features of the language is finally complete, I'll post and compare the implementations of a small but realistic application in the two paradigms (for a problem that is universally regarded as especially well-suited to OOP) and that will show how much shorter, simpler and elegant the functional/relational implementation can be, even when such a comparison is made on OOP's home turf.</p>
-
-
-<h3>Why are there no minimal "Hello world"-style examples anywhere on the website?</h3>
-
-<p>Because they would serve no purpose. Cell is not yet another stale take on OOP, or Lisp dialect, or ML/Haskell derivative. It's based on a radically different programming paradigm, one very few developers are familiar with. The learning curve is inevitably going to be steeper.</p>
-
-<p>Just imagine having to explain to a programmer that only knows procedural languages like C or Pascal what OOP is, what it's for, and why it's better. Could you do it with a "Hello world" or other minimal examples? Or would you need something more complex than that?</p>
-
-<p>That said, I do want to improve the documentation and to make it easier for other developers to quickly grasp what Cell is about, and if you've any ideas, I'm open to suggestions.</p>
+<p>The best way to illustrate the advantages of functional/relational programming over OOP is through a case study. Once version 0.5 is out and the basic set of features of the language is finally complete, I'll post and compare the implementations of a small but realistic application in the two paradigms (for a problem that is universally regarded as especially well-suited to OOP) and that will show how much shorter, simpler and more elegant the functional/relational implementation can be, even when such a comparison is made on OOP's home turf.</p>
 
 
         </article>
@@ -177,15 +174,26 @@
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
               </ul>
             </li>
-            <li>Automata
+            <li>Relational Automata
               <ul class="toc">
-                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
-                <li><a href='reactive.html'>Reactive automata</a></li>
-                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
               </ul>
             </li>
-
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
             <li>Interfacing with...
               <ul class="toc">
                 <li><a href='interface-cpp.html'>C++</a></li>

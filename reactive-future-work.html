@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Future work</h2>
+
+<p>As already mentioned, reactive automata are at this stage experimental, and rather limited in expressive power: it's easy to come up with examples of systems that are indisputably reactive in nature that nonetheless cannot be implemented using reactive automata in their current form. Here we will discuss some improvements that are planned for the not-too-distant future. This list is not exhaustive of course, and no individual feature is described in a lot of detail, so you'll have to use your imagination to fill the gaps.</p>
+
+
+<h3>Indexed signals</h3>
+
+<p>Currently reactive automata can only handle a fixed set of signals, and each rule can only define or update a single signal. Many types of reactive systems though comprise a variable number of signals, that is not known at compile time. Moreover, signals often can come into and go out of existence dynamically. Even when the set of signals is indeed fixed, it can include a large number of similar signals, which are processed in a similar way. As an example, consider the case of automation software that controls several identical external devices, or processes the inputs of an array of similar sensors. In a videogame where you control variable numbers of units, you might want to trigger an action when any of them enters a certain area, or only when all of them have performed a certain action or reached a given level.</p>
+
+<p>Say, for example, that you have a number of similar sensors, and you want, for each of them, to keep track of how many reading errors they produced. This is how you could possibly do it right now:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// The only purpose of <span class='inline-code'>SensorId</span> is to identify individual sensors</span>
+<span class='c'>// It doesn't have to be a tagged integer of course, but</span>
+<span class='c'>// it can be any arbitrarily complex user-defined type</span>
+<span class='k'>type</span> <span class='m'>SensorId</span> = sensor_id(<span class='m'>Nat</span>);
+
+<span class='k'>reactive</span> <span class='m'>ReadingErrors</span> {
+  <span class='k'>input</span>:
+    <span class='c'>// Whenever we have a batch of new sensor readings,</span>
+    <span class='c'>// we feed it to <span class='inline-code'>ReadingErrors</span> as a map that associate</span>
+    <span class='c'>// the sensor id with the result of the read operation.</span>
+    <span class='c'>// <span class='inline-code'>just(x)</span> indicates a successful read that produced</span>
+    <span class='c'>// the value <span class='inline-code'>x</span> while <span class='inline-code'>nothing</span> indicates a reading error</span>
+    readings* : [<span class='m'>SensorId</span> -&gt; <span class='m'>Maybe</span>[<span class='m'>Float</span>]];
+
+  <span class='k'>output</span>:
+    error_counts : [<span class='m'>SensorId</span> -&gt; <span class='m'>NzNat</span>];
+
+  <span class='k'>state</span>:
+    <span class='c'>// Maps associating the id of every sensor with the total</span>
+    <span class='c'>// number of its reading errors. Sensors that never</span>
+    <span class='c'>// produced reading errors are not in the map</span>
+    error_counts : [<span class='m'>SensorId</span> -&gt; <span class='m'>NzNat</span>] = [];
+
+  <span class='k'>rules</span>:
+    <span class='c'>// Identifying the sensors that produced a reading error</span>
+    error_sensors := [s : s, r &lt;- readings, r == nothing];
+
+    <span class='c'>// Incrementing the error counts, if necessary</span>
+    error_counts = increment_counters(error_counts, error_sensors)
+                              <span class='k'>if</span> error_sensors != [] : error_sensors;
+}
+
+[<span class='u'>T</span> -&gt; <span class='m'>NzNat</span>] increment_counters([<span class='u'>T</span> -&gt; <span class='m'>NzNat</span>] ctrs, [<span class='u'>T</span>] incr_keys) {
+  incr_ctrs = [<span class='k'>if</span> incr_keys(k) <span class='k'>then</span> nz_nat(k+<span class='n'>1</span>) <span class='k'>else</span> k : k, n &lt;- ctrs];
+  new_ctrs = [k -&gt; <span class='n'>1</span> : k &lt;- incr_keys, <span class='k'>not</span> ctrs(k, *)];
+  <span class='k'>return</span> incr_ctrs &amp; new_ctrs;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>This solution may be sort of acceptable in simple cases like this one, but in more complex situations, it would basically negate many of the advantages of reactive programming. If you encode a group of signals using a map, every time each individual signal changes you'll end up triggering a lot of recalculations even for the signals that did not change; the code that processes those signal will become more complex, as shown by the use of <code class='inline-code-box'><span class='inline-code'>increment_counters(..)</span></code> above; and you will not be able to use temporal rules on individual signals: if for example you wanted to keep a list of those signals that haven't had a reading error in the last 10 minutes, the approach used above wouldn't work.</p>
+
+<p>Here's how you'll be able to express the same logic in some future version of Cell:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>ReadingErrors</span> {
+  <span class='k'>input</span>:
+    reading(<span class='m'>SensorId</span>)* : <span class='m'>Maybe</span>[<span class='m'>Float</span>];
+
+  <span class='k'>output</span>:
+    err_count(<span class='m'>SensorId</span>) : <span class='m'>NzNat</span>;
+
+  <span class='k'>state</span>:
+    err_count(<span class='m'>SensorId</span>) : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  <span class='k'>rules</span>:
+    err_count(id) = err_count(id) + <span class='n'>1</span> <span class='k'>if</span> reading(id) == nothing;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Here <code class='inline-code-box'><span class='inline-code'>reading</span></code> is not a single signal, but rather a family of signals that share the same name, and are identified by a parameter, which in this case is a value of type <code class='inline-code-box'><span class='inline-code'>SensorId</span></code>. That is, you'll be dealing with a possibly infinite number of signals of the form <code class='inline-code-box'><span class='inline-code'>reading(sensor_id(N))</span></code>: <code class='inline-code-box'><span class='inline-code'>reading(sensor_id(0))</span></code>, <code class='inline-code-box'><span class='inline-code'>reading(sensor_id(1))</span></code>, <code class='inline-code-box'><span class='inline-code'>reading(sensor_id(2))</span></code> and so on. Of course at any given point in time only a (finite) number of them will be defined.</p>
+
+<p>The same happens with <code class='inline-code-box'><span class='inline-code'>err_count</span></code>: it's actually a family of state variables, one for each possible value in <code class='inline-code-box'><span class='inline-code'>SensorId</span></code>: <code class='inline-code-box'><span class='inline-code'>err_count(sensor_id(0))</span></code>, <code class='inline-code-box'><span class='inline-code'>err_count(sensor_id(1))</span></code> and so on. When the system is initialized there will be no need to allocate any memory for any of them, since they will all have the same value, which can be stored only once. Memory for any specific individual variable will be allocated only when such variable is assigned for the first time after initialization.</p>
+
+<p>Say, for example, that after initialization input <code class='inline-code-box'><span class='inline-code'>reading(sensor_id(12))</span></code> is set with a value of <code class='inline-code-box'><span class='inline-code'>nothing</span></code>. That will trigger the only rule in the automaton, which will be instantiated with <code class='inline-code-box'><span class='inline-code'>id = sensor_id(12)</span></code>, therefore assigning the value <code class='inline-code-box'><span class='inline-code'>1</span></code> to <code class='inline-code-box'><span class='inline-code'>err_count(sensor_id(12))</span></code>. All other state variables in the <code class='inline-code-box'><span class='inline-code'>err_count</span></code> family will of course be left untouched.</p>
+
+<p>Even in a very simple example like this, the code is noticeably simpler (and not significantly more complex than in the single-signal case). To give you another example, here's how you could implement the has-it-had-an-error-in-the-last-10-minutes logic mentioned earlier:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>ReadingErrorsInLast10Minutes</span> {
+  <span class='k'>input</span>:
+    reading(<span class='m'>SensorId</span>)* : <span class='m'>Maybe</span>[<span class='m'>Float</span>];
+
+  <span class='k'>output</span>:
+    had_error(<span class='m'>SensorId</span>) : <span class='m'>Bool</span>;
+
+  <span class='k'>rules</span>:
+    had_error(id) = <span class='k'>not</span> <span class='n'>600s</span> <span class='k'>since</span> reading(id) == nothing;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>It will also be possible to define rules that target only specific signals in the family, and to manipulate the entire group of signals using the same aggregate functions used with relational automata. You'll also be able to defined indexed nested automata:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>nested_auto(id) = <span class='m'>NestedAuto</span>(input1=signal1(id), input2=signal2);
+</section>
+</figure>
+</code></pre>
+
+<p>This is a major feature, both in the sense that it will substantially increase the expressive power of reactive automata, and in the (bad) sense that I expect its implementation to be nontrivial.</p>
+
+
+<h3>External automata</h3>
+
+<p>Let's go back to the mine sump example we used throughout our discussion of reactive automata. Let's say we want add a new input, a feedback signal from the pump that tells us if it's working properly or if there's a problem. Here's a revised picture:</p>
+
+<p><!-- transform", "scale(2.0)" -->
+
+<svg width="640" height="480" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <defs>
+
+  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
+   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-B" x1="1" y1="1">
+   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-C" x1="1" y1="1">
+   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <marker
+    id="left-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
+   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
+  </marker>
+
+  <marker
+    id="right-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
+    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
+  </marker>
+
+  <marker
+    id="round-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
+   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
+  </marker>
+
+ </defs>
+ <g>
+  <title>Layer 1</title>
+  <g id="sump">
+
+   <rect
+     id="sump-water"
+     x="40" y="360" width="560" height="120"
+     fill="url(#gradient-A)" stroke="#59667f" stroke-width="0"/>
+
+   <path
+     id="sump-border"
+     fill="none" stroke="#59667f" stroke-width="2" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null"
+     d="M 40 320 V 479 H 600 V 320"/>
+
+  </g>
+
+  <rect
+    id="pump-box"
+    x="140" y="180" width="120" height="60"
+    ry="10" rx="10"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#9080B0"
+    fill="url(#gradient-B)"/>
+
+  <rect
+    id="controller-box"
+    x="320" y="100" width="140" height="60"
+    ry="10" rx="10"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#6080A0"
+    fill="url(#gradient-C)"/>
+
+  <rect
+    id="in-pipe"
+    x="197" y="240" width="6" height="180"
+    stroke-width="1" stroke="#6080a0"
+    fill="url(#gradient-A)"/>
+
+  <rect
+    id="out-pipe"
+    x="20" y="207" width="120" height="6"
+    stroke-width="1" stroke="#6080a0"
+    fill="url(#gradient-A)"/>
+
+  <path
+    id="low-water-sensor"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 466 116 H 560 V 400"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="high-water-sensor"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 466 144 H 520 V 330"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="sensor-methane"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 370 166 V 250"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="sensor-CO2"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 400 166 V 250"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="sensor-airflow"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 430 166 V 250"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+  <path
+    id="pump-feedback"
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 260 210 H 340 V 166"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="pump-control"
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 320 130 H 200 V 174"
+    stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="operator-feedback"
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 390 100 V 40"
+    stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <text
+    xml:space="preserve"
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18"
+    x="192" y="216"
+    fill="#304040">
+    pump
+  </text>
+
+  <text
+    xml:space="preserve"
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18"
+    x="384" y="136"
+    fill="#304040">
+    controller
+  </text>
+
+  <text
+    xml:space="preserve"
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18"
+    x="384" y="24"
+    fill="#304040">
+    operator
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="369" y="272"
+    fill="#304040">
+    C
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="400" y="272"
+    fill="#304040">
+    M
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="430" y="272"
+    fill="#304040">
+    A
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="502" y="336"
+    fill="#304040">
+    H
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="572" y="406"
+    fill="#304040">
+    L
+  </text>
+
+ </g>
+</svg>
+</p>
+
+<p>In our code, we would have to add a new input to <code class='inline-code-box'><span class='inline-code'>MineController</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>MineController</span> {
+  <span class='k'>input</span>:
+    lower_sensor_submerged : <span class='m'>Bool</span>;
+    upper_sensor_submerged : <span class='m'>Bool</span>;
+
+    methane_level : <span class='m'>Int</span>;
+    co_level      : <span class='m'>Int</span>;
+    airflow_level : <span class='m'>Int</span>;
+
+    pump_is_working : <span class='m'>Bool</span>; <span class='c'>// New input</span>
+
+  <span class='k'>output</span>:
+    pump_on           : <span class='m'>Bool</span>;
+    evacuation_needed : <span class='m'>Bool</span>;
+    error_detected    : <span class='m'>Bool</span>;
+
+  ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>There's at least a couple problems here: the first one is that every input or output of the whole system will have to be declared in the topmost automaton, which might end up having dozen or even hundreds of inputs and outputs in a complex application. The other problem is that the <code class='inline-code-box'><span class='inline-code'>pump_is_working</span></code> and <code class='inline-code-box'><span class='inline-code'>pump_on</span></code> are logically related, since they're both associated with the pump, but that's not reflected in the code. If the pump had several input (in order to provide finer-grained control of its operations) and output signals (to have better diagnostics) both problems would get a lot worse. So it would make sense to have an artifact in the code where all those signals could be located.</p>
+
+<p>In order to do so, the language will introduce the notion of external automata. Here's how it would work for our pump:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>external</span> <span class='m'>Pump</span> {
+  <span class='k'>input</span>:
+    on : <span class='m'>Bool</span>;
+
+  <span class='k'>output</span>:
+    is_working : <span class='m'>Bool</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Unlike normal reactive automata, <code class='inline-code-box'><span class='inline-code'>Pump</span></code> is not meant to contain any application logic, but it's only a "placeholder" that represents the external device. Note that the signals here are classified according to the pump's perspective: <code class='inline-code-box'><span class='inline-code'>on</span></code> is an input for the pump, but an output for the controller, and conversely <code class='inline-code-box'><span class='inline-code'>is_working</span></code> is an output for the pump, but an input for the controller. <code class='inline-code-box'><span class='inline-code'>Pump</span></code> would be then declared just as if it were an ordinary nested automaton inside <code class='inline-code-box'><span class='inline-code'>MineController</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>MineController</span> {
+  <span class='k'>input</span>:
+    lower_sensor_submerged : <span class='m'>Bool</span>;
+    upper_sensor_submerged : <span class='m'>Bool</span>;
+
+    methane_level : <span class='m'>Int</span>;
+    co_level      : <span class='m'>Int</span>;
+    airflow_level : <span class='m'>Int</span>;
+
+    <span class='c'>// Replaced by <span class='inline-code'>pump.is_working</span></span>
+    <span class='c'>// pump_is_working : Bool;</span>
+
+  <span class='k'>output</span>:
+    evacuation_needed : <span class='m'>Bool</span>;
+    error_detected    : <span class='m'>Bool</span>;
+
+    <span class='c'>// Replaced by <span class='inline-code'>pump.on</span></span>
+    <span class='c'>// pump_on : Bool;</span>
+
+  ...
+
+  <span class='k'>rules</span>:
+    <span class='c'>// All signals coming from and going to the pump are now</span>
+    <span class='c'>// grouped inside <span class='inline-code'>pump</span>: <span class='inline-code'>pump.on</span>, <span class='inline-code'>pump.is_working</span></span>
+    pump = <span class='m'>Pump</span>(
+      <span class='c'>// Directly "setting" the pump input</span>
+      on = needs_draining <span class='k'>and</span> <span class='k'>not</span> methane_level_critical
+    );
+
+    ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Inside <code class='inline-code-box'><span class='inline-code'>MineController</span></code> the expression <code class='inline-code-box'><span class='inline-code'>pump.on</span></code> would be treated just like any other output, and <code class='inline-code-box'><span class='inline-code'>pump.is_working</span></code> like any other input. In the client code, you will be able to set <code class='inline-code-box'><span class='inline-code'>pump.is_working</span></code> and read <code class='inline-code-box'><span class='inline-code'>pump.on</span></code> exactly in the same way you would have set or read <code class='inline-code-box'><span class='inline-code'>pump_is_working</span></code> and <code class='inline-code-box'><span class='inline-code'>pump_on</span></code> in the initial version of <code class='inline-code-box'><span class='inline-code'>MineController</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>mine_controller_instance.pump.is_working = <span class='k'>true</span>;
+
+on = mine_controller_instance.pump.on;
+</section>
+</figure>
+</code></pre>
+
+<p>Using this feature, you would be able to have reactive automata with very few explicitly declared inputs and outputs, or even none at all.</p>
+
+<p>External automata are just glorified syntactic sugar: they will be implemented by having the compiler internally rewrite the above automaton like so:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>MineController</span> {
+  <span class='k'>input</span>:
+    lower_sensor_submerged : <span class='m'>Bool</span>;
+    upper_sensor_submerged : <span class='m'>Bool</span>;
+
+    methane_level : <span class='m'>Int</span>;
+    co_level      : <span class='m'>Int</span>;
+    airflow_level : <span class='m'>Int</span>;
+
+    <span class='c'>// Internally generated by the compiler during the rewrite step</span>
+    pump.is_working : <span class='m'>Bool</span>;
+
+  <span class='k'>output</span>:
+    evacuation_needed : <span class='m'>Bool</span>;
+    error_detected    : <span class='m'>Bool</span>;
+
+    <span class='c'>// Internally generated by the compiler during the rewrite step</span>
+    pump.on : <span class='m'>Bool</span>;
+
+  ...
+
+  <span class='k'>rules</span>:
+    <span class='c'>// Internally removed by the compiler during the rewrite step</span>
+    <span class='c'>// pump = Pump;</span>
+
+    <span class='c'>// Internally generated by the compiler during the rewrite step</span>
+    pump.on = needs_draining <span class='k'>and</span> <span class='k'>not</span> methane_level_critical;
+
+    ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>In spite of being relatively easy to implement, I believe this feature will make reactive automata much more modular, and easier to work with when modeling complex systems with large numbers of inputs and outputs.</p>
+
+
+<h3>Cyclical and/or variable dependency graphs</h3>
+
+<p>At the moment dependencies between signals cannot be cyclical, that is, two signals <code class='inline-code-box'><span class='inline-code'>s1</span></code> and <code class='inline-code-box'><span class='inline-code'>s2</span></code> cannot depend on each other: either <code class='inline-code-box'><span class='inline-code'>s1</span></code> depends on <code class='inline-code-box'><span class='inline-code'>s2</span></code>, or <code class='inline-code-box'><span class='inline-code'>s2</span></code> depends on <code class='inline-code-box'><span class='inline-code'>s1</span></code>, or they're independent of one another. This constraint is common to all reactive frameworks or languages I know of, because without any restrictions in place reactive systems could produce all sorts of crazy behaviors, and it would probably be impossible to even come up with a reasonable semantics for them.</p>
+
+<p>Yet prohibiting all cyclical dependencies is too strong a restriction. I know examples of systems that are clearly reactive in nature that contain cyclical dependencies that have a straightforward and unambiguous semantics and do not pose any insurmountable problem for their implementation.</p>
+
+<p>Sometimes for example the direction of the dependency between two signals depends on the source that triggered the update: a dependency may go in one direction when the update is triggered by a change in the value of the inputs, and in the opposite one when triggered by a timer.</p>
+
+<p>In other cases we have to deal with circular dependencies (<code class='inline-code-box'><span class='inline-code'>s1 -&gt; s2 -&gt; s3 -&gt; s1</span></code>) that are nonetheless fine, because it can be easily proved that the loop would stop after a single step.</p>
+
+<p>So in the future the compiler will start to accept some types of cyclical dependencies whose semantics is clear and does not lead to any unexpected or problematic behavior. Note that no additional syntax will be needed here: reactive automata with cyclical dependencies can be already be written, they're just rejected by the compiler that doesn't know how to implement them.</p>
+
+
+<h3>Better support for persistence</h3>
+
+<p>Reactive automata at the moment fully support orthogonal persistence only when they contained no temporal rules. Time-aware automata on the other hand contain hidden state in the form of timers that is currently not saved during the serialization process, which causes all temporal rules to be "reset" when the the automaton is deserialized. There's no particular reason for this limitation (it's just work that hasn't been done yet), and that will be fixed in the future.</p>
+
+<p>Still, persistence for reactive automata is a somewhat problematic feature. The main difficulty caused by orthogonal persistence is that you need to be able to reuse the serialized state of old versions of a software system with the new one: code changes all the time, but data stays. So it helps a lot to minimize the number of changes in the data structures that encode the state of the system. Unfortunately, reactive automata tends to have a very unstable state, in the sense that its structure may change in response to even minor refactorings of the code. In one example we discussed earlier, for instance, we refactored <code class='inline-code-box'><span class='inline-code'>MineController</span></code> by replacing the following lines of code:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>state</span>:
+  needs_draining : <span class='m'>Bool</span> = upper_sensor_submerged;
+
+<span class='k'>rules</span>:
+  needs_draining = <span class='k'>true</span>  <span class='k'>when</span> upper_sensor_submerged;
+  needs_draining = <span class='k'>false</span> <span class='k'>when</span> <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
+                              <span class='k'>not</span> upper_sensor_submerged;
+</section>
+</figure>
+</code></pre>
+
+<p>with:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>rules</span>:
+  draining_switch = <span class='m'>Switch</span>(
+    switch_on  = upper_sensor_submerged,
+    switch_off = <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
+                 <span class='k'>not</span> upper_sensor_submerged
+  );
+  needs_draining = draining_switch.is_on;
+</section>
+</figure>
+</code></pre>
+
+<p>This innocent-looking change, that didn't alter the logical functionalities of <code class='inline-code-box'><span class='inline-code'>MineController</span></code> in any way, caused a change in the structure of its persistent state, by replacing the state variable <code class='inline-code-box'><span class='inline-code'>needs_draining</span></code> with <code class='inline-code-box'><span class='inline-code'>draining_switch.is_on</span></code> and turning <code class='inline-code-box'><span class='inline-code'>needs_draining</span></code> into a derived signal. This is more than enough to keep you from being able to reuse the old state.</p>
+
+<p>Contrast that with what happens with relational automata, where schemas and code are kept strictly separate, and well-designed schemas tend to be extremely stable in the face of changes to the code. Even when schemas do change, in many cases the compiler can figure out how to automatically convert your data, and it could go even further with the help of a number of features that are not yet available but are planned.</p>
+
+<p>The fundamental problem here is that, just like with objects and classes in OOP, with reactive automata data structures and code are mixed together in a way that is hard to disentangle. That's bad enough in ordinary languages, but it's especially bad for a language that supports orthogonal persistence. It's also, as far as I can tell, hard to avoid with reactive programming.</p>
+
+<p>One possible way to deal with this problem would be giving the programmer more control over which parts of a reactive automaton's state are persisted, and also over the workings of the deserialization process. There are no clear plans on how to proceed at the moment, but something obviously needs to be done to address the problem.</p>
+
+
+<h3>Direct updates</h3>
+
+<p>There are often times, even with systems that are indisputably reactive in nature, when the need arises to update them in ways that don't fit well with the reactive paradigm. In the case of <code class='inline-code-box'><span class='inline-code'>MineController</span></code>, for example, you might need the ability to "reset" the system, in case something goes wrong. In more complex cases, you might need the ability to reset only a part of the reactive system. The result of trying to implement this type of updates in reactive automata is usually a mess. One possible solution would be to add support for direct updates similar to those used in relational automata that bypass the normal flow-based update mechanism. Here's an example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>reactive</span> <span class='m'>RangeSwitch</span> {
+  <span class='k'>input</span>:
+    value : <span class='m'>Int</span>;
+
+  <span class='k'>output</span>:
+    on      : <span class='m'>Bool</span>;
+    counter : <span class='m'>Int</span>;
+
+  <span class='k'>state</span>:
+    on      : <span class='m'>Bool</span> = value &gt; max_value;
+    counter : <span class='m'>Int</span> = <span class='n'>0</span>;
+
+  <span class='k'>rules</span>:
+    on = <span class='k'>true</span>  <span class='k'>when</span> value &gt; max_value;
+    on = <span class='k'>false</span> <span class='k'>when</span> value &lt; min_value;
+
+    counter = counter + <span class='n'>1</span> : on;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The state variable <code class='inline-code-box'><span class='inline-code'>on</span></code> is set to true when the input <code class='inline-code-box'><span class='inline-code'>value</span></code> exceeds a certain range, and to false when it drops below it. <code class='inline-code-box'><span class='inline-code'>counter</span></code> on the other hand is incremented every time <code class='inline-code-box'><span class='inline-code'>on</span></code> changes. Let's say we want to implement a reset operation, using a syntax similar to the one used with relational automata:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>RangeSwitch</span>.reset {
+  on = value &gt; max_value;
+  counter = <span class='n'>0</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Both <code class='inline-code-box'><span class='inline-code'>on</span></code> and <code class='inline-code-box'><span class='inline-code'>counter</span></code> here are updated directly, ignoring the reactive update rules. Let's now implement a partial reset operation, one that resets <code class='inline-code-box'><span class='inline-code'>on</span></code> but not <code class='inline-code-box'><span class='inline-code'>counter</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>RangeSwitch</span>.partial_reset {
+  on = value &gt; max_value;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The value of <code class='inline-code-box'><span class='inline-code'>on</span></code> is set directly, and if the new value is different from the old one, <code class='inline-code-box'><span class='inline-code'>counter</span></code> is updated as well using the <code class='inline-code-box'><span class='inline-code'>counter = counter + 1 : state</span></code> rule. This is a sort of "mixed" update: part of the state of the system is updated directly, and another part using the reactive logic.</p>
+
+<p>There's a problem with this approach, though. To illustrate it, let's implement a bizarre update operation (one that doesn't make any sense in this context of course, but which illustrates a problem that comes up naturally in more complex systems) that resets <code class='inline-code-box'><span class='inline-code'>on</span></code> and doubles the value of <code class='inline-code-box'><span class='inline-code'>counter</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>RangeSwitch</span>.reset_and_double {
+  on = value &gt; max_value;
+  counter = <span class='n'>2</span> * counter;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Unlike in <code class='inline-code-box'><span class='inline-code'>reset</span></code>, here the new value of <code class='inline-code-box'><span class='inline-code'>counter</span></code> depends on the previous one. If we start with <code class='inline-code-box'><span class='inline-code'>value &lt; max_value</span></code>, <code class='inline-code-box'><span class='inline-code'>on == true</span></code> and <code class='inline-code-box'><span class='inline-code'>counter == 1</span></code>, what should be the value of <code class='inline-code-box'><span class='inline-code'>counter</span></code> after the execution of <code class='inline-code-box'><span class='inline-code'>reset_and_decrement</span></code>, <code class='inline-code-box'><span class='inline-code'>2</span></code>, <code class='inline-code-box'><span class='inline-code'>3</span></code> or <code class='inline-code-box'><span class='inline-code'>4</span></code>? Since the value of <code class='inline-code-box'><span class='inline-code'>on</span></code> goes from true to false, according to the reactive logic <code class='inline-code-box'><span class='inline-code'>counter</span></code> should be incremented. Should we apply both the increment and the doubling, or just the doubling? And if we apply both, in what order should we do it? Each of the three possible semantics would lead to a different result:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='n'>1</span> -&gt; <span class='n'>2</span>        <span class='c'>// Ignoring reactive logic</span>
+<span class='n'>1</span> -&gt; <span class='n'>2</span> -&gt; <span class='n'>4</span>   <span class='c'>// Applying reactive logic before direct assignment</span>
+<span class='n'>1</span> -&gt; <span class='n'>2</span> -&gt; <span class='n'>3</span>   <span class='c'>// Executing direct assignment before reactive logic</span>
+</section>
+</figure>
+</code></pre>
+
+<p>Generally speaking, none of the three possible semantics seem to be acceptable in all circumstances. Each of them may work in some situations but to lead to unexpected and buggy behavior in others.</p>
+
+<p>The most obvious solution to this problem is to simply reject direct updates if their semantics is inherently ambiguous, or if they can lead to unexpected behavior. Even with such constraints, direct updates would substantially increase the number of systems that can be modeled by reactive automata, and enable a clear separation between the reactive logic and the unusual, out-of-the-ordinary cases when the standard flow of control has to be bypassed.</p>
+
+
+<h3>More powerful temporal logic</h3>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>## TODO</span>
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Anonymous derived automata</h3>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>## TODO</span>
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Discrete polymorphic signals</h3>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>## TODO</span>
+</section>
+</figure>
+</code></pre>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Relational Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
+              </ul>
+            </li>
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

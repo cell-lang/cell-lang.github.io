@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Aggregate functions</h2>
+
+<p>Using this schema:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Market</span> {
+  product(<span class='m'>ProductId</span>):
+    description : <span class='m'>String</span>;
+
+  customer(<span class='m'>CustomerId</span>):
+    name : <span class='m'>String</span>;
+
+  purchase(<span class='m'>PurchaseId</span>):
+    item    : <span class='m'>ProductId</span>,
+    buyer   : <span class='m'>CustomerId</span>,
+    amount  : <span class='m'>Int</span>,
+    date    : <span class='m'>Date</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>let's say we want to calculate the total amount of items sold on a given date. One way to go about it would be this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Market</span> {
+  <span class='m'>Int</span> total(<span class='m'>Date</span> date) {
+    total = <span class='n'>0</span>;
+    <span class='k'>for</span> p &lt;- date(?, <span class='k'>this</span>.date):
+      total = total + amount(p);
+    ;
+    <span class='k'>return</span> total;
+  }
+}
+</section>
+</figure>
+</code></pre>
+
+<p>While this would work, it's not a satisfactory way to do it. The above method computes the sum of a number of values: it would be a lot better to be able to write a <code class='inline-code-box'><span class='inline-code'>sum(..)</span></code> function once and for all, and use it in the implementation of <code class='inline-code-box'><span class='inline-code'>total(..)</span></code>. But implementing <code class='inline-code-box'><span class='inline-code'>sum(..)</span></code> as an ordinary function, as shown here:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>## BUG: THIS CODE DOESN'T WORK</span>
+
+<span class='m'>Int</span> sum([<span class='m'>Int</span>] xs) {
+  s = <span class='n'>0</span>;
+  <span class='k'>for</span> x &lt;- xs:
+    s = s + x;
+  ;
+  <span class='k'>return</span> s;
+}
+
+<span class='k'>using</span> <span class='m'>Market</span> {
+  <span class='m'>Int</span> total(<span class='m'>Date</span> date) = sum([amount(p) : p &lt;- date(?, <span class='k'>this</span>.date)]);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>would not work. The problem here is that the expression</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[amount(p) : p &lt;- date(?, <span class='k'>this</span>.date)]
+</section>
+</figure>
+</code></pre>
+
+<p>builds a set, and sets don't retain duplicates. If two purchases have the same value for the <code class='inline-code-box'><span class='inline-code'>amount</span></code> attribute one of them will be eliminated, and the result would be completely wrong. In order to make that work, you need to define <code class='inline-code-box'><span class='inline-code'>sum(..)</span></code> as an aggregate function:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> sum(<span class='m'>Int</span>.. x)
+  <span class='m'>Int</span> s = x : s1 s2 -&gt; s1 + s2;
+  <span class='k'>return</span> <span class='n'>0</span> | s;
+
+<span class='k'>using</span> <span class='m'>Market</span> {
+  <span class='m'>Int</span> total(<span class='m'>Date</span> d) = sum(amount(p) : p &lt;- date(?, d));
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The type of the first argument of an aggregate function is the type of the values it aggregates: in this specific case, the type of the values it adds together. It's followed by a couple dots, which indicate that such argument is not a standard one. Just like ordinary functions, aggregate ones can have any number of arguments, but only the first one is treated specially. The body of an aggregate function is composed of one or more aggregate variable definitions (just <code class='inline-code-box'><span class='inline-code'>s</span></code> in this case) and a weird return statement at the end.</p>
+
+<p>The first step in the evaluation of an aggregate function call is the evaluation of its aggregate variables. Let's say the numbers we want to add are <code class='inline-code-box'><span class='inline-code'>4 5 2 9</span></code>. Here's a graphical depiction of the how <code class='inline-code-box'><span class='inline-code'>s</span></code> is calculated:</p>
+
+<p><!-- transform", "scale(2.0)" -->
+
+<svg width="640" height="120" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <defs>
+
+  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
+   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-B" x1="1" y1="1">
+   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-C" x1="1" y1="1">
+   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <marker
+    id="left-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
+   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
+  </marker>
+
+  <marker
+    id="right-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
+    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
+  </marker>
+
+  <marker
+    id="round-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
+   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
+  </marker>
+
+ </defs>
+ <g>
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="20"
+    fill="#304040">4</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="50"
+    fill="#304040">5</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="80"
+    fill="#304040">2</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="110"
+    fill="#304040">9</text>
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="20"
+    fill="#304040">4</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="50"
+    fill="#304040">5</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="80"
+    fill="#304040">2</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="110"
+    fill="#304040">9</text>
+
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="170" y="35"
+    fill="#304040">9</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="170" y="95"
+    fill="#304040">11</text>
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="240" y="65"
+    fill="#304040">20</text>
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 14 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 44 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 74 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 104 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 14 L 142 26"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 44 L 142 32"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 74 L 142 86"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 104 L 142 92"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 176 30 L 212 54"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 176 88 L 212 64"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+ </g>
+</svg>
+</p>
+
+<p>The definition of an aggregate variable consists of two parts: an initialization expression between the <code class='inline-code-box'><span class='inline-code'>=</span></code> and <code class='inline-code-box'><span class='inline-code'>:</span></code> signs (just <code class='inline-code-box'><span class='inline-code'>x</span></code> in this case) and a reduction rule after the column: <code class='inline-code-box'><span class='inline-code'>s1 s2 -&gt; s1 + s2</span></code>. First the initialization expression is evaluated for each input elements. Then the resulting values are repeatedly merged pairwise using the reduction rule until there's only one left.</p>
+
+<p>Once all aggregate variables have been evaluated, the second expression after the return statement (the one to the right of the <code class='inline-code-box'><span class='inline-code'>|</span></code> sign, <code class='inline-code-box'><span class='inline-code'>s</span></code> in this case) is evaluated and its value returned. If the number of input values is zero, the process that evaluates the aggregate variables is not defined, so the first expression after the return (<code class='inline-code-box'><span class='inline-code'>0</span></code> in this case) is the one that defines the return value.</p>
+
+<p>Let's go through a number of examples. <code class='inline-code-box'><span class='inline-code'>count(..)</span></code> just returns the number of input values:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> count(<span class='m'>Any</span>.. x)
+  <span class='m'>Int</span> c = <span class='n'>1</span> : c1 c2 -&gt; c1 + c2;
+  <span class='k'>return</span> <span class='n'>0</span> | c;
+</section>
+</figure>
+</code></pre>
+
+<p>Here's the evaluation process of the aggregate variable <code class='inline-code-box'><span class='inline-code'>c</span></code>:</p>
+
+<p><!-- transform", "scale(2.0)" -->
+
+<svg width="640" height="120" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <defs>
+
+  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
+   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-B" x1="1" y1="1">
+   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-C" x1="1" y1="1">
+   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <marker
+    id="left-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
+   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
+  </marker>
+
+  <marker
+    id="right-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
+    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
+  </marker>
+
+  <marker
+    id="round-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
+   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
+  </marker>
+
+ </defs>
+ <g>
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="20"
+    fill="#304040">4</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="50"
+    fill="#304040">5</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="80"
+    fill="#304040">2</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="110"
+    fill="#304040">9</text>
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="20"
+    fill="#304040">1</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="50"
+    fill="#304040">1</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="80"
+    fill="#304040">1</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="110"
+    fill="#304040">1</text>
+
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="170" y="35"
+    fill="#304040">2</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="170" y="95"
+    fill="#304040">2</text>
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="240" y="65"
+    fill="#304040">4</text>
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 14 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 44 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 74 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 104 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 14 L 142 26"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 44 L 142 32"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 74 L 142 86"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 104 L 142 92"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 176 30 L 212 54"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 176 88 L 212 64"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+ </g>
+</svg>
+</p>
+
+<p>Incidentally, note that usually the size operator <code class='inline-code-box'><span class='inline-code'>|..|</span></code> (which can be applied to both mutable relation variables and their subsets as we've already seen in a previous chapter) is a much faster alternative to <code class='inline-code-box'><span class='inline-code'>count(..)</span></code>, since in most cases it can produce its result in constant time.</p>
+
+<p><code class='inline-code-box'><span class='inline-code'>prod(..)</span></code> calculates the product of all its inputs, and returns <code class='inline-code-box'><span class='inline-code'>1</span></code> (the identity element of multiplication) if there are none:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> prod(<span class='m'>Int</span>.. x)
+  <span class='m'>Int</span> p = x : p1 p2 -&gt; p1 * p2;
+  <span class='k'>return</span> <span class='n'>1</span> | p;
+</section>
+</figure>
+</code></pre>
+
+<p><!-- transform", "scale(2.0)" -->
+
+<svg width="640" height="120" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <defs>
+
+  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
+   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-B" x1="1" y1="1">
+   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-C" x1="1" y1="1">
+   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <marker
+    id="left-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
+   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
+  </marker>
+
+  <marker
+    id="right-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
+    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
+  </marker>
+
+  <marker
+    id="round-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
+   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
+  </marker>
+
+ </defs>
+ <g>
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="20"
+    fill="#304040">4</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="50"
+    fill="#304040">5</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="80"
+    fill="#304040">2</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="110"
+    fill="#304040">9</text>
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="20"
+    fill="#304040">4</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="50"
+    fill="#304040">5</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="80"
+    fill="#304040">2</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="110"
+    fill="#304040">9</text>
+
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="170" y="35"
+    fill="#304040">20</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="170" y="95"
+    fill="#304040">18</text>
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="248" y="65"
+    fill="#304040">360</text>
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 14 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 44 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 74 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 104 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 14 L 142 26"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 44 L 142 32"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 74 L 142 86"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 104 L 142 92"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 176 30 L 212 54"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 176 88 L 212 64"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+ </g>
+</svg>
+</p>
+
+<p><code class='inline-code-box'><span class='inline-code'>norm(..)</span></code> calculates the L2 norm (that is, the square root of the sum of the squares) of a collection of floating point numbers:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Float</span> norm(<span class='m'>Float</span>.. x)
+  <span class='m'>Float</span> s = x * x : s1 s2 -&gt; s1 + s2;
+  <span class='k'>return</span> <span class='n'>0.0</span> | sqrt(s);
+</section>
+</figure>
+</code></pre>
+
+<p><!-- transform", "scale(2.0)" -->
+
+<svg width="640" height="120" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <defs>
+
+  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
+   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-B" x1="1" y1="1">
+   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-C" x1="1" y1="1">
+   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <marker
+    id="left-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
+   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
+  </marker>
+
+  <marker
+    id="right-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
+    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
+  </marker>
+
+  <marker
+    id="round-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
+   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
+  </marker>
+
+ </defs>
+ <g>
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="20"
+    fill="#304040">4.0</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="50"
+    fill="#304040">5.0</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="80"
+    fill="#304040">2.0</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="110"
+    fill="#304040">9.0</text>
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="120" y="20"
+    fill="#304040">16.0</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="120" y="50"
+    fill="#304040">25.0</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="120" y="80"
+    fill="#304040">4.0</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="120" y="110"
+    fill="#304040">81.0</text>
+
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="210" y="35"
+    fill="#304040">41.0</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="210" y="95"
+    fill="#304040">85.0</text>
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="308" y="65"
+    fill="#304040">126.0</text>
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="540" y="65"
+    fill="#304040">11.224972160321824</text>
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 48 14 H 78"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 48 44 H 78"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 48 74 H 78"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 48 104 H 78"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 126 14 L 168 26"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 126 44 L 168 32"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 126 74 L 168 86"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 126 104 L 168 92"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 216 30 L 252 54"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 216 88 L 252 64"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 316 60 H 354"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+ </g>
+</svg>
+</p>
+
+<p>An aggregate function can make use of more than one aggregate variables. Here's one way to define a function that calculates the average of its inputs, which is not defined for empty collections:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Maybe</span>[<span class='m'>Float</span>] avg(<span class='m'>Float</span>.. x)
+  <span class='m'>Float</span> s = x : s1 s2 -&gt; s1 + s2;
+  <span class='m'>Int</span>   c = <span class='n'>1</span> : c1 c2 -&gt; c1 + c2;
+  <span class='k'>return</span> nothing | just(s / c);
+</section>
+</figure>
+</code></pre>
+
+<p>There can be other arguments, in addition to the "special" one. Here's another version of <code class='inline-code-box'><span class='inline-code'>avg(..)</span></code> that takes a "default" value to return when there are zero inputs:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Float</span> avg(<span class='m'>Float</span>.. x, <span class='m'>Float</span> avg0)
+  <span class='m'>Float</span> s = x : s1 s2 -&gt; s1 + s2;
+  <span class='m'>Int</span>   c = <span class='n'>1</span> : c1 c2 -&gt; c1 + c2;
+  <span class='k'>return</span> avg0 | s / c;
+</section>
+</figure>
+</code></pre>
+
+<p>Aggregate functions can also be polymorphic, but it must be possible to figure out at compile time which instance to call: there's no dynamic dispatch. Here's an example, the <code class='inline-code-box'><span class='inline-code'>sum(..)</span></code> function for integers and floating point numbers:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> sum(<span class='m'>Int</span>.. x)
+  <span class='m'>Int</span> s = x : s1 s2 -&gt; s1 + s2;
+  <span class='k'>return</span> <span class='n'>0</span> | s;
+
+<span class='m'>Float</span> sum(<span class='m'>Float</span>.. x)
+  <span class='m'>Float</span> s = x : s1 s2 -&gt; s1 + s2;
+  <span class='k'>return</span> <span class='n'>0.0</span> | s;
+</section>
+</figure>
+</code></pre>
+
+<p>Aggregate functions cannot have type parameters, and their arguments have to be ordinary values and not closures.</p>
+
+
+<h3>Using aggregate functions</h3>
+
+<p>We've already seen an example of how to call aggregate functions:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Market</span> {
+  <span class='m'>Int</span> total(<span class='m'>Date</span> d) = sum(amount(p) : p &lt;- date(?, d));
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The values that <code class='inline-code-box'><span class='inline-code'>sum(..)</span></code> has to add together are defined by a pseudo-expression that is syntactically similar to a set comprehension expression, but it's not enclosed by brackets, and it can only iterate over a single mutable relation variable (you cannot use aggregate function with ordinary set or relation values). Unlike what happens with sets though, in this case duplicates are not eliminated. You can also add a single filter: here's how you would calculate the total amount of items purchased on a given date with orders of at least <code class='inline-code-box'><span class='inline-code'>n</span></code> items:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Market</span> {
+  <span class='m'>Int</span> total(<span class='m'>Date</span> d, <span class='m'>Int</span> n) =
+    sum(amount(p) : p &lt;- date(?, d) <span class='k'>if</span> amount(p) &gt;= n);
+}
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Nondeterminism, again</h3>
+
+<p>We saw in the previous chapter that when iterating through a mutable relation variable the compiler cannot (yet?) make any guarantee about the iteration order, which may cause methods to become nondeterministic. The same problem arises here: there's no guarantee whatsoever on the order the reduction operations are performed in, so if you want an aggregate function to be deterministic you must make sure the merge operation is both commutative and associative. Depending on the needs of your application, sometimes it may be acceptable to lower the bar a bit, as is often the case with some non-associative floating point operations. The floating point version of <code class='inline-code-box'><span class='inline-code'>sum(..)</span></code> defined above, for example, is not entirely deterministic because floating point addition is not entirely associative, but in practice you won't have much of a choice there.</p>
+
+<p>We've already explained why striving for full determinism is so important when programming in Cell, and how many major features of the language actually depend on it, so we won't repeat it here, except to remind you of its importance.</p>
+
+
+<h3>Future query language</h3>
+
+<p>Aggregate functions are at the moment just a more convenient way to implement logic that could otherwise be implemented with only marginally more effort using a loop, and their design may seem pretty bizarre, but in fact they're just a piece of larger puzzle. Aggregate functions are just the first bit of a future query language that will become a major part of Cell at some point in the future.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Relational Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
+              </ul>
+            </li>
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

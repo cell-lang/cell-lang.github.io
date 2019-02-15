@@ -60,7 +60,7 @@
 }
 
 <span class='m'>Counter</span>.reset(<span class='m'>Int</span>) {
-  <span class='k'>set</span> value = untag(<span class='k'>self</span>);
+  <span class='k'>set</span> value = untag(<span class='k'>this</span>);
   <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 </section>
@@ -104,7 +104,7 @@
 </figure>
 </code></pre>
 
-<p>but in the latter case you're allowed to ommit the <code class='inline-code-box'><span class='inline-code'>&lt;</span></code> and <code class='inline-code-box'><span class='inline-code'>&gt;</span></code> symbols, if the type between them is not a union type. In order to access the value of the message you need to use the keyword <code class='inline-code-box'><span class='inline-code'>self</span></code>, as demonstrated in the last handler, <code class='inline-code-box'><span class='inline-code'>Counter.reset(Int)</span></code>. Note that the same keyword is also used in several object-oriented programming languages, but the meaning is different: in OOP it's used to refer to the target of a method (that is, the object that "receives the message") while here it's used to refer to the message itself. There's no way in this context to refer to (the value of) the automaton instance that receives the message (only its individual fields can be accessed), because that value cannot be aliased as we explained in the previous chapter.</p>
+<p>but in the latter case you're allowed to ommit the <code class='inline-code-box'><span class='inline-code'>&lt;</span></code> and <code class='inline-code-box'><span class='inline-code'>&gt;</span></code> symbols, if the type between them is not a union type. In order to access the value of the message you need to use the keyword <code class='inline-code-box'><span class='inline-code'>this</span></code>, as demonstrated in the last handler, <code class='inline-code-box'><span class='inline-code'>Counter.reset(Int)</span></code>. Note that the same keyword is also used in several object-oriented languages, but the meaning is different: in OOP it's used to refer to the target of a method (that is, the object that "receives the message") while here it's used to refer to the message itself. There's no way in this context to refer to (the value of) the automaton instance that receives the message (only its individual fields can be accessed), because that value cannot be aliased as we explained in the previous chapter.</p>
 
 <p>Any number of message handlers can be merged without restrictions, whenever that's convenient. The four message handlers of <code class='inline-code-box'><span class='inline-code'>Counter</span></code> can for example be rewritten as follow:</p>
 
@@ -113,7 +113,7 @@
 <pre><code><span class='k'>type</span> <span class='m'>CounterMsg</span> = incr, decr, reset, reset(<span class='m'>Int</span>);
 
 <span class='m'>Counter</span>.<span class='m'>CounterMsg</span> {
-  new_value = <span class='k'>match</span> (<span class='k'>self</span>)
+  new_value = <span class='k'>match</span> (<span class='k'>this</span>)
     incr      = value + <span class='n'>1</span>,
     decr      = value - <span class='n'>1</span>,
     reset     = <span class='n'>0</span>,
@@ -130,7 +130,7 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>Counter</span>.<span class='m'>CounterMsg</span> {
-  <span class='k'>set</span> value = new_value(<span class='k'>self</span>);
+  <span class='k'>set</span> value = new_value(<span class='k'>this</span>);
   <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 
@@ -149,12 +149,12 @@
 
 <p>In spite of a few superficial similarities, message handlers differ from methods in OOP (or even messages in the actor model) in several significant ways:</p>
 
-<ul><li>Similarily to messages in the actor model, but unlike methods in OOP, messages in Cell are just ordinary values, that can be manipulated like any other piece of data: they can be copied, passed around and stored as part of the automaton's state. It's very easy, for instance, to store and keep a record of all messages that have been received by any given automaton instance.</li><li>Another similarity with the actor model is that message handlers don't return a value: there's a strict separation between commands/messages and queries/methods. Such a programming model is more reliable when writing distributed applications.</li><li>Automata can only receive messages, not send them, even to themselves. There's no such thing as "message passing" between automata. That's by design and it's never going to change: automata are meant to be self-contained entities, oblivious to the world around them, the only exception being other automata they're wired to, which are read-only to them anyway. Any inter-automata update logic there is, it has to go somewhere else. For the time being, that typically means it has to be dealt with in the host language, not in Cell. The only exception to this is nested automata, which are not regarded as indipendent entities but only as a part of their parent, which is therefore allowed to send messages to them.</li><li>The scope of the side effects caused by a message handler is limited to the automaton instance that received the message. The state of other automata is not affected, and that includes both dependees and dependants of the target of the message.</li><li>All update instructions that are issued as part of the execution of a message handler do not take effect immediately. Instead, they are retained and applied only when the message handler returns, which means that during the entire execution of the latter the state of the automaton doesn't change at all. Not only that, but also the specific order in which those commands are issued is ignored. This is a major difference, that completely changes the way you have to write and think about update code. It comes with a long list of trade-offs, and it certainly puts an extra burden on the developer. I believe the advantages outweigh the disadvantages, but the latter are very substantial. We'll discuss all the trade-offs in detail later.</li></ul>
+<ul><li>Similarily to messages in the actor model, but unlike methods in OOP, messages in Cell are just ordinary values, that can be manipulated like any other piece of data: they can be copied, passed around, sent over a network and saved to a file. It's very easy, for instance, to store and keep a record of all messages that have been received by any given automaton instance.</li><li>Another similarity with the actor model is that message handlers don't return a value: there's a strict separation between commands/messages and queries/methods. Such a programming model is more reliable when writing distributed applications.</li><li>Automata can only receive messages, not send them, even to themselves. There's no such thing as "message passing" between automata. That's by design and it's never going to change: automata are meant to be self-contained entities, oblivious to the world around them, the only exception being other automata they're wired to, which are read-only to them anyway. Any inter-automata update logic there is, it has to go somewhere else. For the time being, that typically means it has to be dealt with in the host language, not in Cell. The only exception to this is nested automata, which are not regarded as indipendent entities but only as a part of their parent, which is therefore allowed to send messages to them.</li><li>The scope of the side effects caused by a message handler is limited to the automaton instance that received the message. The state of other automata is not affected, and that includes both dependees and dependants of the automaton that receives the message.</li><li>All update instructions that are issued as part of the execution of a message handler do not take effect immediately. Instead, they are retained and applied only when the message handler returns, which means that during the entire execution of the latter the state of the automaton doesn't change at all. Not only that, but also the specific order in which those commands are issued is ignored. This is a major difference, that completely changes the way you have to write and think about update code. It comes with a long list of trade-offs, and it certainly puts an extra burden on the developer. I believe the advantages outweigh the disadvantages, but the latter are substantial. We'll discuss all the trade-offs in detail later.</li></ul>
 
 
 <h3>Atomic update instructions</h3>
 
-<p>We've already seen our first atomic update instruction, the <code class='inline-code-box'><span class='inline-code'>set</span></code> statement, which simply sets the value of a member variable. It can be used only with ordinary variables, and not with mutable relation variables or nested automata. The most important thing to notice here is that any member given variable can be assigned only once during the execution of the message handler: trying to set the same variable twice would cause the message handler to fail. That's because, as explained above, the order in which assignments are issued is ignored, and therefore there's no way to decide which of two (conflicting) assignments targeting the same member variable should actually be executed.</p>
+<p>We've already seen our first atomic update instruction, the <code class='inline-code-box'><span class='inline-code'>set</span></code> statement, which simply sets the value of a member variable. It can be used only with ordinary variables, and not with mutable relation variables or nested automata. The most important thing to notice here is that any given member variable can be assigned only once during the execution of the message handler: trying to set the same variable twice would cause the message handler to fail. That's because, as explained above, the order in which assignments are issued is ignored, and therefore there's no way to decide which of two (conflicting) assignments targeting the same member variable should actually be executed.</p>
 
 <p>In order to update mutable relation variables the language provides two commands, <code class='inline-code-box'><span class='inline-code'>insert</span></code> and <code class='inline-code-box'><span class='inline-code'>delete</span></code>. To illustrate them, we'll make use of some of the automata we defined in the previous chapter. Here's our first example:</p>
 
@@ -166,30 +166,30 @@
 }
 
 <span class='m'>Logins</span>.login(user_id: <span class='m'>Nat</span>, name: <span class='m'>String</span>) {
-  <span class='c'>// Inserting the entry <span class='inline-code'>self.user_id, self.name</span> into <span class='inline-code'>usernames</span></span>
+  <span class='c'>// Inserting the entry <span class='inline-code'>this.user_id, this.name</span> into <span class='inline-code'>usernames</span></span>
   <span class='c'>// No effect if <span class='inline-code'>usernames</span> already contains such an entry</span>
   <span class='c'>// Fails if a (different) entry with the same left argument or</span>
   <span class='c'>// the same right argument (but not both) already exists, since</span>
   <span class='c'>// that would violate the integrity constraints of <span class='inline-code'>usernames</span></span>
-  <span class='k'>insert</span> usernames(<span class='k'>self</span>.user_id, <span class='k'>self</span>.name);
+  <span class='k'>insert</span> usernames(<span class='k'>this</span>.user_id, <span class='k'>this</span>.name);
 }
 
 <span class='m'>Logins</span>.logout(user_id: <span class='m'>Nat</span>) {
-  <span class='c'>// Deleting all entries whose left field equals <span class='inline-code'>self.user_id</span></span>
+  <span class='c'>// Deleting all entries whose left field equals <span class='inline-code'>this.user_id</span></span>
   <span class='c'>// from both <span class='inline-code'>usernames</span> and <span class='inline-code'>memberships</span></span>
-  <span class='k'>delete</span> usernames(<span class='k'>self</span>.user_id, *), memberships(<span class='k'>self</span>.user_id, *);
+  <span class='k'>delete</span> usernames(<span class='k'>this</span>.user_id, *), memberships(<span class='k'>this</span>.user_id, *);
 }
 
 <span class='m'>Logins</span>.join_room(user_id: <span class='m'>Nat</span>, room: <span class='m'>String</span>) {
-  <span class='c'>// Inserting the entry <span class='inline-code'>self.user_id, self.room</span> into <span class='inline-code'>memberships</span></span>
+  <span class='c'>// Inserting the entry <span class='inline-code'>this.user_id, this.room</span> into <span class='inline-code'>memberships</span></span>
   <span class='c'>// No effect if <span class='inline-code'>memberships</span> already contains such an entry</span>
-  <span class='k'>insert</span> memberships(<span class='k'>self</span>.user_id, <span class='k'>self</span>.room);
+  <span class='k'>insert</span> memberships(<span class='k'>this</span>.user_id, <span class='k'>this</span>.room);
 }
 
 <span class='m'>Logins</span>.leave_room(user_id: <span class='m'>Nat</span>, room: <span class='m'>String</span>) {
-  <span class='c'>// Deleting the entry <span class='inline-code'>self.user_id, self.room</span> from <span class='inline-code'>memberships</span>,</span>
+  <span class='c'>// Deleting the entry <span class='inline-code'>this.user_id, this.room</span> from <span class='inline-code'>memberships</span>,</span>
   <span class='c'>// if such entry exists, no effect otherwise</span>
-  <span class='k'>delete</span> memberships(<span class='k'>self</span>.user_id, <span class='k'>self</span>.room);
+  <span class='k'>delete</span> memberships(<span class='k'>this</span>.user_id, <span class='k'>this</span>.room);
 }
 
 <span class='m'>Logins</span>.clear {
@@ -200,7 +200,7 @@
 </figure>
 </code></pre>
 
-<p>Both commands offer a bit of syntactic sugar, that allows you to merge several commands into a single one: <code class='inline-code-box'><span class='inline-code'>insert relvar1(x1, y1);</span></code> and <code class='inline-code-box'><span class='inline-code'>insert relvar2(x2, y2);</span></code> can be combined, with no difference in meaning, into <code class='inline-code-box-long'><span class='inline-code'>insert relvar1(x1, y1), relvar2(x2, y2);</span></code>. When deleting entries you can also use wildcard arguments, as demonstrated in <code class='inline-code-box'><span class='inline-code'>Logins.join_room(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>Logins.clear</span></code>. The above examples all use binary relation variables, but it all works in the same way for unary and ternary ones, just with one or three arguments respectively instead of two.</p>
+<p>For both updates and deletes you can merge several commands into a single one: <code class='inline-code-box'><span class='inline-code'>insert relvar1(x1, y1);</span></code> and <code class='inline-code-box'><span class='inline-code'>insert relvar2(x2, y2);</span></code> can be combined, with no difference in meaning, into <code class='inline-code-box-long'><span class='inline-code'>insert relvar1(x1, y1), relvar2(x2, y2);</span></code>. When deleting entries you can also use wildcard arguments, as demonstrated in <code class='inline-code-box'><span class='inline-code'>Logins.logout(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>Logins.clear</span></code>. The above examples all use binary relation variables, but it all works in the same way for unary and ternary ones, just with one or three arguments respectively instead of two.</p>
 
 <p>The <code class='inline-code-box'><span class='inline-code'>insert</span></code> command comes in two flavors. The standard version is the one shown in the above example: it fails when inserting an entry that would violate the integrity constraints that apply to the target relation variable. The second form is a sort of "forced insert": if the relation contains entries that are key-incompatible with the entry that is being inserted the former are simply deleted. The only syntactic difference is that it requires the <code class='inline-code-box'><span class='inline-code'>update</span></code> keyword instead of <code class='inline-code-box'><span class='inline-code'>insert</span></code>. A command of the form:</p>
 
@@ -227,10 +227,10 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>Supply</span>.set_address(supplier_id: <span class='m'>SupplierId</span>, new_address: <span class='m'>String</span>) {
-  <span class='k'>update</span> address(<span class='k'>self</span>.supplier_id, <span class='k'>self</span>.new_address);
+  <span class='k'>update</span> address(<span class='k'>this</span>.supplier_id, <span class='k'>this</span>.new_address);
   <span class='c'>// The above statement is equivalent to:</span>
-  <span class='c'>// delete address(self.supplier_id, *);</span>
-  <span class='c'>// insert address(self.supplier_id, self.new_address);</span>
+  <span class='c'>// delete address(this.supplier_id, *);</span>
+  <span class='c'>// insert address(this.supplier_id, this.new_address);</span>
 }
 </section>
 </figure>
@@ -241,10 +241,10 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>Supply</span>.set_price(suppl_id: <span class='m'>SupplierId</span>, part_id: <span class='m'>PartId</span>, price: <span class='m'>Money</span>) {
-  <span class='k'>update</span> unit_price(<span class='k'>self</span>.suppl_id, <span class='k'>self</span>.part_id, <span class='k'>self</span>.price);
+  <span class='k'>update</span> unit_price(<span class='k'>this</span>.suppl_id, <span class='k'>this</span>.part_id, <span class='k'>this</span>.price);
   <span class='c'>// The above statement is equivalent to:</span>
-  <span class='c'>// delete unit_price(self.suppl_id, self.part_id, *);</span>
-  <span class='c'>// insert unit_price(self.suppl_id, self.part_id, self.price);</span>
+  <span class='c'>// delete unit_price(this.suppl_id, this.part_id, *);</span>
+  <span class='c'>// insert unit_price(this.suppl_id, this.part_id, this.price);</span>
 }
 </section>
 </figure>
@@ -285,9 +285,159 @@
 </figure>
 </code></pre>
 
-<p>For the time being when deleting an entity or a relationship from a dataset you'll have to explicitly delete all of its attributes stored in ancillary relations. That's of course boring and error prone, and it will be fixed in a future release, as part of the implementation of foreign keys. Also note that until the latter are implemented, you have to be careful, when creating a new entity or relationship, to also insert all of its attributes into their corresponding relations: neither the compiler nor the runtime will be able to catch the error if you forget to provide a mandatory attribute. A future version of the language will also provide some syntactic sugar for the insertion of data into attribute relations.</p>
-
 <p>Once the message handler returns and all inserts and deletes take effect, the order in which these commands are issued is irrelevant but, conceptually at least, all deletes are applied before the inserts. Updates commands are just treated as a combination of deletes and inserts.</p>
+
+
+<h3>Inserting attributes</h3>
+
+<p>When inserting an entity or a relationship from a dataset you'll generally have to also insert attributes stored in ancillary relations. That tends to be rather very verbose, so the language provides some syntactic sugar here. If you have a set of mutable relation variables like the following ones:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Users</span> {
+  user(<span class='m'>UserId</span>):
+    name            : <span class='m'>String</span>, <span class='c'>// Mandatory</span>
+    date_of_birth?  : <span class='m'>Date</span>,   <span class='c'>// Optional</span>
+    phone_number+   : <span class='m'>String</span>; <span class='c'>// One or more values</span>
+
+  ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Here's how you can write a message handlers that inserts a new user and all its attributes:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>User</span>.add_user(id: <span class='m'>UserId</span>, name: <span class='m'>String</span>, date: <span class='m'>Date</span>, phone: <span class='m'>String</span>) {
+  <span class='k'>insert</span> user(<span class='k'>this</span>.id):
+    name          = <span class='k'>this</span>.name,
+    date_of_birth = <span class='k'>this</span>.date,
+    phone_number  = <span class='k'>this</span>.phone;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>It's completely equivalent to the following, more verbose version:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>User</span>.add_user(id: <span class='m'>UserId</span>, name: <span class='m'>String</span>, date: <span class='m'>Date</span>, phone: <span class='m'>String</span>) {
+  <span class='k'>insert</span> user(<span class='k'>this</span>.id);
+  <span class='k'>insert</span> name(<span class='k'>this</span>.id, <span class='k'>this</span>.name);
+  <span class='k'>insert</span> date_of_birth(<span class='k'>this</span>.id, <span class='k'>this</span>.date);
+  <span class='k'>insert</span> phone(<span class='k'>this</span>.id, <span class='k'>this</span>.phone);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Here's another, more complex example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>User</span>.add_user(id: <span class='m'>UserId</span>, name: <span class='m'>String</span>, date: <span class='m'>Date</span>?, phones: [+<span class='m'>String</span>]) {
+  <span class='k'>insert</span> user(<span class='k'>this</span>.id):
+    name          = <span class='k'>this</span>.name,
+    date_of_birth = <span class='k'>this</span>.date <span class='k'>if</span> <span class='k'>this</span>.date?,
+    phone_number  = p : p &lt;- <span class='k'>this</span>.phones;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>which is equivalent to:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>User</span>.add_user(id: <span class='m'>UserId</span>, name: <span class='m'>String</span>, date: <span class='m'>Date</span>?, phones: [+<span class='m'>String</span>]) {
+  <span class='k'>insert</span> user(<span class='k'>this</span>.id);
+  <span class='k'>insert</span> name(<span class='k'>this</span>.id, <span class='k'>this</span>.name);
+  <span class='k'>if</span> <span class='k'>this</span>.date?:
+    <span class='k'>insert</span> date_of_birth(<span class='k'>this</span>.id, <span class='k'>this</span>.date);
+  ;
+  <span class='k'>for</span> p &lt;- <span class='k'>this</span>.phones:
+    <span class='k'>insert</span> phone(<span class='k'>this</span>.id, p);
+  ;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Whenever you insert a new entity or relationship in the dataset, the compiler checks that you're also inserting all its mandatory attributes. More specifically, whenever you define, either implicitly or explicitly, a foreign key like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>unary_rel(x) -&gt; binary_rel(x, _);
+</section>
+</figure>
+</code></pre>
+
+<p>the compilers expects you to follow up any insertion into <code class='inline-code-box'><span class='inline-code'>unary_rel</span></code> with a corresponding one in <code class='inline-code-box'><span class='inline-code'>binary_rel</span></code>, and for a foreign key of the type:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>binary_rel(x, y) -&gt; ternary_rel(x, y, _);
+</section>
+</figure>
+</code></pre>
+
+<p>it expects any insertion into <code class='inline-code-box'><span class='inline-code'>binary_rel</span></code> to be followed by at least one insertion into <code class='inline-code-box'><span class='inline-code'>ternary_rel</span></code>. In both cases it makes sure that you're inserting exactly one value for (mandatory) single-valued attributes, and at least one for (mandatory) multi-valued ones.</p>
+
+
+<h3>Cascade deletes</h3>
+
+<p>Just like for insertions, there's some syntactic sugar for deletions as well. Using the <code class='inline-code-box'><span class='inline-code'>Users</span></code> schema defined above, the following message handler:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Users</span>.delete_user(id: <span class='m'>UserId</span>) {
+  <span class='k'>delete</span> user(<span class='k'>this</span>.id);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>not only deletes that particular id from <code class='inline-code-box'><span class='inline-code'>user</span></code>, but also deletes all its corresponding entries in the attribute relations. In other words, the compiler rewrites the body of <code class='inline-code-box'><span class='inline-code'>delete_user()</span></code> like so:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Users</span>.delete_user(id: <span class='m'>UserId</span>) {
+  <span class='k'>delete</span> user(<span class='k'>this</span>.id);
+  <span class='k'>delete</span> name(<span class='k'>this</span>.id, *);
+  <span class='k'>delete</span> date_of_birth(<span class='k'>this</span>.id, *);
+  <span class='k'>delete</span> phone_number(<span class='k'>this</span>.id, *);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Note, though, that only the attributes that are defined using the syntactic sugar are deleted automatically. If <code class='inline-code-box'><span class='inline-code'>Users</span></code> had been defined as follows, without any syntactic sugar:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Users</span> {
+  user(<span class='m'>UserId</span>);
+  user(u) -&gt; name(u, _), phone_number(u, _);
+
+  name(<span class='m'>UserId</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+  name(u, _) -&gt; user(u);
+
+  date_of_birth(<span class='m'>UserId</span>, <span class='m'>Date</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+  date_of_birth(u, _) -&gt; user(u);
+
+  phone_number(<span class='m'>UserId</span>, <span class='m'>String</span>);
+  phone_number(u, _) -&gt; user(u);
+
+  ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>you would have had to explicitly delete all the data from the attribute relations as well.</p>
 
 
 <h3>Mutator methods</h3>
@@ -303,13 +453,19 @@
 <span class='m'>Counter</span>.decr {
   update_value(value - <span class='n'>1</span>);
 }
+</section>
+</figure>
+</code></pre>
 
-<span class='m'>Counter</span>.reset {
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Counter</span>.reset {
   update_value(<span class='n'>0</span>);
 }
 
 <span class='m'>Counter</span>.reset(<span class='m'>Int</span>) {
-  update_value(untag(<span class='k'>self</span>));
+  update_value(untag(<span class='k'>this</span>));
 }
 
 <span class='k'>using</span> <span class='m'>Counter</span> {
@@ -346,10 +502,10 @@
 }
 
 <span class='m'>CounterPair</span>.update_counter(id: &lt;<span class='n'>0</span>..<span class='n'>1</span>&gt;, msg: <span class='m'>CounterMsg</span>) {
-  <span class='k'>if</span> <span class='k'>self</span>.id == <span class='n'>0</span>:
-    counter_1 &lt;- <span class='k'>self</span>.msg;
+  <span class='k'>if</span> <span class='k'>this</span>.id == <span class='n'>0</span>:
+    counter_1 &lt;- <span class='k'>this</span>.msg;
   <span class='k'>else</span>
-    counter_2 &lt;- <span class='k'>self</span>.msg;
+    counter_2 &lt;- <span class='k'>this</span>.msg;
   ;
 }
 </section>
@@ -408,7 +564,7 @@
 
 <p>The choice of such an execution model is probably the most puzzling design decision in the entire language since it makes update code more difficult to write, it adversely affects its modularity, and was not, in any way, dictated by other features of the language. But in spite of its issues, it also has a couple of important advantages.</p>
 
-<p>One major problem with imperative code is that it doesn't lend itself to parallel execution: it's notoriously difficult to write concurrent imperative programs, and even more so for a compiler to (semi-)automatically and safely parallelize the execution of existing code. One much hyped advantage of pure functional programming on the other hand is that it is very well suited to parallel execution: since functions are referentially transparent and have no side effects, two function calls can always be executed in parallel, as long as neither depends on the other's result. And in spite of their imperative syntax, message handlers in Cell are, in fact, pure functions: the only thing that's different about them (apart from the syntax) is the fact that instead of explicitly returning an ordinary value they implicitly return a set of <code class='inline-code-box'><span class='inline-code'>set</span></code>/<code class='inline-code-box'><span class='inline-code'>insert</span></code>/<code class='inline-code-box'><span class='inline-code'>delete</span></code> commands that are then checked and executed by some compiler-generated code. Both the execution of the message handler and the subsequent checking and execution of the resulting commands can potentially be made to take advantage of multi-core processors safely and with little effort on the programmer's part. That's in addition to the potential inter-automata parallelism: since automata cannot share any mutable state (thanks to the combination of immutability for some data structures and the impossibility of aliasing for others) they can potentially be safely updated concurrently, unless they are nested inside one another or in a dependant/dependee relationship. Now, just to be clear, what we're talking about here is just leaving the door open for a future implementation to take advantage of parallelism: currently there's no support for concurrency at all, and a fully parallel implementation is going to be a long-term effort.</p>
+<p>One major problem with imperative code is that it doesn't lend itself to parallel execution: it's notoriously difficult to write concurrent imperative programs, and even more so for a compiler to (semi-)automatically and safely parallelize the execution of existing code. One much hyped advantage of pure functional programming on the other hand is that it is very well suited to parallel execution: since functions are referentially transparent and have no side effects, two function calls can always be executed in parallel, as long as neither depends on the other's result. And in spite of their imperative syntax, message handlers in Cell are, in fact, pure functions: the only thing that's different about them (apart from the syntax) is the fact that instead of explicitly returning an ordinary value they implicitly return a set of <code class='inline-code-box'><span class='inline-code'>set</span></code>/<code class='inline-code-box'><span class='inline-code'>insert</span></code>/<code class='inline-code-box'><span class='inline-code'>update</span></code>/<code class='inline-code-box'><span class='inline-code'>delete</span></code> commands that are then checked and executed by some compiler-generated code. Both the execution of the message handler and the subsequent checking and execution of the resulting commands can potentially be made to take advantage of multi-core processors safely and with little effort on the programmer's part. That's in addition to the potential inter-automata parallelism: since automata cannot share any mutable state (thanks to the combination of immutability for some data structures and the impossibility of aliasing for others) they can potentially be safely updated concurrently, unless they are nested inside one another or in a dependant/dependee relationship. Now, just to be clear, what we're talking about here is just leaving the door open for a future implementation to take advantage of parallelism: currently there's no support for concurrency at all, and a fully parallel implementation is going to be a long-term effort.</p>
 
 <p>Another problem is that the execution model of imperative languages, while undoubtedly convenient in simple cases like the example shown above, leads to nasty spaghetti code when programming in the large. Even in a moderately complex real world application, an update may well involve mutating the data structures that encode the state of the application in hundreds of different places. The goal of an update is to transition those data structures from the state they have before the update to the one they're supposed to have when the update is complete. But in order to do so they have to go through many different intermediate states each of which is the result of applying an atomic update to the previous one, and it's also common for specific pieces of information to be mutated several times during a single global update. The vast majority of those partially updated states are inconsistent, since they're by definition the result of updating only a part of the target data structures. But all those intermediate states are visible to the application code, with the result that's very difficult to know, when reading the value of a particular variable, whether such a value is the initial one, the final one, or just an intermediate one. The correctness of the code is highly dependendent on the order in which side effects are carried out, but such order is very difficult to control when updating a large object graph.</p>
 
@@ -456,15 +612,26 @@
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
               </ul>
             </li>
-            <li>Automata
+            <li>Relational Automata
               <ul class="toc">
-                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
-                <li><a href='reactive.html'>Reactive automata</a></li>
-                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
               </ul>
             </li>
-
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
             <li>Interfacing with...
               <ul class="toc">
                 <li><a href='interface-cpp.html'>C++</a></li>

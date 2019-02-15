@@ -33,7 +33,7 @@
         <article class="content">
 <h2>Why relations are better than objects</h2>
 
-<p>The title of this post is a bit misleading, as the first thing the word "object" brings to mind (in this context) is OOP. Here instead we'll be using said word in a looser sense, one that includes, but is not specific to OOP. For our purposes, an object is any mutable record that can be referenced and manipulated through a pointer or object id. So everything we will be saying applies not only to object-oriented languages, but also to procedural languages like C or Pascal, and even some impure functional ones.</p>
+<p>The title of this chapter is a bit misleading, as the first thing the word "object" brings to mind (in this context) is OOP. Here instead we'll be using said word in a looser sense, one that includes, but is not specific to OOP. For our purposes, an object is any mutable record that can be referenced and manipulated through a pointer or object id. So everything we will be saying applies not only to object-oriented languages, but also to procedural languages like C or Pascal, and even some impure functional ones.</p>
 
 <p>In what follows, we'll be talking specifically about the particular flavor of the relational model that is used in Cell (which is very different from the one used in relational databases) and we'll assume the reader has a basic familiarity with it, so you'll need to read the introductory <a href='example.html'>example</a> first. It would also be useful, but not strictly necessary, to take a look at the chapter on <a href='relational.html'>relational automata</a>.</p>
 
@@ -243,15 +243,26 @@ joined_on(<span class='m'>UserId</span>, <span class='m'>ChatGroupId</span>, <sp
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
               </ul>
             </li>
-            <li>Automata
+            <li>Relational Automata
               <ul class="toc">
-                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
-                <li><a href='reactive.html'>Reactive automata</a></li>
-                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
               </ul>
             </li>
-
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
             <li>Interfacing with...
               <ul class="toc">
                 <li><a href='interface-cpp.html'>C++</a></li>

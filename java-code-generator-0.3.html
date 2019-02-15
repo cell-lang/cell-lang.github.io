@@ -31,21 +31,19 @@
     <div id="main-container">
       <div id="main">
         <article class="content">
-<h2>Cell-to-C# compiler initial release</h2>
+<h2>Cell &#x279e; Java compiler version 0.3</h2>
 
-<p>The first release of the Cell-to-C# compiler/code generator is out today. It is provided as a .NET application, and even though it was developed using Mono on Linux, it should work just fine on Windows, though I haven't actually tried it there yet.</p>
+<p>Version 0.3 of the Cell to Java code generator is now available, with a lot of new features. Here's a partial list:</p>
 
-<p>The interface of the generated code is documented in the <a href='interface-cs.html'>Interfacing with C#</a> chapter. Other details can be found in the <a href='getting-started.html'>Getting started</a> chapter.</p>
+<ul><li>Foreign keys (both implicit and explicit)</li><li>Compile-time checks for (some types of) foreign keys</li><li>Cascade deletes</li><li>Syntactic sugar for insertions</li><li>Full support for inheritance hierarchies</li><li>Syntactic sugar for unique attributes</li><li>Symmetric relations</li><li>Aggregate functions</li><li>Improved support for orthogonal persistence</li></ul>
 
-<p>All language features are exactly the same as in the C++ version, but the Cell to C# compiler has a couple of improvements. First of all, the interface of the generated code is quite a bit nicer. The names of the methods of the generated classes are very similar to what you would see in hand-written code, unless there's some naming conflict that forces the compiler to add prefixes and/or underscores. More importantly, the mapping between the Cell data types and the native C# types works better here, both because mapping to C# data structures is intrinsically easier, and because there have been improvements to the mapping itself, which will of course be soon backported to the C++ code generator as well. The new mapping doesn't take full advantage of all the available C# features, though. In particular, it's not making use yet of named tuples, which can be used to straightforwardly map Cell records. That will be fixed soon.</p>
+<p>All the major features that are planned for version 1.0 have now been implemented. This is still a beta though, since there's a lot of new code that still needs more testing.</p>
 
-<p>The other major improvement is in the data structures that are used in the physical implementation of mutable relations, which are now much closer to their final form. All lookups and searches are now performed in constant time (of course if a search returns more than one result, retrieving each additional result required an additional small constant time).</p>
+<p>There's also been a backward-incompatible syntactic change: the keyword <code class='inline-code-box'><span class='inline-code'>self</span></code>, that was used to refer to the message inside the message handler's body has been replaced with <code class='inline-code-box'><span class='inline-code'>this</span></code>.</p>
 
-<p>The bad news is that (apart from the aforementioned case of operations on mutable relations) the generated C# code is a lot slower than the generated C++. The Cell compiler, which is itself written in Cell and is the only real benchmark I have at the moment, runs an order of magnitude slower when compiled to C# instead of C++. All the low level optimizations that worked well with C++ only seemed to make things worse here, so I gave up on that after a couple of days. I could have tried harder, but since I'm going to start working very soon on type-based optimization, which is where the real speed gains should come from (and which will work across all target languages), there was no point in investing more time and effort in that. Whatever optimization I can add at this stage, it will probably became useless once type-based optimization is implemented.</p>
+<p>This version is also Java-only. The release of C++ and C# code generators has been postponed until version 0.5.</p>
 
-<p>Along with this release I've also added a new hands-on <a href='example.html'>introduction/tutorial</a> and a <a href='comparison.html'>comparison with OOP</a>.</p>
-
-<p>Next up is the Java version of the compiler/code generator. It's going to be very similar to the C# version released today, so it should be ready pretty soon, in just a few weeks.</p>
+<p>The next version, 0.4, will be focused exclusively on performance optimization of relational automata and is expected to be released in May. The one after that, 0.5, will implement the last few (minor) features that are required for version 1.0, and will probably be available in July.</p>
 
 
         </article>

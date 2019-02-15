@@ -333,6 +333,8 @@ counter.execute(<span class='s'>"reset(-1)"</span>);
 
 <p>The two methods <code class='inline-code-box'><span class='inline-code'>value()</span></code> and <code class='inline-code-box'><span class='inline-code'>updates()</span></code> are <code class='inline-code-box'><span class='inline-code'>Counter</span></code>-specific accessors that return the values of the <code class='inline-code-box'><span class='inline-code'>value</span></code> and <code class='inline-code-box'><span class='inline-code'>updates</span></code> member variables respectively. Note that the types of such variables is just <code class='inline-code-box'><span class='inline-code'>Int</span></code>, which can be mapped directly to <code class='inline-code-box'><span class='inline-code'>long</span></code> in Java, with no need to use <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code>.</p>
 
+<p>If you don't want those automatically generated methods, just use the <code class='inline-code-box'><span class='inline-code'>-nag</span></code> flag when running the Cell compiler.</p>
+
 <p>Let's now take a look at a more complex automaton, <code class='inline-code-box'><span class='inline-code'>Supply</span></code>. Here's the declaration of the generated Java class:</p>
 
 <p><figure class="highlight"><section><pre><code><span class='k'>package</span> net.cell_lang;</span>
@@ -344,49 +346,76 @@ counter.execute(<span class='s'>"reset(-1)"</span>);
   <span class='k'>void</span> setState(<span class='b'>String</span>);
   <span class='k'>void</span> execute(<span class='b'>String</span>);
 
+  <span class='c'>// User-defined methods</span>
+  <span class='m'>Value</span> lowestPriceSuppliers();
+  <span class='b'>long</span>[] lowestPriceSuppliers(<span class='b'>long</span>);
+
+  <span class='c'>// Automatically generated member variable accessors</span>
   <span class='b'>long</span> nextPartId();
   <span class='b'>long</span> nextSupplierId();
 
-  <span class='b'>boolean</span> part(<span class='b'>long</span>);
-  <span class='b'>long</span>[] part();
-
-  <span class='b'>boolean</span> supplier(<span class='b'>long</span>);
-  <span class='b'>long</span>[] supplier();
-
-  <span class='b'>boolean</span> code(<span class='b'>long</span>, <span class='b'>String</span>);
-  <span class='m'>Pair</span>&lt;<span class='b'>long</span>[], <span class='b'>String</span>[]&gt; code();
-
-  <span class='b'>boolean</span> phone(<span class='b'>long</span>, <span class='b'>String</span>);
-  <span class='m'>Pair</span>&lt;<span class='b'>long</span>, <span class='b'>String</span>&gt;[] phone();
-
-  <span class='b'>boolean</span> sells(<span class='b'>long</span>, <span class='b'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='b'>long</span>, <span class='b'>long</span>&gt;[] sells();
-
-  <span class='b'>boolean</span> availability(<span class='b'>long</span>, <span class='b'>long</span>, <span class='b'>long</span>);
-  <span class='m'>Triplet</span>&lt;<span class='b'>long</span>, <span class='b'>long</span>, <span class='b'>long</span>&gt;[] availability();
-
-  <span class='b'>boolean</span> unitPrice(<span class='b'>long</span>, <span class='b'>long</span>, <span class='b'>long</span>);
-  <span class='m'>Triplet</span>&lt;<span class='b'>long</span>, <span class='b'>long</span>, <span class='b'>long</span>&gt;[] unitPrice();
-
-  <span class='b'>boolean</span> name(<span class='b'>long</span>, <span class='b'>String</span>);
-  <span class='b'>String</span> name(<span class='b'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='b'>long</span>, <span class='b'>String</span>&gt;[] name();
-
-  <span class='b'>boolean</span> address(<span class='b'>long</span>, <span class='b'>String</span>);
-  <span class='b'>String</span> address(<span class='b'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='b'>long</span>, <span class='b'>String</span>&gt;[] address();
-
-  <span class='b'>boolean</span> description(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='c'>// Automatically generated attribute accessors.</span>
+  <span class='c'>// Given an entity id return the value of the</span>
+  <span class='c'>// attribute for the corresponding entity</span>
+  <span class='b'>String</span> code(<span class='b'>long</span>);
   <span class='b'>String</span> description(<span class='b'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='b'>long</span>, <span class='b'>String</span>&gt;[] description();
+  <span class='b'>String</span> name(<span class='b'>long</span>);
+  <span class='b'>String</span> address(<span class='b'>long</span>);
 
-  <span class='m'>Value</span> lowestPriceSuppliers();
-  <span class='b'>long</span>[] lowestPriceSuppliers(<span class='b'>long</span>);
+  <span class='c'>// Automatically generated. Return the attribute of a</span>
+  <span class='c'>// relationships given the ids of its entities.</span>
+  <span class='b'>long</span> availability(<span class='b'>long</span>, <span class='b'>long</span>);
+  <span class='b'>long</span> unitPrice(<span class='b'>long</span>, <span class='b'>long</span>);
+
+  <span class='c'>// Automatically generated. Check whether a given element or tuple</span>  
+  <span class='c'>// belongs to the corresponding mutable relation variable</span>  
+  <span class='b'>boolean</span> part(<span class='b'>long</span>);
+  <span class='b'>boolean</span> supplier(<span class='b'>long</span>);
+  <span class='b'>boolean</span> code(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='b'>boolean</span> description(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='b'>boolean</span> name(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='b'>boolean</span> address(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='b'>boolean</span> phone(<span class='b'>long</span>, <span class='b'>String</span>);
+  <span class='b'>boolean</span> sells(<span class='b'>long</span>, <span class='b'>long</span>);
+  <span class='b'>boolean</span> unitPrice(<span class='b'>long</span>, <span class='b'>long</span>, <span class='b'>long</span>);
+  <span class='b'>boolean</span> availability(<span class='b'>long</span>, <span class='b'>long</span>, <span class='b'>long</span>);
+
+  <span class='c'>// Automatically generated. Return the entire</span>
+  <span class='c'>// content of a mutable relation variable</span>
+  <span class='b'>long</span>[] part();
+  <span class='b'>long</span>[] supplier();
+  <span class='m'>PartId_String</span>[] code();
+  <span class='m'>PartId_String</span>[] description();
+  <span class='m'>SupplierId_String</span>[] name();
+  <span class='m'>SupplierId_String</span>[] address();
+  <span class='m'>SupplierId_String</span>[] phone();
+  <span class='m'>SupplierId_PartId</span>[] sells();
+  <span class='m'>SupplierId_PartId_Money</span>[] unitPrice();
+  <span class='m'>SupplierId_PartId_Long</span>[] availability();
 }
 </code></pre></section></figure>
 </p>
 
-<p>The first three methods of the <code class='inline-code-box'><span class='inline-code'>Supply</span></code> class, <code class='inline-code-box'><span class='inline-code'>readState()</span></code>, <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code>, are the same as before. The two methods <code class='inline-code-box'><span class='inline-code'>nextPartId()</span></code> and <code class='inline-code-box'><span class='inline-code'>nextSupplierId()</span></code> are just accessors for the corresponding member variables, just like <code class='inline-code-box'><span class='inline-code'>value()</span></code> and <code class='inline-code-box'><span class='inline-code'>updates()</span></code> in <code class='inline-code-box'><span class='inline-code'>Counter</span></code>. All the other methods are new, and are either accessors for some mutable relation variable or wrappers for a Cell method. A first set of boolean methods check whether a relation contains a given tuple (or value, for unary relations):</p>
+<p>The first three methods of the <code class='inline-code-box'><span class='inline-code'>Supply</span></code> class, <code class='inline-code-box'><span class='inline-code'>readState()</span></code>, <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code>, are the same as before. The next two (both named <code class='inline-code-box'><span class='inline-code'>lowestPriceSuppliers(..)</span></code>) are just the compiled Java version of the corresponding Cell methods of the <code class='inline-code-box'><span class='inline-code'>Supply</span></code> automaton.</p>
+
+<p>Everything else is just automatically generated accessors for the data stored by the automaton. Again, if don't want them just use the <code class='inline-code-box'><span class='inline-code'>-nag</span></code> option when compiling.</p>
+
+<p>The two methods <code class='inline-code-box'><span class='inline-code'>nextPartId()</span></code> and <code class='inline-code-box'><span class='inline-code'>nextSupplierId()</span></code> are just accessors for the corresponding member variables, just like <code class='inline-code-box'><span class='inline-code'>value()</span></code> and <code class='inline-code-box'><span class='inline-code'>updates()</span></code> in <code class='inline-code-box'><span class='inline-code'>Counter</span></code>.</p>
+
+<p>The next set of methods all take as argument the id of an entity and return the value of the corresponding attribute. They're defined only for single-valued attributes:</p>
+
+<p><figure class="highlight">
+<section>
+<pre><code><span class='c'>// Looks up the name of the supplier identified by the value</span>
+<span class='c'>// <span class="inline-code">supplier_id(21)</span> if the <span class="inline-code">name</span> relation contains an entry</span>
+<span class='c'>// for such supplier. Throws an exception otherwise</span>
+<span class='b'>string</span> name = supplyInstance.name(<span class='n'>21</span>);
+</code></pre>
+</section>
+</figure>
+</p>
+
+<p>Similar accessors are available also for the attributes of relationships. Then we have a group of boolean methods that check whether a relation contains a given tuple (or value, for unary relations):</p>
 
 <p><figure class="highlight"><section><pre><code><span class='c'>// Checks whether the <span class="inline-code">part</span> unary relation</span>
 <span class='c'>// contains the value <span class="inline-code">part_id(1)</span></span>
@@ -402,39 +431,9 @@ supplyInstance.availability(<span class='n'>7</span>, <span class='n'>3</span>, 
 </code></pre></section></figure>
 </p>
 
-<p>A second group of methods, like <code class='inline-code-box'><span class='inline-code'>supplier()</span></code> or <code class='inline-code-box'><span class='inline-code'>unitPrice()</span></code>, return the entire content of a given relations. In the case of unary relation they return an array of values corresponding to the elements of the relations. In the case of binary or ternary relations they return an object of type <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Pair</span></code> and <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Triplet</span></code> respectively, that contain the columns of the relations. The <code class='inline-code-box'><span class='inline-code'>Pair</span></code> and <code class='inline-code-box'><span class='inline-code'>Triplet</span></code> types are defined as follow:</p>
+<p>The last group of methods simply returns the entire content of a given relations. The definitions of their return types are not shown here, but you'll find them in the <code class='inline-code-box'><span class='inline-code'>interface.txt</span></code> file.</p>
 
-<p><figure class="highlight"><section><pre><code><span class='k'>package</span> net.cell_lang;
-
-<span class='k'>public</span> <span class='k'>class</span> <span class='m'>Pair</span>&lt;<span class='u'>X</span>, <span class='u'>Y</span>&gt; {
-  <span class='k'>public</span> <span class='u'>X</span> item1;
-  <span class='k'>public</span> <span class='u'>Y</span> item2;
-}
-
-<span class='k'>public</span> <span class='k'>class</span> <span class='m'>Triplet</span>&lt;<span class='u'>X</span>, <span class='u'>Y</span>, <span class='u'>Z</span>&gt; {
-  <span class='k'>public</span> <span class='u'>X</span> item1;
-  <span class='k'>public</span> <span class='u'>Y</span> item2;
-  <span class='k'>public</span> <span class='u'>Z</span> item3;
-}
-</code></pre></section></figure>
-</p>
-
-<p>It would be of course nicer to return an array of tuples, rather than a pair/triplet of arrays, and that's how it is in other languages, but given the restrictions of Java's type system this is probably the simplest and most efficient way to do it.</p>
-
-<p>Binary relations with a key on the first column (that is, maps) also have accessors that return the value corresponding to a given key, provided that the relation/map contains such key:</p>
-
-<p><figure class="highlight">
-<section>
-<pre><code><span class='c'>// Looks up the name of the supplier identified by the value</span>
-<span class='c'>// <span class="inline-code">supplier_id(21)</span> if the <span class="inline-code">name</span> relation contains an entry</span>
-<span class='c'>// for such supplier. Throws an exception otherwise</span>
-<span class='b'>string</span> name = supplyInstance.name(<span class='n'>21</span>);
-</code></pre>
-</section>
-</figure>
-</p>
-
-<p>The last group of methods (<code class='inline-code-box'><span class='inline-code'>lowestPriceSuppliers(..)</span></code>) are just the compiled Java version of the corresponding Cell methods of the <code class='inline-code-box'><span class='inline-code'>Supply</span></code> automaton.</p>
+<p>Automatically generated methods are still a work in progress at the moment: some of those that are there are probably of dubious value, and others that are probably useful are not there yet. At some point in the future the compiler will not only choose what to generate more wisely, but will also provide the developer with a way to control the generation process.</p>
 
 
 <h3>Reactive automata</h3>
@@ -658,15 +657,26 @@ waterSensor.setElapsedMillisecs(<span class='n'>100</span>);
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
               </ul>
             </li>
-            <li>Automata
+            <li>Relational Automata
               <ul class="toc">
-                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
-                <li><a href='reactive.html'>Reactive automata</a></li>
-                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
               </ul>
             </li>
-
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
             <li>Interfacing with...
               <ul class="toc">
                 <li><a href='interface-cpp.html'>C++</a></li>

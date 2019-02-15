@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Hierarchical classification and polymorphism</h2>
+
+<p>Sometimes (some of) the entities in your application domain can be classified hierarchically, and we're now going to see how inheritance can be modeled in Cell. Keep in mind though that this is not the only way to do it and that the necessary support hasn't entirely materialized yet: some integrity constraints are still missing, and so is some much needed syntactic sugar.</p>
+
+<p>As an example, let's say we've to build a very simple payroll system for a company that pays its employees on a weekly basis. Employees are of four types: salaried employees are paid a fixed weekly salary regardless of the number of hours worked, hourly employees are paid by the hour and receive overtime pay (i.e., 1.5 times their hourly salary rate) for all hours worked in excess of 40 hours, commission employees are paid a percentage of their sales and base-salaried commission employees receive a base salary plus a percentage of their sales.</p>
+
+<p>The first step is to create typed identifiers for each of the four types of employees and to arrange them hierarchically:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>SalariedEmployee</span>   = salaried_employee(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>HourlyEmployee</span>     = hourly_employee(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>CommissionEmployee</span> = commission_employee(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>BasePlusEmployee</span>   = base_plus_employee(<span class='m'>Nat</span>);
+
+<span class='k'>type</span> <span class='m'>AnyCommissionEmployee</span> = <span class='m'>CommissionEmployee</span>,
+                             <span class='m'>BasePlusEmployee</span>;
+
+<span class='k'>type</span> <span class='m'>Employee</span> = <span class='m'>SalariedEmployee</span>,
+                <span class='m'>HourlyEmployee</span>,
+                <span class='m'>CommissionEmployee</span>,
+                <span class='m'>BasePlusEmployee</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>The type <code class='inline-code-box'><span class='inline-code'>Employee</span></code> is the superset of all employee types, and <code class='inline-code-box'><span class='inline-code'>AnyCommissionEmployee</span></code> includes all employees that earn a commission on their sales, regardless of whether they also have a base salary or not. Note that the only purpose of these datatypes is to identify employees and their types, not to carry around all information that is associated with them, which will be instead stored using relations. The following <code class='inline-code-box'><span class='inline-code'>Workforce</span></code> schema defines the attributes of each type of employee: some are shared among all types of employees, like <code class='inline-code-box'><span class='inline-code'>first_name</span></code>, <code class='inline-code-box'><span class='inline-code'>last_name</span></code> and <code class='inline-code-box'><span class='inline-code'>ssn</span></code>, others apply only to a specific type of employees, like <code class='inline-code-box'><span class='inline-code'>weekly_salary</span></code> for salaried employees, and finally there's a couple of attributes, <code class='inline-code-box'><span class='inline-code'>gross_sales</span></code> and <code class='inline-code-box'><span class='inline-code'>commission_rate</span></code>, that are shared by all types of employees that can earn commissions, hence the declaration of their base type <code class='inline-code-box'><span class='inline-code'>AnyCommissionEmployee</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Workforce</span> {
+  <span class='c'>// Next unused employee id</span>
+  next_employee_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  <span class='c'>// Shared attributes of all employees</span>
+  employee(<span class='m'>Employee</span>):
+    first_name  : <span class='m'>String</span>,
+    last_name   : <span class='m'>String</span>,
+    ssn         : <span class='m'>String</span>;
+
+  <span class='c'>// Attributes of salaried employees</span>
+  employee(<span class='m'>SalariedEmployee</span>):
+    weekly_salary : <span class='m'>Money</span>;
+
+  <span class='c'>// Attributes of hourly employees</span>
+  employee(<span class='m'>HourlyEmployee</span>):
+    hourly_wage  : <span class='m'>Money</span>,
+    hours_worked : <span class='m'>Float</span>;
+
+  <span class='c'>// Attributes of all employees that earn commissions,</span>
+  <span class='c'>// including those with base salary + commissions</span>
+  employee(<span class='m'>AnyCommissionEmployee</span>):
+    gross_sales     : <span class='m'>Money</span>,
+    commission_rate : <span class='m'>Float</span>;
+
+  <span class='c'>// Attributes of employees with base salary + commissions</span>
+  employee(<span class='m'>BasePlusEmployee</span>):
+    base_salary : <span class='m'>Money</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>As usual, our schema declaration makes use of a lot of syntactic sugar. It's completely equivalent to the following, less syntactically sugared version:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Workforce</span> {
+  <span class='c'>// Next unused employee id</span>
+  next_employee_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  <span class='c'>// Salaried employees and their attributes</span>
+  employee(<span class='m'>SalariedEmployee</span>):
+    first_name    : <span class='m'>String</span>,
+    last_name     : <span class='m'>String</span>,
+    ssn           : <span class='m'>String</span>,
+    weekly_salary : <span class='m'>Money</span>;
+
+  <span class='c'>// Hourly employees and their attributes</span>
+  employee(<span class='m'>HourlyEmployee</span>):
+    first_name    : <span class='m'>String</span>,
+    last_name     : <span class='m'>String</span>,
+    ssn           : <span class='m'>String</span>,
+    hourly_wage   : <span class='m'>Money</span>,
+    hours_worked  : <span class='m'>Float</span>;
+
+  <span class='c'>// Commissions-only employees and their attributes</span>
+  employee(<span class='m'>CommissionEmployee</span>):
+    first_name      : <span class='m'>String</span>,
+    last_name       : <span class='m'>String</span>,
+    ssn             : <span class='m'>String</span>,
+    gross_sales     : <span class='m'>Money</span>,
+    commission_rate : <span class='m'>Float</span>;
+
+  <span class='c'>// Employees with base salary + commissions and their attributes</span>
+  employee(<span class='m'>BasePlusEmployee</span>):
+    first_name      : <span class='m'>String</span>,
+    last_name       : <span class='m'>String</span>,
+    ssn             : <span class='m'>String</span>,
+    gross_sales     : <span class='m'>Money</span>,
+    commission_rate : <span class='m'>Float</span>,
+    base_salary     : <span class='m'>Money</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The difference is that in the first, terser version all attributes that are common to all employees are just declared once, and so are those that are shared by all employees that earn commission.</p>
+
+<p>Now we can define the polymorphic <code class='inline-code-box'><span class='inline-code'>earnings(..)</span></code> method, which is implemented differently for each type of employee:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Workforce</span> {
+  <span class='m'>Money</span> earnings(<span class='m'>SalariedEmployee</span> e) = weekly_salary(e);
+
+  <span class='m'>Money</span> earnings(<span class='m'>HourlyEmployee</span> e) {
+    hours = hours_worked(e);
+    wage = hourly_wage(e);
+    earnings = hours * wage;
+    earnings = earnings + <span class='n'>0.5</span> * {hours - <span class='n'>40.0</span>} * wage <span class='k'>if</span> hours &gt; <span class='n'>40.0</span>;
+    <span class='k'>return</span> earnings;
+  }
+
+  <span class='m'>Money</span> earnings(<span class='m'>CommissionEmployee</span> e) =
+    commission_rate(e) * gross_sales(e);
+
+  <span class='m'>Money</span> earnings(<span class='m'>BasePlusEmployee</span> e) =
+    base_salary(e) + commission_rate(e) * gross_sales(e);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>As you can see, polymorphic methods are just like polymorphic function, except that they have access to the state of an automaton, which in this case contains the data associated with the entities they manipulate.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Relational Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
+              </ul>
+            </li>
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

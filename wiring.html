@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Wiring relational automata together</h2>
+
+<p>Relational automata are meant to be rather large data structures, storing data about many different entity types, with all their attributes and relationships. Still, once your application grows beyond a certain size, you'll want to partition the information it handles into several domains (and therefore several automata). As an example, let's say you want to create an online marketplace for used books, where anyone can register as either a buyer or a seller. In order to sell their used books sellers have to create listings: with each listing they can put up for sale any number of copies of a specific book, and buyers can choose to buy any number of copies of a book from one of the listings. There's also going to be a catalog, which is provided by the administrator of the marketplace, and cannot by edited by sellers. Here's how a toy version of the schema could look like:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>AuthorId</span>   = author_id(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>BookId</span>     = book_id(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>SellerId</span>   = seller_id(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>BuyerId</span>    = buyer_id(<span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>ListingId</span>  = listing_id(<span class='m'>Nat</span>);
+
+<span class='k'>type</span> <span class='m'>Money</span> = dollar_cents(<span class='m'>Nat</span>);
+
+<span class='k'>type</span> <span class='m'>BookCondition</span> = new, like_new, very_good, good,
+                     has_issues(descr: <span class='m'>String</span>);
+
+<span class='k'>schema</span> <span class='m'>BookMarket</span> {
+  next_author_id    : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_book_id      : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_seller_id    : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_buyer_id     : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_listing_id   : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  author(<span class='m'>AuthorId</span>):
+    name : <span class='m'>String</span>;
+
+  book(<span class='m'>BookId</span>):
+    title : <span class='m'>String</span>,
+    isbn  : <span class='m'>String</span>,
+    by+   : <span class='m'>AuthorId</span>,
+    listed_price : <span class='m'>Money</span>;
+
+  seller(<span class='m'>SellerId</span>):
+    name : <span class='m'>String</span>;
+
+  buyer(<span class='m'>BuyerId</span>):
+    name : <span class='m'>String</span>;
+
+  listing(<span class='m'>ListingId</span>):
+    seller_id : <span class='m'>SellerId</span>,
+    book_id   : <span class='m'>BookId</span>,
+    condition : <span class='m'>BookCondition</span>,
+    price     : <span class='m'>Money</span>,
+    amount    : <span class='m'>NzNat</span>;
+
+  purchased(<span class='m'>BuyerId</span>, <span class='m'>ListingId</span>, <span class='m'>NzNat</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>If one wanted to somehow partition the information contained in <code class='inline-code-box'><span class='inline-code'>BookMarket</span></code>, one way to do it would be to split it into three domains, the first one containing information about books and authors, the second about buyers and sellers, and the last one about offerings and purchases. The first two would be standalone domains, while the last one would be conceptually dependent on the others: you can't really talk about listings and purchases without also talking about books, sellers and buyers. Here's the refactored code:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Publishing</span> {
+  next_author_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_book_id   : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  author(<span class='m'>AuthorId</span>):
+    name : <span class='m'>String</span>;
+
+  book(<span class='m'>BookId</span>):
+    title : <span class='m'>String</span>,
+    isbn  : <span class='m'>String</span>,
+    by+   : <span class='m'>AuthorId</span>,
+    listed_price : <span class='m'>Money</span>;
+}
+
+<span class='k'>schema</span> <span class='m'>Actors</span> {
+  next_seller_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+  next_buyer_id  : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  seller(<span class='m'>SellerId</span>):
+    name : <span class='m'>String</span>;
+
+  buyer(<span class='m'>BuyerId</span>):
+    name : <span class='m'>String</span>;
+}
+
+<span class='k'>schema</span> <span class='m'>Market</span> : <span class='m'>Publishing</span>, <span class='m'>Actors</span> {
+  next_listing_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
+
+  listing(<span class='m'>ListingId</span>):
+    seller_id : <span class='m'>SellerId</span>,
+    book_id   : <span class='m'>BookId</span>,
+    condition : <span class='m'>BookCondition</span>,
+    price     : <span class='m'>Money</span>,
+    amount    : <span class='m'>NzNat</span>;
+
+  purchased(<span class='m'>BuyerId</span>, <span class='m'>ListingId</span>, <span class='m'>NzNat</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The only thing that is new here is the reference to <code class='inline-code-box'><span class='inline-code'>Publishing</span></code> and <code class='inline-code-box'><span class='inline-code'>Actors</span></code> in the declaration of <code class='inline-code-box'><span class='inline-code'>Market</span></code>. It states that the information contained in the latter automaton is dependent on that contained in first two. In practice, this means that whenever you create an instance of <code class='inline-code-box'><span class='inline-code'>Market</span></code> you need to provide a reference to an instance of both <code class='inline-code-box'><span class='inline-code'>Publishing</span></code> and <code class='inline-code-box'><span class='inline-code'>Actors</span></code>, which methods and message handlers of <code class='inline-code-box'><span class='inline-code'>Market</span></code> have access to, but only in read-only mode. This wiring is static: once an automaton instance has been created, there's no way to change it. When creating those instances in Cell (as opposed to doing that from the host language in a mixed-language application) the wiring is not only fixed, but it's also entirely known at compile time. We will discuss the details later, when we see how automata are instantiated and used. Dependencies between automata cannot be cyclical: two distinct automaton types are not allowed to reference, directly or indirectly, each other, and consequently neither are their instances. If two knowledge domains depend on each other, you'll have to merge them into a single one.</p>
+
+<p>Foreign keys do not work yet across automata: for example, it's not possible at the moment to declare a foreign key from a field like <code class='inline-code-box'><span class='inline-code'>book_id</span></code> in <code class='inline-code-box'><span class='inline-code'>Market</span></code> to the <code class='inline-code-box'><span class='inline-code'>book</span></code> unary relation/set in <code class='inline-code-box'><span class='inline-code'>Publishing</span></code>. This will be fixed in a future release.</p>
+
+<p>Note that the above example is just meant to demonstrate automata wiring, and it should not be taken as design advice: in general, it doesn't make much sense to partition a tiny schema like <code class='inline-code-box'><span class='inline-code'>BookMarket</span></code> into even smaller ones. As already mentioned above, schemas are meant to be large data structures, containing information about an entire knowledge domain or subdomain, not about a single conceptual entity. But in a real application such schemas would be much larger, and therefore the data would have to be partitioned in order to stay manageable: in a company like Amazon.com, for example, customer data, product catalogs and information about orders are managed by different teams and stored in different databases, each of which has dozens or even hundreds of tables.</p>
+
+<p>One note about terminology: in what follows I will use to terms dependant and dependee to indicate the automata involved in this kind of relationship: that is, <code class='inline-code-box'><span class='inline-code'>Publishing</span></code> and <code class='inline-code-box'><span class='inline-code'>Actors</span></code> are dependees of <code class='inline-code-box'><span class='inline-code'>Market</span></code>, and <code class='inline-code-box'><span class='inline-code'>Market</span></code> is a dependant of both <code class='inline-code-box'><span class='inline-code'>Publishing</span></code> and <code class='inline-code-box'><span class='inline-code'>Actors</span></code>.</p>
+
+<p>Note also that the relatioship between dependant and dependees does not fit any of the standard relationship types you have in OOP: the exact details will be explain later, but it's not inheritance, nor composition, or aggregation, or association or even delegation, although it shares some characteristics with all of them.</p>
+
+
+<h3>Methods</h3>
+
+<p>Methods of dependant automata can freely access member variables of the dependees, just as if they belonged to the dependant, with one exception. Here's an example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Dependee</span> {
+  var(<span class='m'>Int</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+}
+
+<span class='k'>schema</span> <span class='m'>Dependant</span> : <span class='m'>Dependee</span> {
+  var : <span class='m'>Float</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Here the name <code class='inline-code-box'><span class='inline-code'>var</span></code> is bound to a binary mutable relation variable in <code class='inline-code-box'><span class='inline-code'>Dependee</span></code>, and to an ordinary member variables in <code class='inline-code-box'><span class='inline-code'>Dependant</span></code>. The two variable have no relationship to each other, apart from having the same name: in particular, there's no "overriding" of any sort taking place. Any reference to the name <code class='inline-code-box'><span class='inline-code'>var</span></code> will be statically (that is, at compile time) bound to the binary relation in methods of <code class='inline-code-box'><span class='inline-code'>Dependee</span></code>, and to the floating-point variable in methods of <code class='inline-code-box'><span class='inline-code'>Dependant</span></code>. The following method, for example, will work when declared inside <code class='inline-code-box'><span class='inline-code'>Dependee</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Dependee</span> {
+  <span class='m'>Bool</span> associate_to_the_same_string(<span class='m'>Int</span> i, <span class='m'>Int</span> j) = var(i) == var(j);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>but will be rejected if declared inside <code class='inline-code-box'><span class='inline-code'>Dependant</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Dependant</span> {
+  <span class='c'>## ERROR: DOES NOT COMPILE</span>
+  <span class='c'>## THE SYMBOL var REFERENCES Dependant.var IN THIS CONTEXT</span>
+  <span class='m'>Bool</span> associate_to_the_same_string(<span class='m'>Int</span> i, <span class='m'>Int</span> j) = var(i) == var(j);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>A similar problem happens when there are two dependees, that have a variable by the same name:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Dependee1</span> {
+  var(<span class='m'>Int</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+}
+
+<span class='k'>schema</span> <span class='m'>Dependee2</span> {
+  var : <span class='m'>Float</span>;
+}
+
+<span class='k'>schema</span> <span class='m'>Dependant</span> : <span class='m'>Dependee1</span>, <span class='m'>Dependee2</span> {
+
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Here too the following code will be rejected:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Dependant</span> {
+  <span class='c'>## ERROR: DOES NOT COMPILE</span>
+  <span class='c'>## THE COMPILER CANNOT DECIDE WHETHER THE SYMBOL var SHOULD</span>
+  <span class='c'>## REFERENCE Dependee1.var OR Dependee2.var IN THIS CONTEXT</span>
+  <span class='m'>Bool</span> associate_to_the_same_string(<span class='m'>Int</span> i, <span class='m'>Int</span> j) = var(i) == var(j);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The same rules apply to methods: a method call will be bound to the dependant's copy if such a copy exists, or to the dependee's otherwise. Similarly, if a method is defined in more than one dependee but not in the dependant any reference to it will be rejected. Methods with the same name but different arities are considered distinct though, so no ambiguities arise in that case.</p>
+
+<p>Dependees are totally oblivious to the existence of dependants, so they cannot access their variables or methods in any way, and neither can the semantics of their methods be affected in any way by the presence of dependants: again, this is not inheritance, and there's no overriding of any sort going on here.</p>
+
+
+<h3>Nested automata</h3>
+
+<p>Relational automata can not only be wired together, but also nested inside one another. Here's an example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>CounterPair</span> {
+  counter_1 : <span class='m'>Counter</span>;
+  counter_2 : <span class='m'>Counter</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>It defines a new automaton, <code class='inline-code-box'><span class='inline-code'>CounterPair</span></code>, which contains two instances the <code class='inline-code-box'><span class='inline-code'>Counter</span></code> automaton defined earlier. When <code class='inline-code-box'><span class='inline-code'>CounterPair</span></code> is instantiated, the two nested instances of <code class='inline-code-box'><span class='inline-code'>Counter</span></code> are automatically created as well, bound to the <code class='inline-code-box'><span class='inline-code'>counter_1</span></code> and <code class='inline-code-box'><span class='inline-code'>counter_2</span></code> fields. This is a sample value for the state of <code class='inline-code-box'><span class='inline-code'>CounterPair</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>( counter_1: (value: <span class='n'>1</span>, updates: <span class='n'>1</span>),
+  counter_2: (value: <span class='n'>0</span>, updates: <span class='n'>0</span>)
+)
+</section>
+</figure>
+</code></pre>
+
+<p>As you can see, the state of nested automata simply becomes part of the state of their parent, and can be updated only as part of an update of the state of their parent. We'll say more about that when we talk about updates and message handlers in the next chapter.</p>
+<p>Just like mutable relation variables, and automaton variables in general, nested automata cannot be aliased, that is, variables like <code class='inline-code-box'><span class='inline-code'>counter_1</span></code> and <code class='inline-code-box'><span class='inline-code'>counter_2</span></code> cannot be copied and are in general subject to the same limitations that apply to mutable relation variables. The fields/member variables of nested automata, on the other hand, can be accessed (using the familiar <code class='inline-code-box'><span class='inline-code'>counter_1.value</span></code> syntax) just like the fields of their parents: with no restrictions for ordinary member variables, and with all the restrictions that apply in the case of mutable relation variables.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Relational Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
+              </ul>
+            </li>
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

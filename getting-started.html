@@ -33,7 +33,11 @@
         <article class="content">
 <h2>Getting started</h2>
 
-<p>The Cell code generators can be downloaded here: <a href='cellc-java.zip'>Java</a>,  <a href='cellc-cpp-linux.zip'>C++ (Linux)</a> and <a href='cellc-cs.zip'>C#</a>. The Java code generator is at version 0.2, while the C++ and C# ones are still stuck at version 0.1. After you unzip the file, you'll see five directories: <code class='inline-code-box'><span class='inline-code'>bin</span></code>, <code class='inline-code-box'><span class='inline-code'>stdlib</span></code>, <code class='inline-code-box'><span class='inline-code'>examples</span></code>, <code class='inline-code-box'><span class='inline-code'>src</span></code> (only for C++) and <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code>. The first one contains the Cell compilers/code generators (there's one for each target language), the second one the standard library (which at the moment consists of just one file, <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code>), and the third one a few ready-to-build examples to get you started. To create your own project, just pick the one of them and start making changes to it. You can find more information about them in <code class='inline-code-box'><span class='inline-code'>examples/README.txt</span></code>.</p>
+<p>The latest version (0.3) of the Java code generator can be downloaded <a href='cellc-java.zip'>here</a>.</p>
+
+<p>This release is Java-only, but version 0.1 of the <a href='cellc-cpp-linux.zip'>C++ (Linux)</a> and <a href='cellc-cs.zip'>C#</a> code generators is still available. They can be used to experiment with the functional subset of the language and reactive automata, which have changed very little from 0.1 to 0.3 (save for performance optimization) but if you're interested in relational automata those versions are now completely obsolete. New versions of the C++ and C# code generators will be released again with version 0.5.</p>
+
+<p>After you unzip the file, you'll see four directories: <code class='inline-code-box'><span class='inline-code'>bin</span></code>, <code class='inline-code-box'><span class='inline-code'>stdlib</span></code>, <code class='inline-code-box'><span class='inline-code'>examples</span></code> and <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code>. The first one contains the compiler, the second one the standard library (which at the moment consists of just one file, <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code>), and the third one a few ready-to-build examples to get you started. To create your own project, just pick one of them and start making changes to it. You can find more information about them in <code class='inline-code-box'><span class='inline-code'>examples/README.txt</span></code>.</p>
 
 <p>Each of the code generators produces, when the compilation process is successful, one or more source files in the target language. These files can then be fed directly to a compiler for the corresponding language if your Cell source code includes a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure, or otherwise included in an existing project.</p>
 
@@ -49,6 +53,15 @@
 <p>Sometimes there's no choice but to debug the generated code. The code itself is all but incomprehensible, but the names of variables and functions are the same as in the Cell sources, with the addition of a short suffix that is needed to avoid name clashes. For example a two-argument non-polymorphic function named <code class='inline-code-box'><span class='inline-code'>my_fn(..)</span></code> in Cell will be named <code class='inline-code-box'><span class='inline-code'>my_fn_F2(..)</span></code> in the generated code, and a variable named <code class='inline-code-box'><span class='inline-code'>my_var</span></code> will become <code class='inline-code-box'><span class='inline-code'>my_var_V</span></code>. How to print the value of a variable containing/pointing to a Cell object is language-specific, and is described in the following sections.</p>
 
 
+<h3>Java</h3>
+
+<p>The Java code generator is provided as a jar file, <code class='inline-code-box'><span class='inline-code'>cellc-java.jar</span></code>. To run it, just type <code class='inline-code-box-long'><span class='inline-code'>java -jar cellc-java.jar &lt;project file&gt; &lt;output directory&gt;</span></code>, assuming <code class='inline-code-box'><span class='inline-code'>cellc-java.jar</span></code> is in the current directory . The compiler will produce a <code class='inline-code-box'><span class='inline-code'>Generated.java</span></code> file containing the core logic, and a separate file for each of the public classes you'll be interacting with. Their interface is documented in pseudo-Java code in another generated file, <code class='inline-code-box'><span class='inline-code'>interfaces.txt</span></code>.</p>
+
+<p>In order to compile your code in debug mode, and have it print a complete stack trace when an error occurs, you'll have to use the <code class='inline-code-box'><span class='inline-code'>-d</span></code> option of the compiler: <code class='inline-code-box-long'><span class='inline-code'>java -jar cellc-java.jar -d &lt;project file&gt; &lt;output directory&gt;</span></code>. Execution times normally increase by less than 50% in debug mode.</p>
+
+<p>If you want to inspect the content of a variable containing a Cell object when debugging the generated code, just print the output of its <code class='inline-code-box'><span class='inline-code'>toString()</span></code> method.</p>
+
+
 <h3>C++</h3>
 
 <p>The output of the C++ code generator (<code class='inline-code-box'><span class='inline-code'>cellc</span></code>) is the <code class='inline-code-box'><span class='inline-code'>generated.cpp</span></code> source file. You'll need a compiler that supports C++11. If your project defines any automata, of either type, the compiler will also produce a second files, <code class='inline-code-box'><span class='inline-code'>generated.h</span></code>, which contains the declaration of the interface of the generated classes that you'll be dealing with from your own native C++ code.</p>
@@ -58,15 +71,6 @@
 <p>The <code class='inline-code-box'><span class='inline-code'>NDEBUG</span></code> preprocessor symbol is used to choose between debug and release mode. It's the same symbol used by the C <code class='inline-code-box'><span class='inline-code'>assert(..)</span></code> macro. Defining it when compiling the generated C++ code will disable all the extra debugging code. With GCC, that can be done with the <code class='inline-code-box'><span class='inline-code'>-DNDEBUG</span></code> command line argument. The code compiled in debug mode is an order of magnitude slower, so make sure that symbol is defined when building your production binaries.</p>
 
 <p>To print the value of a Cell variable <code class='inline-code-box'><span class='inline-code'>my_var</span></code> (which, as explained before, will be named <code class='inline-code-box'><span class='inline-code'>my_var_V</span></code> in the generated code) in GDB you'll need to type <code class='inline-code-box'><span class='inline-code'>call print(my_var_V)</span></code> at the debugger prompt.</p>
-
-
-<h3>Java</h3>
-
-<p>The Java code generator is provided as a jar file, <code class='inline-code-box'><span class='inline-code'>cellc-java.jar</span></code>. To run it, just type <code class='inline-code-box-long'><span class='inline-code'>java -jar cellc-java.jar &lt;project file&gt; &lt;output directory&gt;</span></code>, assuming <code class='inline-code-box'><span class='inline-code'>cellc-java.jar</span></code> is in the current directory . The compiler will produce a <code class='inline-code-box'><span class='inline-code'>Generated.java</span></code> file containing the core logic, and a separate file for each of the public classes you'll be interacting with. Their interface is documented in pseudo-Java code in another generated file, <code class='inline-code-box'><span class='inline-code'>interfaces.txt</span></code>.</p>
-
-<p>In order to compile your code in debug mode, and have it print a complete stack trace when an error occurs, you'll have to use the <code class='inline-code-box'><span class='inline-code'>-d</span></code> option of the compiler: <code class='inline-code-box-long'><span class='inline-code'>java -jar cellc-java.jar -d project.txt</span></code>. Execution times normally increase by less than 50% in debug mode.</p>
-
-<p>If you want to inspect the content of a variable containing a Cell object when debugging the generated code, just print the output of its <code class='inline-code-box'><span class='inline-code'>toString()</span></code> method.</p>
 
 
 <h3>C#</h3>
@@ -119,15 +123,26 @@
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
               </ul>
             </li>
-            <li>Automata
+            <li>Relational Automata
               <ul class="toc">
-                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
-                <li><a href='reactive.html'>Reactive automata</a></li>
-                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
               </ul>
             </li>
-
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
             <li>Interfacing with...
               <ul class="toc">
                 <li><a href='interface-cpp.html'>C++</a></li>

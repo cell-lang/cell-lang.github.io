@@ -242,7 +242,7 @@
 </svg>
 </p>
 
-<p>In this example we need to pump water out of a mine sump. In order to detect the level of the water we have two water sensors, <code class='inline-code-box'><span class='inline-code'>L</span></code> and <code class='inline-code-box'><span class='inline-code'>H</span></code>. We want to start pumping water out of the sump we the water reaches the higher sensor, <code class='inline-code-box'><span class='inline-code'>H</span></code>, and continue until the level returns below the level of the lower sensor, <code class='inline-code-box'><span class='inline-code'>L</span></code>. We also have three gas sensors to measure carbon monoxide (<code class='inline-code-box'><span class='inline-code'>C</span></code>), methane (<code class='inline-code-box'><span class='inline-code'>M</span></code>) and airflow (<code class='inline-code-box'><span class='inline-code'>A</span></code>) levels. If any of them becomes critical the operator must be alerted. Finally, in order to prevent explosions, the pump cannot be operated when the methane level exceeds a certain critical threshold.</p>
+<p>In this example we need to pump water out of a mine sump. In order to detect the level of the water we have two sensors, <code class='inline-code-box'><span class='inline-code'>L</span></code> and <code class='inline-code-box'><span class='inline-code'>H</span></code>. We want to start pumping water out of the sump when it reaches the higher sensor, <code class='inline-code-box'><span class='inline-code'>H</span></code>, and continue until its level drops below the lower sensor, <code class='inline-code-box'><span class='inline-code'>L</span></code>. We also have three gas sensors to measure carbon monoxide (<code class='inline-code-box'><span class='inline-code'>C</span></code>), methane (<code class='inline-code-box'><span class='inline-code'>M</span></code>) and airflow (<code class='inline-code-box'><span class='inline-code'>A</span></code>) levels. If any of them becomes critical the operator must be alerted. Finally, in order to prevent explosions, the pump cannot be operated when the methane level exceeds a certain critical threshold.</p>
 
 <p>Our task is to implement the controller logic, which reads the inputs signals from the various sensors and outputs the ones that control the pump and alert the operator. We'll proceed gradually, starting with something very simple and then gradually including additional features. Here's the first version of our code:</p>
 
@@ -1070,15 +1070,26 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
               </ul>
             </li>
-            <li>Automata
+            <li>Relational Automata
               <ul class="toc">
-                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
-                <li><a href='reactive.html'>Reactive automata</a></li>
-                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
               </ul>
             </li>
-
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
             <li>Interfacing with...
               <ul class="toc">
                 <li><a href='interface-cpp.html'>C++</a></li>

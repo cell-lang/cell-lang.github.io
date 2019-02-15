@@ -33,9 +33,9 @@
         <article class="content">
 <h2>An introductory example</h2>
 
-<p>This chapter will walk you through a toy example of what is one of the most obvious uses of Cell, namely as an alternative to an embedded SQL database. It shows some basic features of relational automata, but it's not meant to be a comprehensive introduction to them. It also makes use of a number of features (foreign keys, symmetric relations and cascade deletes, plus a bit of syntactic sugar) that will be available only with the next (0.3) version of the language. So as it is the code shown here doesn't yet compile.</p>
+<p>This chapter will walk you through a toy example of what is one of the most obvious uses of Cell, namely as an alternative to an embedded SQL database. It shows some basic features of relational automata, but it's not meant to be a comprehensive introduction to them.</p>
 
-<p>This specific example was chosen because it is simple and familiar to anyone but at the same time sophisticated enough to provide a glimpse of the advantages of the functional/relational programming paradigm over OOP. But it is a server application, and Cell is not at the moment a good fit for server software. That's because server applications typically have to handle large amounts of persistent data, something that Cell is not (yet) able to do. With Cell, your entire dataset has to fit in RAM and has to be saved explicitly. It takes only a couple lines of code to load or save it, independently of its size or complexity, but there's currently no support for "incremental" saving, that is, the ability to save only the part of your dataset that has changed since the last save. There's a way (discussed below) to make sure that unsaved data is never lost, even in the event of a software crash or hardware failure (unless the latter involves a disk failure, of course), but in general these limitations make Cell a better fit for desktop, mobile or embedded applications, which usually have to deal with smaller datasets.</p>
+<p>The specific example we'll be using was chosen because it is simple and familiar to anyone but at the same time sophisticated enough to provide a glimpse of the advantages of the functional/relational programming paradigm over OOP. But it is a server application, and Cell is not at the moment a good fit for server software. That's because server applications typically have to handle large amounts of persistent data, something that Cell is not (yet) able to do. With Cell, your entire dataset has to fit in RAM and has to be saved explicitly. It takes only a couple lines of code to load or save it, independently of its size or complexity, but there's currently no support for incremental saving, that is, the ability to save only the part of your dataset that has changed since the last save. There's a way (discussed below) to make sure that unsaved data is never lost, even in the event of a software crash or hardware failure (unless the latter involves a disk failure, of course), but in general these limitations make Cell a better fit for desktop, mobile or embedded applications, which usually have to deal with smaller datasets.</p>
 
 
 <h3>Creating an online forum</h3>
@@ -113,7 +113,7 @@
 
   <span class='c'>// Foreign key integrity constraint. States that</span>
   <span class='c'>// every group administrator must also be a valid user</span>
-  admin(_, id) =&gt; user(id);
+  admin(_, id) -&gt; user(id);
 
   <span class='c'>// Membership relationship between users</span>
   <span class='c'>// and groups, and its attributes</span>
@@ -124,7 +124,7 @@
   <span class='c'>// Another foreign key integrity constraint.</span>
   <span class='c'>// States that the <span class='inline-code'>member</span> relation can only</span>
   <span class='c'>// reference valid users and chat groups</span>
-  member(u, g) =&gt; user(u), chat_group(g);
+  member(u, g) -&gt; user(u), chat_group(g);
 
   <span class='c'>// Stores friendship information between user,</span>
   <span class='c'>// with its only attribute. The relation is</span>
@@ -134,7 +134,7 @@
     since : <span class='m'>Date</span>;
 
   <span class='c'>// The <span class='inline-code'>friends</span> relation can only reference valid users</span>
-  friends(u1, u2) =&gt; user(u1), user(u2);
+  friends(u1, u2) -&gt; user(u1), user(u2);
 }
 </section>
 </figure>
@@ -275,7 +275,7 @@
 
 <figure class="highlight">
 <section>
-<pre><code>admin(_, id) =&gt; user(id);
+<pre><code>admin(_, id) -&gt; user(id);
 </section>
 </figure>
 </code></pre>
@@ -284,8 +284,8 @@
 
 <figure class="highlight">
 <section>
-<pre><code>member(u, g) =&gt; user(u), chat_group(g);
-friends(u1, u2) =&gt; user(u1), user(u2);
+<pre><code>member(u, g) -&gt; user(u), chat_group(g);
+friends(u1, u2) -&gt; user(u1), user(u2);
 </section>
 </figure>
 </code></pre>
@@ -386,31 +386,37 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
 );
 
 <span class='m'>OnlineForum</span>.<span class='m'>AddUser</span> {
-  id = <span class='k'>self</span>.id;
-  <span class='c'>// Inserting the new user id and setting all the mandatory attributes</span>
-  <span class='k'>insert</span> user(id),
-         username(id, <span class='k'>self</span>.username),
-         first_name(id, <span class='k'>self</span>.first_name),
-         last_name(id, <span class='k'>self</span>.last_name),
-         signup_date(id, <span class='k'>self</span>.signup_date);
-  <span class='c'>// Setting the <span class='inline-code'>date_of_birth</span> attribute, if available</span>
-  <span class='k'>insert</span> date_of_birth(id, <span class='k'>self</span>.date_of_birth) <span class='k'>if</span> <span class='k'>self</span>.date_of_birth?;
+  id = <span class='k'>this</span>.id;
+
+  <span class='c'>// Inserting the new user id</span>
+  <span class='k'>insert</span> user(id);
+
+  <span class='c'>// Setting all the mandatory attributes</span>
+  <span class='k'>insert</span> username(id, <span class='k'>this</span>.username);
+  <span class='k'>insert</span> first_name(id, <span class='k'>this</span>.first_name);
+  <span class='k'>insert</span> last_name(id, <span class='k'>this</span>.last_name);
+  <span class='k'>insert</span> signup_date(id, <span class='k'>this</span>.signup_date);
+
+  <span class='c'>// Setting the (optional) <span class='inline-code'>date_of_birth</span> attribute, if available</span>
+  <span class='k'>if</span> <span class='k'>this</span>.date_of_birth?:
+    <span class='k'>insert</span> date_of_birth(id, <span class='k'>this</span>.date_of_birth);
+  ;
 }
 </section>
 </figure>
 </code></pre>
 
-<p>The first declarations defines the type of the message, which is basically just a record containing all the information about a new user. The <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code> field is optional. The second declaration defines the message handler, which is pretty straightforward, just a bunch of insert statements, one of which is conditional since <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code> is optional. The only thing to note is the <code class='inline-code-box'><span class='inline-code'>self</span></code> keyword that is used to access the value of the message. There's also some syntactic sugar for the <code class='inline-code-box'><span class='inline-code'>insert</span></code> statement. The above message handler can be rewritten more tersely as follows:</p>
+<p>The first declarations defines the type of the message, which is basically just a record containing all the information about a new user. The <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code> field is optional. The second declaration defines the message handler, which is pretty straightforward, just a bunch of insert statements, one of which is conditional since <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code> is optional. The only thing to note is the <code class='inline-code-box'><span class='inline-code'>this</span></code> keyword that is used to access the value of the message. There's also some syntactic sugar for the <code class='inline-code-box'><span class='inline-code'>insert</span></code> statement. The above message handler can be rewritten more tersely as follows:</p>
 
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>OnlineForum</span>.<span class='m'>AddUser</span> {
-  <span class='k'>insert</span> user(<span class='k'>self</span>.id):
-    username      = <span class='k'>self</span>.username,
-    first_name    = <span class='k'>self</span>.first_name,
-    last_name     = <span class='k'>self</span>.last_name,
-    signup_date   = <span class='k'>self</span>.signup_date,
-    date_of_birth = <span class='k'>self</span>.date_of_birth <span class='k'>if</span> <span class='k'>self</span>.date_of_birth?;
+  <span class='k'>insert</span> user(<span class='k'>this</span>.id):
+    username      = <span class='k'>this</span>.username,
+    first_name    = <span class='k'>this</span>.first_name,
+    last_name     = <span class='k'>this</span>.last_name,
+    signup_date   = <span class='k'>this</span>.signup_date,
+    date_of_birth = <span class='k'>this</span>.date_of_birth <span class='k'>if</span> <span class='k'>this</span>.date_of_birth?;
 }
 </section>
 </figure>
@@ -421,7 +427,7 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>OnlineForum</span>.delete_user(id: <span class='m'>UserId</span>) {
-  id = <span class='k'>self</span>.id;
+  id = <span class='k'>this</span>.id;
 
   <span class='c'>// Deleting a user's data, memberships and friendships</span>
   <span class='c'>// All attributes are deleted automatically when the</span>
@@ -431,12 +437,12 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
   <span class='c'>// If the user is the administrator of one or more chat groups,</span>
   <span class='c'>// we need to choose a new administrator for them, or delete</span>
   <span class='c'>// them altogether, if there's nobody left</span>
-  <span class='k'>for</span> g &lt;- admin(?, u):
+  <span class='k'>for</span> g &lt;- admin(?, id):
     members = [u : u &lt;- member(?, g), u != id];
     <span class='k'>if</span> members != []:
       <span class='c'>// The new administrator is randomly chosen</span>
       <span class='c'>// among all members with the highest karma</span>
-      new_admin = an_elem(max_by(members, karma($, g)));
+      new_admin = any(max_by(members, karma($, g)));
       <span class='k'>update</span> admin(g, new_admin);
     <span class='k'>else</span>
       <span class='c'>// No members left, deleting the group</span>
@@ -509,58 +515,8 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
 
   <span class='m'>Value</span> readState();
   <span class='k'>void</span> setState(<span class='m'>String</span>);
+
   <span class='k'>void</span> execute(<span class='m'>String</span>);
-
-  <span class='k'>long</span> nextId();
-
-  <span class='k'>boolean</span> user(<span class='k'>long</span>);
-  <span class='k'>long</span>[] user();
-
-  <span class='k'>boolean</span> chatGroup(<span class='k'>long</span>);
-  <span class='k'>long</span>[] chatGroup();
-
-  <span class='k'>boolean</span> username(<span class='k'>long</span>, <span class='m'>String</span>);
-  <span class='m'>String</span> username(<span class='k'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='k'>long</span>[], <span class='m'>String</span>[]&gt; username();
-
-  <span class='k'>boolean</span> signupDate(<span class='k'>long</span>, <span class='m'>Date</span>);
-  <span class='m'>Date</span> signupDate(<span class='k'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='k'>long</span>[], <span class='m'>Date</span>[]&gt; signupDate();
-
-  <span class='k'>boolean</span> firstName(<span class='k'>long</span>, <span class='m'>String</span>);
-  <span class='m'>String</span> firstName(<span class='k'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='k'>long</span>[], <span class='m'>String</span>[]&gt; firstName();
-
-  <span class='k'>boolean</span> lastName(<span class='k'>long</span>, <span class='m'>String</span>);
-  <span class='m'>String</span> lastName(<span class='k'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='k'>long</span>[], <span class='m'>String</span>[]&gt; lastName();
-
-  <span class='k'>boolean</span> dateOfBirth(<span class='k'>long</span>, <span class='m'>Date</span>);
-  <span class='m'>Date</span> dateOfBirth(<span class='k'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='k'>long</span>[], <span class='m'>Date</span>[]&gt; dateOfBirth();
-
-  <span class='k'>boolean</span> name(<span class='k'>long</span>, <span class='m'>String</span>);
-  <span class='m'>String</span> name(<span class='k'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='k'>long</span>[], <span class='m'>String</span>[]&gt; name();
-
-  <span class='k'>boolean</span> admin(<span class='k'>long</span>, <span class='k'>long</span>);
-  <span class='k'>long</span> admin(<span class='k'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='k'>long</span>[], <span class='k'>long</span>[]&gt; admin();
-
-  <span class='k'>boolean</span> member(<span class='k'>long</span>, <span class='k'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='k'>long</span>[], <span class='k'>long</span>[]&gt; member();
-
-  <span class='k'>boolean</span> joinedOn(<span class='k'>long</span>, <span class='k'>long</span>, <span class='m'>Date</span>);
-  <span class='m'>Triplet</span>&lt;<span class='k'>long</span>[], <span class='k'>long</span>[], <span class='m'>Date</span>[]&gt; joinedOn();
-
-  <span class='k'>boolean</span> karma(<span class='k'>long</span>, <span class='k'>long</span>, <span class='k'>long</span>);
-  <span class='m'>Triplet</span>&lt;<span class='k'>long</span>[], <span class='k'>long</span>[], <span class='k'>long</span>[]&gt; karma();
-
-  <span class='k'>boolean</span> friends(<span class='k'>long</span>, <span class='k'>long</span>);
-  <span class='m'>Pair</span>&lt;<span class='k'>long</span>[], <span class='k'>long</span>[]&gt; friends();
-
-  <span class='k'>boolean</span> since(<span class='k'>long</span>, <span class='k'>long</span>, <span class='m'>Date</span>);
-  <span class='m'>Triplet</span>&lt;<span class='k'>long</span>[], <span class='k'>long</span>[], <span class='m'>Date</span>[]&gt; since();
 
   <span class='m'>String</span> fullName(<span class='k'>long</span>);
   <span class='k'>long</span>[] usersWhoSignedUpOn(<span class='m'>Date</span>);
@@ -568,7 +524,7 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
 </code></pre></section></figure>
 </p>
 
-<p>That's a lot to parse, so let's break it up into more digestible pieces, starting with the pair of complementary methods <code class='inline-code-box'><span class='inline-code'>readState()</span></code> and <code class='inline-code-box'><span class='inline-code'>setState()</span></code>. The former takes a snapshot of the state of an automaton, and returns it as an object of type <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code>, which is a class that can represent any Cell value. The returned states can be freely inspected and, for example, printed or stored to a file. <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> erases the current state of the automaton and sets its new state to whatever value is provided as argument (as long as that's a valid state for the automaton in question, of course). The argument is provided as a string containing the standard textual Cell representation of the new state. Any state returned by <code class='inline-code-box'><span class='inline-code'>readState()</span></code> can be used, once it has been converted to text (using the standard Java <code class='inline-code-box'><span class='inline-code'>toString()</span></code> method), as input for <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code>, which makes it very easy to save the data stored inside an automaton to a file, and then read it back later.</p>
+<p>Let's start with the pair of complementary methods <code class='inline-code-box'><span class='inline-code'>readState()</span></code> and <code class='inline-code-box'><span class='inline-code'>setState()</span></code>. The former takes a snapshot of the state of an automaton, and returns it as an object of type <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code>, which is a class that can represent any Cell value. The returned states can be freely inspected and, for example, printed or stored to a file. <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> erases the current state of the automaton and sets its new state to whatever value is provided as argument (as long as that's a valid state for the automaton in question, of course). The argument is provided as a string containing the standard textual Cell representation of the new state. Any state returned by <code class='inline-code-box'><span class='inline-code'>readState()</span></code> can be used, once it has been converted to text (using the standard Java <code class='inline-code-box'><span class='inline-code'>toString()</span></code> method), as input for <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code>, which makes it very easy to save the data stored inside an automaton to a file, and then read it back later.</p>
 
 <p>The next method, <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code>, is used to send a message to the automaton. Here too the message is provided as a string containing its standard textual representation. If an error occurs during the execution of the message handler an exception is thrown, and the state of the automaton is left unchanged, as we've already mentioned before.</p>
 
@@ -594,16 +550,127 @@ try (FileWriter writer = new FileWriter(<span class='s'>&quot;final-state.txt&qu
 
 <p>Here's an example of what a valid <a href='online-forum-state.txt'>state</a> for the <code class='inline-code-box'><span class='inline-code'>OnlineForum</span></code> automaton looks like, once it's converted into its standard textual representation.</p>
 
-<p>All the remaining methods are specific to each type of automaton, and they're all read-only. There are methods to read the value of member variables, like <code class='inline-code-box'><span class='inline-code'>long nextId()</span></code>; to invoke methods of the automaton, like <code class='inline-code-box'><span class='inline-code'>string fullName(long)</span></code> and <code class='inline-code-box'><span class='inline-code'>long usersWhoSignedUpOn(Date)</span></code>; to read the entire content of a relation, like <code class='inline-code-box'><span class='inline-code'>long[] user()</span></code>, <code class='inline-code-box'><span class='inline-code'>Pair&lt;long[], String[]&gt; lastName()</span></code> and <code class='inline-code-box-long'><span class='inline-code'>Triplet&lt;long[], long[], long[]&gt; karma()</span></code>; to check if a relation contains a given tuple (or element, for unary relations) like <code class='inline-code-box'><span class='inline-code'>boolean user(long)</span></code>, <code class='inline-code-box'><span class='inline-code'>boolean member(long, long)</span></code> and <code class='inline-code-box'><span class='inline-code'>boolean joinedOn(long, long, Date)</span></code>; and finally, in the case of binary relations, to lookup the value of an attribute of a specific entity given its id, like <code class='inline-code-box'><span class='inline-code'>String lastName(long)</span></code> or <code class='inline-code-box'><span class='inline-code'>long admin(long)</span></code>. All these methods are described in detail elsewhere in the documentation, and we won't discuss them any further here.</p>
+<p>All the remaining methods are specific to each type of automaton, and they're all read-only. In this case, there's just <code class='inline-code-box'><span class='inline-code'>string fullName(long)</span></code> and <code class='inline-code-box'><span class='inline-code'>long usersWhoSignedUpOn(Date)</span></code> which, as you would expect, are used to invoke the corresponding methods of the <code class='inline-code-box'><span class='inline-code'>OnlineForum</span></code> automaton.</p>
 
-<p>The only thing left to mention is the fact that, in order for the generated code to interface smoothly with hand-written Java code, the Cell compiler tries to map each Cell type that appears in the interface of an automaton to a standard Java type or to generate a corresponding Java class for it: in the rare cases in which that fails, the corresponding piece of data is either returned as a <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code> object, when data moves from Cell to Java, or passed in as a string containing the textual representation of a Cell value when going in the other direction. The details of the mapping too are described in another chapter.</p>
+<p>The only thing left to mention is the fact that, in order for the generated code to interface smoothly with hand-written Java code, the Cell compiler tries to map each Cell type that appears in the interface of an automaton to a standard Java type or to generate a corresponding Java class for it: in the rare cases in which that fails, the corresponding piece of data is either returned as a <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code> object, when data moves from Cell to Java, or passed in as a string containing the textual representation of a Cell value when going in the other direction. The details of the mapping are described in detail in another chapter.</p>
+
+
+<h3>Auto-generated methods and message handlers</h3>
+
+<p>The Cell compiler can also, if you want it to, automatically generate a number of accessor methods that give you direct access to the data stored inside your automata. It generates methods to read the value of member variables, or the entire content of a relation; to check if a relation contains a given tuple (or element, for unary relations); and finally, in the case of binary relations, to lookup the value of an attribute of a specific entity given its id.</p>
+
+<p>For each automaton there's also a number of message handlers (mainly those that are used to insert data into it, like <code class='inline-code-box'><span class='inline-code'>AddUser</span></code> we saw before) that are almost invariably needed, but whose structure is so predictable that the compiler can generate them automatically. That way, we can avoid polluting the codebase with boring boilerplate code, and leave the developer free to concentrate on the interesting part of the application's logic. Automatic generation of messages and message handlers will be implemented either in the next (0.4) version of the compiler, or the one after that.</p>
+
+
+<h3>Inheritance hierarchies and polymorphism</h3>
+
+<p>Before we wrap up this introduction, let's take a look at how inheritance hierarchies can be modeled in Cell. As an example, let's say we've to build a very simple payroll system for a company that pays its employees on a weekly basis. Employees are of four types: salaried employees are paid a fixed weekly salary regardless of the number of hours worked, hourly employees are paid by the hour and receive overtime pay (i.e., 1.5 times their hourly salary rate) for all hours worked in excess of 40 hours, commission employees are paid a percentage of their sales and base-salaried commission employees receive a base salary plus a percentage of their sales.</p>
+
+<p>The first step is to create typed identifiers for each of the four types of employees:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>SalariedEmployee</span>   = salaried_employee(<span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>HourlyEmployee</span>     = hourly_employee(<span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>CommissionEmployee</span> = commission_employee(<span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>BasePlusEmployee</span>   = base_plus_employee(<span class='m'>Int</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>The type definitions above are very similar to <code class='inline-code-box'><span class='inline-code'>UserId</span></code> and <code class='inline-code-box'><span class='inline-code'>GroupId</span></code> we saw previously (we just dropped the "Id"/"_id" suffixes). Now we can define the type of all employees:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Employee</span> = <span class='m'>SalariedEmployee</span>,
+                <span class='m'>HourlyEmployee</span>,
+                <span class='m'>CommissionEmployee</span>,
+                <span class='m'>BasePlusEmployee</span>;
+</section>
+</figure>
+</code></pre>
+
+<p><code class='inline-code-box'><span class='inline-code'>Employee</span></code> is just the union of all employee types, in the sense that every value that belongs to one of the four basic types of employees also belongs to <code class='inline-code-box'><span class='inline-code'>Employee</span></code> (types in Cell have set semantics). It's also useful to define the type of all employees that earn commissions:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>AnyCommissionEmployee</span> = <span class='m'>CommissionEmployee</span>, <span class='m'>BasePlusEmployee</span>;
+</section>
+</figure>
+</code></pre>
+
+<p><code class='inline-code-box'><span class='inline-code'>AnyCommissionEmployee</span></code> is obviously a subset/subtype of <code class='inline-code-box'><span class='inline-code'>Employee</span></code>, and the compiler recognizes it as such. The following <code class='inline-code-box'><span class='inline-code'>Workforce</span></code> schema stores basic information about employees:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Workforce</span> {
+  <span class='c'>// Next unused employee id</span>
+  next_employee_id : <span class='m'>Int</span> = <span class='n'>0</span>;
+
+  <span class='c'>// Shared attributes of all employees</span>
+  employee(<span class='m'>Employee</span>):
+    first_name  : <span class='m'>String</span>,
+    last_name   : <span class='m'>String</span>,
+    ssn         : <span class='m'>String</span>;
+
+  <span class='c'>// Attributes of salaried employees</span>
+  employee(<span class='m'>SalariedEmployee</span>):
+    weekly_salary : <span class='m'>Money</span>;
+
+  <span class='c'>// Attributes of hourly employees</span>
+  employee(<span class='m'>HourlyEmployee</span>):
+    hourly_wage  : <span class='m'>Money</span>,
+    hours_worked : <span class='m'>Float</span>;
+
+  <span class='c'>// Attributes of all employees that earn commissions,</span>
+  <span class='c'>// including those with base salary + commissions</span>
+  employee(<span class='m'>AnyCommissionEmployee</span>):
+    gross_sales     : <span class='m'>Money</span>,
+    commission_rate : <span class='m'>Float</span>;
+
+  <span class='c'>// Attributes of employees with base salary + commissions</span>
+  employee(<span class='m'>BasePlusEmployee</span>):
+    base_salary : <span class='m'>Money</span>;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The unary relation <code class='inline-code-box'><span class='inline-code'>employee</span></code> contains the identifiers of all employees in the system. The first set of attributes, <code class='inline-code-box'><span class='inline-code'>first_name</span></code>, <code class='inline-code-box'><span class='inline-code'>last_name</span></code> and <code class='inline-code-box'><span class='inline-code'>ssn</span></code>, are common to all types of employees, while others apply only to a specific type: <code class='inline-code-box'><span class='inline-code'>weekly_salary</span></code> is only for salaried employees, <code class='inline-code-box'><span class='inline-code'>hourly_wage</span></code> only for hourly employees, and so on. Finally there's a couple of attributes, <code class='inline-code-box'><span class='inline-code'>gross_sales</span></code> and <code class='inline-code-box'><span class='inline-code'>commission_rate</span></code>, that are shared by all types of employees that can earn commissions.</p>
+
+<p>Now we can define the polymorphic <code class='inline-code-box'><span class='inline-code'>earnings(..)</span></code> method, which is implemented differently for each type of employee:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Workforce</span> {
+  <span class='m'>Money</span> earnings(<span class='m'>SalariedEmployee</span> e) = weekly_salary(e);
+
+  <span class='m'>Money</span> earnings(<span class='m'>HourlyEmployee</span> e) {
+    hours = hours_worked(e);
+    wage = hourly_wage(e);
+    earnings = hours * wage;
+    earnings = earnings + <span class='n'>0.5</span> * (hours - <span class='n'>40.0</span>) * wage <span class='k'>if</span> hours &gt; <span class='n'>40.0</span>;
+    <span class='k'>return</span> earnings;
+  }
+
+  <span class='m'>Money</span> earnings(<span class='m'>CommissionEmployee</span> e) =
+    commission_rate(e) * gross_sales(e);
+
+  <span class='m'>Money</span> earnings(<span class='m'>BasePlusEmployee</span> e) =
+    base_salary(e) + commission_rate(e) * gross_sales(e);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>This example is discussed in more depth in another chapter.</p>
 
 
 <h3>Where to go from here</h3>
 
-<p>It's interesting at this point to implement the data structures and logic of this example in both Cell and Java, in order to see how the two paradigms (functional/relational programming and OOP) compare. You can read about it <a href='comparison.html'>here</a>.</p>
+<p>It's interesting at this point to implement the data structures and logic of the online forum example in both Cell and Java, in order to see how the two paradigms (functional/relational programming and OOP) compare. You can read about it <a href='comparison.html'>here</a>.</p>
 
-<p>The <a href='relational.html'>relational automata</a> and <a href='updates.html'>state updates</a> chapters contain the complete documentation for relational automata, but you'll have to read about <a href='data.html'>data</a> and <a href='types.html'>types</a> first. The <a href='overview.html'>overview</a> will give you some additional high-level information.</p>
+<p>The <a href='relational.html'>relational automata</a> section contains the complete documentation for relational automata, but you'll have to read about <a href='data.html'>data</a> and <a href='types.html'>types</a> first. The <a href='overview.html'>overview</a> will give you some additional high-level information.</p>
 
 <p>This chapter focused on the most important of the two types of automata, namely relational automata. For an overview of the other type, reactive automata, just head to the corresponding <a href='reactive.html'>chapter</a>. It should be readable even without any previous knowledge of the language.</p>
 
@@ -647,15 +714,26 @@ try (FileWriter writer = new FileWriter(<span class='s'>&quot;final-state.txt&qu
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
               </ul>
             </li>
-            <li>Automata
+            <li>Relational Automata
               <ul class="toc">
-                <li><a href='relational.html'>Relational automata</a></li>
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
-                <li><a href='reactive.html'>Reactive automata</a></li>
-                <li><a href='commands.html'>Using automata</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
               </ul>
             </li>
-
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
             <li>Interfacing with...
               <ul class="toc">
                 <li><a href='interface-cpp.html'>C++</a></li>

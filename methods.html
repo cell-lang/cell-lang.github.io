@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Methods</h2>
+
+<p>Methods of relational automaton are just normal functions which are given read-only access to the current state of an automaton instance. Since the states of automaton instances are not ordinary values that can be passed around as parameters (remember, automaton variables cannot be aliased) methods have to be declared inside a <code class='inline-code-box'><span class='inline-code'>using</span></code> block, as shown here:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>using</span> <span class='m'>Supply</span> {
+  [<span class='m'>SupplierId</span>] lowest_price_suppliers(<span class='m'>PartId</span> pid) {
+    prices = [s, p : s, p &lt;- unit_price(?, pid, ?)];
+    <span class='k'>return</span> [] <span class='k'>if</span> prices == [];
+    min_price = only(min_by([p : s, p &lt;- prices], untag));
+    <span class='k'>return</span> [p : p, s &lt;- prices, s == min_price];
+  }
+
+  [<span class='m'>PartId</span>, <span class='m'>SupplierId</span>] lowest_price_suppliers = [
+    p, s : p &lt;- part, s &lt;- lowest_price_suppliers(p)
+  ];
+}
+</section>
+</figure>
+</code></pre>
+
+<p>A using block can contain any number of methods, and an automaton can have any number of using blocks. Method are invoked with the same syntax used in object-oriented languages: if <code class='inline-code-box'><span class='inline-code'>a</span></code> is an automaton variable and <code class='inline-code-box'><span class='inline-code'>m</span></code> is a method, it can be invoked by writing <code class='inline-code-box'><span class='inline-code'>a.m(..)</span></code> if <code class='inline-code-box'><span class='inline-code'>m</span></code> has any arguments, or <code class='inline-code-box'><span class='inline-code'>a.m</span></code> otherwise. The same is true of all automaton variables, including nested automata. Methods of a given automaton can of course invoke each other, with no need (and no way) to explicitly specify the target, and a reference to the automaton instance is passed along implicitly, just like the <code class='inline-code-box'><span class='inline-code'>this</span></code>/<code class='inline-code-box'><span class='inline-code'>self</span></code> argument in object-oriented languages.</p>
+
+<p>Methods can freely manipulate ordinary member variables of the automaton they both the automaton they're associated with and all of its dependees, but they need to adhere to the no-aliasing rule for mutable relation variables. We've already seen which operations can be performed on mutable relation variables and which cannot, but if you're unsure whether something is permitted or not, just try to do it: the compiler will stop you anyway if you're doing something wrong.</p>
+
+
+<h3>Accessing stored and computed data in a uniform way</h3>
+
+<p>Mutable relation variables benefit from the same syntactic sugar that is available for ordinary relation values. Lookup operations of the form:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>address(sid, !!)
+unit_price(sid, pid, !!)
+</section>
+</figure>
+</code></pre>
+
+<p>can be rewritten more concisely like so:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>address(sid)
+unit_price(sid, pid)
+</section>
+</figure>
+</code></pre>
+
+<p>which makes them look like function/method calls, therefore providing a uniform syntax to access both stored attributes and computed ones. Here's an example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>People</span> {
+  person(<span class='m'>PersonId</span>):
+    first_name : <span class='m'>String</span>,
+    last_name  : <span class='m'>String</span>;
+}
+
+<span class='k'>using</span> <span class='m'>People</span> {
+  <span class='m'>String</span> full_name(<span class='m'>PersonId</span> id) = first_name(id) &amp; <span class='s'>" "</span> &amp; last_name(id);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Now <code class='inline-code-box'><span class='inline-code'>first_name</span></code>, <code class='inline-code-box'><span class='inline-code'>last_name</span></code> and <code class='inline-code-box'><span class='inline-code'>full_name</span></code> for a given <code class='inline-code-box'><span class='inline-code'>person_id</span></code> can be accessed in exactly the same way:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>first_name(person_id)
+last_name(person_id)
+full_name(person_id)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Nondeterminism</h3>
+
+<p>Function in Cell are, like in all pure functional languages, referentially transparent, which is just another way to say that they're deterministic: calling a function with the same inputs must always produce the same result. Unfortunately, that's not entirely true for methods. While methods cannot have any side effects, they're not entirely deterministic because they manipulate data structures whose elements are intrinsically unordered. Whenever you iterate through the elements of a mutable relation variable, the language does not guarantee a deterministic iteration order so if you're not careful you may end up writing nondeterministic code. Here's a couple of examples:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Measurements</span> {
+  measurement(<span class='m'>MsrtId</span>):
+    value : <span class='m'>Float</span>;
+}
+
+<span class='k'>using</span> <span class='m'>Measurements</span> {
+  <span class='m'>Float</span> avg_value {
+    count = <span class='n'>0</span>;
+    sum = <span class='n'>0.0</span>;
+    <span class='k'>for</span> id, v &lt;- measurements:
+      count = count + <span class='n'>1</span>;
+      sum = sum + v;
+    ;
+    <span class='k'>return</span> sum / count;
+  }
+
+  <span class='m'>Float</span>* ord_values {
+    values = ();
+    <span class='k'>for</span> id, v &lt;- values:
+      values = (values | v);
+    ;
+    <span class='k'>return</span> values;
+  }
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>avg_value</span></code> method iterates through all measurement values in an unspecified order: calling it on two different automaton instances can (and generally will) result in different iteration orders, even when the two instances have exactly the same logical state. Since floating point additions (unlike integer ones) are not associative and therefore sensitive to the order they're performed in, calling <code class='inline-code-box'><span class='inline-code'>avg_value</span></code> on two automaton instances with the same state can produce different results. <code class='inline-code-box'><span class='inline-code'>ord_values</span></code> shows a more blatant example of nondeterminism: all measurement values are appended to the result sequence in the order they're iterated on, so in this case we would be unlikely to get the same result from two distinct but logically identical automaton instances.</p>
+
+<p>The same problem of course arises for ordinary relation variables, but in that case the language does guarantee a deterministic iteration order, even though such an order is implementation defined and may change from one version of the language to the next. But mutable relation variables are implemented differently under the hood, and they forgo determinism in order to provide optimal performance. I'm not aware of a way to provide deterministic iteration that doesn't impact performance or memory consumption to some extent, so this problem is probably not going away completely, but future version of the compiler will provide an option to make the behavior of methods entirely deterministic that will come with performance trade-offs.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+              </ul>
+            </li>
+            <li>Relational Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
+              </ul>
+            </li>
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='benchmarks.html'>Benchmarks</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>
