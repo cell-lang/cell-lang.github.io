@@ -85,7 +85,7 @@ unit_price(sid, pid)
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>schema</span> <span class='m'>People</span> {
-  person(<span class='m'>PersonId</span>):
+  person(<span class='m'>PersonId</span>)
     first_name : <span class='m'>String</span>,
     last_name  : <span class='m'>String</span>;
 }
@@ -116,7 +116,7 @@ full_name(person_id)
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>schema</span> <span class='m'>Measurements</span> {
-  measurement(<span class='m'>MsrtId</span>):
+  measurement(<span class='m'>MsrtId</span>)
     value : <span class='m'>Float</span>;
 }
 
@@ -124,18 +124,17 @@ full_name(person_id)
   <span class='m'>Float</span> avg_value {
     count = <span class='n'>0</span>;
     sum = <span class='n'>0.0</span>;
-    <span class='k'>for</span> id, v &lt;- measurements:
+    <span class='k'>for</span> id, v &lt;- measurements {
       count = count + <span class='n'>1</span>;
       sum = sum + v;
-    ;
+    }
     <span class='k'>return</span> sum / count;
   }
 
   <span class='m'>Float</span>* ord_values {
     values = ();
-    <span class='k'>for</span> id, v &lt;- values:
+    <span class='k'>for</span> id, v &lt;- values
       values = (values | v);
-    ;
     <span class='k'>return</span> values;
   }
 }
@@ -185,6 +184,7 @@ full_name(person_id)
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -198,6 +198,7 @@ full_name(person_id)
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -217,7 +218,6 @@ full_name(person_id)
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

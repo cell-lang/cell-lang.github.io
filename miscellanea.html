@@ -122,9 +122,8 @@
 
 <span class='m'>StateM</span> run_all(<span class='m'>StateM</span> init_state, <span class='m'>Msg</span>* msgs) {
   <span class='k'>state</span> = init_state;
-  <span class='k'>for</span> m &lt;- msgs:
+  <span class='k'>for</span> m &lt;- msgs
     <span class='k'>state</span> = run(state, m);
-  ;
   <span class='k'>return</span> state;
 }
 
@@ -175,10 +174,10 @@
 }
 
 <span class='m'>PrintRecords</span>(<span class='m'>PersonData</span>* ps) {
-  <span class='k'>for</span> p &lt;- ps:
+  <span class='k'>for</span> p &lt;- ps {
     str = format_person_data(p, locale=<span class='a'>:en_us</span>);
     <span class='m'>Print</span>(str &amp; <span class='s'>"\n"</span>);
-  ;
+  }
 }
 </section>
 </figure>
@@ -227,12 +226,12 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>PrintRecords</span>(<span class='m'>PersonData</span>* ps) {
-  <span class='k'>let</span> locale = <span class='a'>:en_us</span>:
-    <span class='k'>for</span> p &lt;- ps:
+  <span class='k'>let</span> locale = <span class='a'>:en_us</span> {
+    <span class='k'>for</span> p &lt;- ps {
       str = format_person_data(p);
       <span class='m'>Print</span>(str &amp; <span class='s'>"\n"</span>);
-    ;
-  ;
+    }
+  }
 }
 </section>
 </figure>
@@ -242,13 +241,13 @@
 
 <figure class="highlight">
 <section>
-<pre><code><span class='k'>let</span> impl_arg_1 = value1, impl_arg_2 = value2:
+<pre><code><span class='k'>let</span> impl_arg_1 = value1, impl_arg_2 = value2 {
   ...
-  <span class='k'>let</span> impl_arg_3 = value3:
+  <span class='k'>let</span> impl_arg_3 = value3 {
     ...
-  ;
+  }
   ...
-;
+}
 </section>
 </figure>
 </code></pre>
@@ -268,9 +267,8 @@
 
 <span class='m'>Int</span> const_ints_sum {
   sum = <span class='n'>0</span>;
-  <span class='k'>for</span> x &lt;- const_ints:
+  <span class='k'>for</span> x &lt;- const_ints
     sum = sum + x;
-  ;
   <span class='k'>return</span> sum;
 }
 </section>
@@ -346,6 +344,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -359,6 +358,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -378,7 +378,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

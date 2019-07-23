@@ -99,7 +99,7 @@
 
   <span class='c'>// Users and their attributes</span>
   <span class='c'>// <span class='inline-code'>username</span> must be unique, and <span class='inline-code'>date_of_birth</span> is optional</span>
-  user(<span class='m'>UserId</span>):
+  user(<span class='m'>UserId</span>)
     username       : <span class='m'>String</span> [<span class='k'>unique</span>],
     signup_date    : <span class='m'>Date</span>,
     first_name     : <span class='m'>String</span>,
@@ -107,7 +107,7 @@
     date_of_birth? : <span class='m'>Date</span>;
 
   <span class='c'>// Chat groups and their attributes</span>
-  chat_group(<span class='m'>GroupId</span>):
+  chat_group(<span class='m'>GroupId</span>)
     name  : <span class='m'>String</span>,
     admin : <span class='m'>UserId</span>;
 
@@ -117,7 +117,7 @@
 
   <span class='c'>// Membership relationship between users</span>
   <span class='c'>// and groups, and its attributes</span>
-  member(<span class='m'>UserId</span>, <span class='m'>GroupId</span>):
+  member(<span class='m'>UserId</span>, <span class='m'>GroupId</span>)
     joined_on : <span class='m'>Date</span>,
     karma     : <span class='m'>Int</span>;
 
@@ -130,7 +130,7 @@
   <span class='c'>// with its only attribute. The relation is</span>
   <span class='c'>// declared symmetric, the order in which the</span>
   <span class='c'>// user identifiers are stored doesn't matter</span>
-  friends(<span class='m'>UserId</span> | <span class='m'>UserId</span>):
+  friends(<span class='m'>UserId</span> | <span class='m'>UserId</span>)
     since : <span class='m'>Date</span>;
 
   <span class='c'>// The <span class='inline-code'>friends</span> relation can only reference valid users</span>
@@ -154,7 +154,7 @@
 
 <figure class="highlight">
 <section>
-<pre><code>user(<span class='m'>UserId</span>):
+<pre><code>user(<span class='m'>UserId</span>)
   username       : <span class='m'>String</span> [<span class='k'>unique</span>],
   signup_date    : <span class='m'>Date</span>,
   first_name     : <span class='m'>String</span>,
@@ -225,7 +225,7 @@
 
 <figure class="highlight">
 <section>
-<pre><code>user(<span class='m'>UserId</span>):
+<pre><code>user(<span class='m'>UserId</span>)
   username       : <span class='m'>String</span> [<span class='k'>unique</span>],
   signup_date    : <span class='m'>Date</span>,
   first_name     : <span class='m'>String</span>,
@@ -239,7 +239,7 @@
 
 <figure class="highlight">
 <section>
-<pre><code>user(<span class='m'>UserId</span>):
+<pre><code>user(<span class='m'>UserId</span>)
   ... <span class='c'>// Same as before</span>
   phone_number*  : <span class='m'>String</span>;
 </section>
@@ -259,7 +259,7 @@
 
 <figure class="highlight">
 <section>
-<pre><code>user(<span class='m'>UserId</span>):
+<pre><code>user(<span class='m'>UserId</span>)
   ...
   phone_number+  : <span class='m'>String</span>;
 </section>
@@ -297,7 +297,7 @@ friends(u1, u2) -&gt; user(u1), user(u2);
 
 <figure class="highlight">
 <section>
-<pre><code>member(<span class='m'>UserId</span>, <span class='m'>GroupId</span>):
+<pre><code>member(<span class='m'>UserId</span>, <span class='m'>GroupId</span>)
   joined_on : <span class='m'>Date</span>,
   karma     : <span class='m'>Int</span>;
 </section>
@@ -333,7 +333,7 @@ karma(<span class='m'>UserId</span>, <span class='m'>GroupId</span>, <span class
 
 <figure class="highlight">
 <section>
-<pre><code>friends(<span class='m'>UserId</span> | <span class='m'>UserId</span>):
+<pre><code>friends(<span class='m'>UserId</span> | <span class='m'>UserId</span>)
   since : <span class='m'>Date</span>;
 </section>
 </figure>
@@ -398,9 +398,8 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
   <span class='k'>insert</span> signup_date(id, <span class='k'>this</span>.signup_date);
 
   <span class='c'>// Setting the (optional) <span class='inline-code'>date_of_birth</span> attribute, if available</span>
-  <span class='k'>if</span> <span class='k'>this</span>.date_of_birth?:
+  <span class='k'>if</span> <span class='k'>this</span>.date_of_birth?
     <span class='k'>insert</span> date_of_birth(id, <span class='k'>this</span>.date_of_birth);
-  ;
 }
 </section>
 </figure>
@@ -411,7 +410,7 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>OnlineForum</span>.<span class='m'>AddUser</span> {
-  <span class='k'>insert</span> user(<span class='k'>this</span>.id):
+  <span class='k'>insert</span> user(<span class='k'>this</span>.id)
     username      = <span class='k'>this</span>.username,
     first_name    = <span class='k'>this</span>.first_name,
     last_name     = <span class='k'>this</span>.last_name,
@@ -437,18 +436,18 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
   <span class='c'>// If the user is the administrator of one or more chat groups,</span>
   <span class='c'>// we need to choose a new administrator for them, or delete</span>
   <span class='c'>// them altogether, if there's nobody left</span>
-  <span class='k'>for</span> g &lt;- admin(?, id):
+  <span class='k'>for</span> g &lt;- admin(?, id) {
     members = [u : u &lt;- member(?, g), u != id];
-    <span class='k'>if</span> members != []:
+    <span class='k'>if</span> members != [] {
       <span class='c'>// The new administrator is randomly chosen</span>
       <span class='c'>// among all members with the highest karma</span>
       new_admin = any(max_by(members, karma($, g)));
       <span class='k'>update</span> admin(g, new_admin);
+    }
     <span class='k'>else</span>
       <span class='c'>// No members left, deleting the group</span>
       <span class='k'>delete</span> chat_group(g);
-    ;
-  ;
+  }
 }
 </section>
 </figure>
@@ -513,38 +512,41 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
 <span class='k'>class</span> <span class='m'>OnlineForum</span> {
   <span class='m'>OnlineForum</span>();
 
-  <span class='m'>Value</span> readState();
-  <span class='k'>void</span> setState(<span class='m'>String</span>);
+  <span class='b'>void</span> load(<span class='m'>Reader</span> writer);
+  <span class='b'>void</span> save(<span class='m'>Writer</span> reader);
 
-  <span class='k'>void</span> execute(<span class='m'>String</span>);
+  <span class='b'>void</span> execute(<span class='m'>String</span>);
 
-  <span class='m'>String</span> fullName(<span class='k'>long</span>);
-  <span class='k'>long</span>[] usersWhoSignedUpOn(<span class='m'>Date</span>);
+  <span class='m'>String</span> fullName(<span class='b'>long</span>);
+  <span class='b'>long</span>[] usersWhoSignedUpOn(<span class='m'>Date</span>);
 }
 </code></pre></section></figure>
 </p>
 
-<p>Let's start with the pair of complementary methods <code class='inline-code-box'><span class='inline-code'>readState()</span></code> and <code class='inline-code-box'><span class='inline-code'>setState()</span></code>. The former takes a snapshot of the state of an automaton, and returns it as an object of type <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code>, which is a class that can represent any Cell value. The returned states can be freely inspected and, for example, printed or stored to a file. <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> erases the current state of the automaton and sets its new state to whatever value is provided as argument (as long as that's a valid state for the automaton in question, of course). The argument is provided as a string containing the standard textual Cell representation of the new state. Any state returned by <code class='inline-code-box'><span class='inline-code'>readState()</span></code> can be used, once it has been converted to text (using the standard Java <code class='inline-code-box'><span class='inline-code'>toString()</span></code> method), as input for <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code>, which makes it very easy to save the data stored inside an automaton to a file, and then read it back later.</p>
+<p>Let's start with the pair of complementary methods <code class='inline-code-box'><span class='inline-code'>load(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>save(..)</span></code>. The latter save a snapshot of the state of the automaton to a <code class='inline-code-box'><span class='inline-code'>java.io.Writer</span></code> object. The state of the automaton is saved in Cell's standard textual format, so that is can be manually inspected and modified. The <code class='inline-code-box'><span class='inline-code'>load(..)</span></code> method, on the other hand, erases the current state of the automaton and loads a new state from the provided <code class='inline-code-box'><span class='inline-code'>java.io.Reader</span></code>, as long as that's a valid state for the automaton in question. The new state must be in the same text format used by the <code class='inline-code-box'><span class='inline-code'>save(..)</span></code> method. If the load operation fails, for whatever reason, the state of the automaton is left unchanged. Loading a previously saved state results in an identical copy of the original automaton, that will pick up where the original left off, and behave in the exact same way.</p>
 
 <p>The next method, <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code>, is used to send a message to the automaton. Here too the message is provided as a string containing its standard textual representation. If an error occurs during the execution of the message handler an exception is thrown, and the state of the automaton is left unchanged, as we've already mentioned before.</p>
 
 <p>Here's an example of how to use the three methods just discussed. The following Java code creates an instance of <code class='inline-code-box'><span class='inline-code'>OnlineForum</span></code>, loads an initial state for it from a file, sends a message to the automaton to delete one specific user from the dataset and saves the resulting state/dataset to another file:</p>
 
 <p><figure class="highlight"><section><pre><code><span class='c'>// Creating an instance of OnlineForum</span>
-OnlineForum onlineForum = new OnlineForum();
+<span class='m'>OnlineForum</span> onlineForum = new <span class='m'>OnlineForum</span>();
 
-<span class='c'>// Reading and setting the initial state for the automaton</span>
-Path inputFile = Paths.get(<span class='s'>&quot;initial-state.txt&quot;</span>);
-onlineForum.setState(new String(Files.readAllBytes(inputFile)));
+<span class='c'>// Loading the initial state from a file</span>
+<span class='k'>try</span> (<span class='m'>FileReader</span> reader = new <span class='m'>FileReader</span>(<span class='s'>&quot;initial-state.txt&quot;</span>)) {
+  onlineForum.load(reader);
+}
 
 <span class='c'>// Sending a message</span>
 onlineForum.execute(<span class='s'>&quot;delete_user(id: user_id(5))&quot;</span>);
 
 <span class='c'>// Writing the new state to a file</span>
-try (FileWriter writer = new FileWriter(<span class='s'>&quot;final-state.txt&quot;</span>)) {
-  onlineForum.readState().print(writer);
+<span class='k'>try</span> (<span class='m'>FileWriter</span> writer = new <span class='m'>FileWriter</span>(<span class='s'>&quot;final-state.txt&quot;</span>)) {
+  onlineForum.save(writer);
 }
 </code></pre></section></figure>
+
+
 
 </p>
 
@@ -552,14 +554,14 @@ try (FileWriter writer = new FileWriter(<span class='s'>&quot;final-state.txt&qu
 
 <p>All the remaining methods are specific to each type of automaton, and they're all read-only. In this case, there's just <code class='inline-code-box'><span class='inline-code'>string fullName(long)</span></code> and <code class='inline-code-box'><span class='inline-code'>long usersWhoSignedUpOn(Date)</span></code> which, as you would expect, are used to invoke the corresponding methods of the <code class='inline-code-box'><span class='inline-code'>OnlineForum</span></code> automaton.</p>
 
-<p>The only thing left to mention is the fact that, in order for the generated code to interface smoothly with hand-written Java code, the Cell compiler tries to map each Cell type that appears in the interface of an automaton to a standard Java type or to generate a corresponding Java class for it: in the rare cases in which that fails, the corresponding piece of data is either returned as a <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code> object, when data moves from Cell to Java, or passed in as a string containing the textual representation of a Cell value when going in the other direction. The details of the mapping are described in detail in another chapter.</p>
+<p>The only thing left to mention is the fact that, in order for the generated code to interface smoothly with hand-written Java code, the Cell compiler tries to map each Cell type that appears in the interface of an automaton to a standard Java type or to generate a corresponding Java class for it: in the rare cases in which that fails, the corresponding piece of data is either returned as a <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code> object, when data moves from Cell to Java, or passed in as a string containing the textual representation of a Cell value when going in the other direction. The details of the mapping are described in another chapter.</p>
 
 
 <h3>Auto-generated methods and message handlers</h3>
 
 <p>The Cell compiler can also, if you want it to, automatically generate a number of accessor methods that give you direct access to the data stored inside your automata. It generates methods to read the value of member variables, or the entire content of a relation; to check if a relation contains a given tuple (or element, for unary relations); and finally, in the case of binary relations, to lookup the value of an attribute of a specific entity given its id.</p>
 
-<p>For each automaton there's also a number of message handlers (mainly those that are used to insert data into it, like <code class='inline-code-box'><span class='inline-code'>AddUser</span></code> we saw before) that are almost invariably needed, but whose structure is so predictable that the compiler can generate them automatically. That way, we can avoid polluting the codebase with boring boilerplate code, and leave the developer free to concentrate on the interesting part of the application's logic. Automatic generation of messages and message handlers will be implemented either in the next (0.4) version of the compiler, or the one after that.</p>
+<p>For each automaton there's also a number of message handlers (mainly those that are used to insert data into it, like <code class='inline-code-box'><span class='inline-code'>AddUser</span></code> we saw before) that are almost invariably needed, but whose structure is so predictable that the compiler can generate them automatically. That way, we can avoid polluting the codebase with boring boilerplate code, and leave the developer free to concentrate on the interesting part of the application's logic. Automatic generation of messages and message handlers will be implemented in one of the next versions of the compiler.</p>
 
 
 <h3>Inheritance hierarchies and polymorphism</h3>
@@ -608,28 +610,28 @@ try (FileWriter writer = new FileWriter(<span class='s'>&quot;final-state.txt&qu
   next_employee_id : <span class='m'>Int</span> = <span class='n'>0</span>;
 
   <span class='c'>// Shared attributes of all employees</span>
-  employee(<span class='m'>Employee</span>):
+  employee(<span class='m'>Employee</span>)
     first_name  : <span class='m'>String</span>,
     last_name   : <span class='m'>String</span>,
     ssn         : <span class='m'>String</span>;
 
   <span class='c'>// Attributes of salaried employees</span>
-  employee(<span class='m'>SalariedEmployee</span>):
+  employee(<span class='m'>SalariedEmployee</span>)
     weekly_salary : <span class='m'>Money</span>;
 
   <span class='c'>// Attributes of hourly employees</span>
-  employee(<span class='m'>HourlyEmployee</span>):
+  employee(<span class='m'>HourlyEmployee</span>)
     hourly_wage  : <span class='m'>Money</span>,
     hours_worked : <span class='m'>Float</span>;
 
   <span class='c'>// Attributes of all employees that earn commissions,</span>
   <span class='c'>// including those with base salary + commissions</span>
-  employee(<span class='m'>AnyCommissionEmployee</span>):
+  employee(<span class='m'>AnyCommissionEmployee</span>)
     gross_sales     : <span class='m'>Money</span>,
     commission_rate : <span class='m'>Float</span>;
 
   <span class='c'>// Attributes of employees with base salary + commissions</span>
-  employee(<span class='m'>BasePlusEmployee</span>):
+  employee(<span class='m'>BasePlusEmployee</span>)
     base_salary : <span class='m'>Money</span>;
 }
 </section>
@@ -712,6 +714,7 @@ try (FileWriter writer = new FileWriter(<span class='s'>&quot;final-state.txt&qu
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -725,6 +728,7 @@ try (FileWriter writer = new FileWriter(<span class='s'>&quot;final-state.txt&qu
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -744,7 +748,6 @@ try (FileWriter writer = new FileWriter(<span class='s'>&quot;final-state.txt&qu
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

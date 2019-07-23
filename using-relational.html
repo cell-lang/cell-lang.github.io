@@ -35,7 +35,7 @@
 
 <p>We're now going to see how relational automata are created and used. While we will focus here on how to do that in Cell, as opposed to doing it from the host language in mixed-language applications, all the commands we're going to describe have close equivalents in the interface of the generated code.</p>
 
-<p>Automata of either type can only be created inside procedures and not functions. A procedure can declare any number of automaton variables, but it cannot create automata dynamically: all automaton variables are instantiated when a procedure is called, and automatically destroyed when it returns. Automaton instances are also only visible inside the procedure they're declared in and they cannot be passed to other procedures.</p>
+<p>Automata of either type can only be created inside procedures and passed as arguments to other procedures, but not functions. A procedure can declare any number of automaton variables, but it cannot create them dynamically: all automaton variables are instantiated when a procedure is called, and automatically destroyed when it returns.</p>
 
 <p>In order to see how to use relational automata, we'll write a tiny command line tool that is actually useful in practice. Our application will create a relational automaton, read an initial state for it from a file and a list of messages from another, send each message to the automaton instance in the given order, and save its final state in another file. We'll make use of the <code class='inline-code-box'><span class='inline-code'>Counter</span></code> automaton we saw in the previous chapters, but the code can be made to work with any automaton type with only trivial changes.</p>
 
@@ -45,10 +45,10 @@
   instance : <span class='m'>Counter</span>;
 
   <span class='c'>// Checking the argument list</span>
-  <span class='k'>if</span> |args| != <span class='n'>3</span>:
+  <span class='k'>if</span> |args| != <span class='n'>3</span> {
     <span class='m'>Print</span>(<span class='s'>"Invalid arguments\n"</span>);
     <span class='k'>return</span> <span class='n'>1</span>;
-  ;
+  }
   init_state_fname, msg_list_fname, final_state_fname = args;
 
   <span class='c'>// Reading and checking the initial state</span>
@@ -58,58 +58,57 @@
 
   <span class='c'>// Making sure the value is a record</span>
   <span class='c'>// Without this check the code won't compile</span>
-  <span class='k'>if</span> <span class='k'>not</span> init_state :: [<span class='m'>Symbol</span> -&gt; <span class='m'>Any</span>]:
+  <span class='k'>if</span> <span class='k'>not</span> init_state :: [<span class='m'>Symbol</span> -&gt; <span class='m'>Any</span>] {
     <span class='m'>Print</span>(<span class='s'>"Invalid initial state\n"</span>);
     <span class='k'>return</span> <span class='n'>1</span>;
-  ;
+  }
 
   <span class='c'>// Setting the initial state of the automaton</span>
   ok = <span class='k'>write</span> instance &lt;- init_state;
-  <span class='k'>if</span> <span class='k'>not</span> ok:
+  <span class='k'>if</span> <span class='k'>not</span> ok {
     <span class='m'>Print</span>(<span class='s'>"Invalid initial state\n"</span>);
     <span class='k'>return</span> <span class='n'>1</span>;
-  ;
+  }
 
   <span class='c'>// Reading and checking the message list</span>
   res = <span class='m'>ReadValueFromFile</span>(msg_list_fname);
   <span class='k'>return</span> <span class='n'>1</span> <span class='k'>if</span> res == nothing;
   msg_list = value(res);
-  <span class='k'>if</span> <span class='k'>not</span> msg_list :: <span class='m'>CounterMsg</span>*:
+  <span class='k'>if</span> <span class='k'>not</span> msg_list :: <span class='m'>CounterMsg</span>* {
     <span class='m'>Print</span>(<span class='s'>"Invalid message list\n"</span>);
     <span class='k'>return</span> <span class='n'>1</span>;
-  ;
+  }
 
   <span class='c'>// Sending all messages in the list</span>
-  <span class='k'>for</span> msg @ i &lt;- msg_list:
+  <span class='k'>for</span> msg @ i &lt;- msg_list {
     ok = instance &lt;- msg;
-    <span class='k'>if</span> <span class='k'>not</span> ok:
+    <span class='k'>if</span> <span class='k'>not</span> ok
       <span class='m'>Print</span>(<span class='s'>"Message number "</span> &amp; _print_(i) &amp; <span class='s'>" failed\n"</span>);
-    ;
-  ;
+  }
 
   <span class='c'>// Saving the final state</span>
   final_state = <span class='k'>read</span> instance;
   ok = <span class='m'>FileWrite</span>(final_state_fname, untag(_print_(final_state)));
-  <span class='k'>if</span> <span class='k'>not</span> ok:
+  <span class='k'>if</span> <span class='k'>not</span> ok {
     <span class='m'>Print</span>(<span class='s'>"Could not write to file "</span> &amp; final_state_fname &amp; <span class='s'>"\n"</span>);
     <span class='k'>return</span> <span class='n'>1</span>;
-  ;
+  }
 
   <span class='k'>return</span> <span class='n'>0</span>;
 }
 
 <span class='m'>Maybe</span>[<span class='m'>Any</span>] <span class='m'>ReadValueFromFile</span>(<span class='m'>String</span> fname) {
   res = <span class='m'>FileRead</span>(fname);
-  <span class='k'>if</span> res == nothing:
+  <span class='k'>if</span> res == nothing {
     <span class='m'>Print</span>(<span class='s'>"Cannot read file "</span> &amp; fname &amp; <span class='s'>"\n"</span>);
     <span class='k'>return</span> nothing;
-  ;
+  }
 
   res = _parse_(string(value(res)));
-  <span class='k'>if</span> failed(res):
+  <span class='k'>if</span> failed(res) {
     <span class='m'>Print</span>(<span class='s'>"File "</span> &amp; fname &amp; <span class='s'>" does not contain a valid Cell value\n"</span>);
     <span class='k'>return</span> nothing;
-  ;
+  }
 
   <span class='k'>return</span> just(result(res));
 }
@@ -119,7 +118,7 @@
 
 <p>The first line in the body of <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> is the declaration of the automaton variable <code class='inline-code-box'><span class='inline-code'>instance</span></code>, which looks like an ordinary variable declaration. Automaton variables are instantiated and initialized as soon as the procedure that hosts them is called, and their initial state is the one that is provided with the schema declaration, which in the case of <code class='inline-code-box'><span class='inline-code'>Counter</span></code> is just <code class='inline-code-box'><span class='inline-code'>(value: 0, updates: 0)</span></code>.</p>
 
-<p>The first step is to load the initial state for <code class='inline-code-box'><span class='inline-code'>counter</span></code> from the given file, check that it's a valid one using the runtime type check <code class='inline-code-box'><span class='inline-code'>init_state :: Counter</span></code> and set the state of <code class='inline-code-box'><span class='inline-code'>instance</span></code> with the command:</p>
+<p>The first step is to load the initial state for <code class='inline-code-box'><span class='inline-code'>counter</span></code> from the given file, check that it's a valid record using the runtime type check <code class='inline-code-box'><span class='inline-code'>init_state :: [Symbol -&gt; Any]</span></code> and set the state of <code class='inline-code-box'><span class='inline-code'>instance</span></code> with the command:</p>
 
 <figure class="highlight">
 <section>
@@ -128,7 +127,7 @@
 </figure>
 </code></pre>
 
-<p><code class='inline-code-box'><span class='inline-code'>ok</span></code> is a boolean variable that indicates whether the operation succeeded. Generally speaking, setting the state of an automaton instance can fail if the state that is provided is not a valid one. The typechecker tries to prevent you from using an invalid state in the first place, and that's why the <code class='inline-code-box'><span class='inline-code'>init_state :: Counter</span></code> check is actually necessary, but it doesn't verify that integrity constraints (which just means mutable relation variables' keys at the moment) are actually met, since that's rather hard to do with just a static analysis of the code, so those constraints are checked only when you actually try to set the state of an automaton instance.</p>
+<p><code class='inline-code-box'><span class='inline-code'>ok</span></code> is a boolean variable that indicates whether the operation succeeded. It will fail if the provided value (<code class='inline-code-box'><span class='inline-code'>init_state</span></code>, in this case) is not a valid state for the target automaton. That cannot be checked at compile time, for two different reasons. First of all, a schema definition includes integrity constraints (keys and foreign keys) that would be hard to check at compile time. The other reason is related to persistence, and will be discussed in detail in the next paragraph.</p>
 
 <p>The state of any automaton can be set at any time, any number of times. It's just like setting the value of a variable of an atomic type (like booleans, integers or floating point numbers) in any other language. The next step is to load the list of messages and send them in the given order to <code class='inline-code-box'><span class='inline-code'>instance</span></code> with the instruction:</p>
 
@@ -207,6 +206,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -220,6 +220,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -239,7 +240,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

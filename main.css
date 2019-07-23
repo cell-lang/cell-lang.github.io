@@ -864,6 +864,15 @@ blockquote.posterous_long_quote {
   padding: 8px;
 }
 
+.types-table .number {
+  text-align: right;
+  font-family: "Lucida Console", Monaco, monospace;
+}
+
+.types-table .number-header {
+  text-align: right;
+}
+
 .types-table tr:nth-child(even) {
   background-color: #eee;
 }
@@ -961,6 +970,7 @@ blockquote.posterous_long_quote {
   background: #e8e8f8;
   white-space: nowrap;
   /*font-size: 12;*/
+  font-family: "Lucida Console", Monaco, monospace;
 }
 
 .inline-code-box-long {
@@ -968,11 +978,13 @@ blockquote.posterous_long_quote {
   background: #e8e8f8;
   /*white-space: nowrap;*/
   /*font-size: 12;*/
+  font-family: "Lucida Console", Monaco, monospace;
 }
 
 .inline-code {
- margin-left: 3px;
- margin-right: 3px;
+  margin-left: 3px;
+  margin-right: 3px;
+  font-family: "Lucida Console", Monaco, monospace;
 }
 
 .highlight {
@@ -998,6 +1010,12 @@ blockquote.posterous_long_quote {
     /*margin: 0;*/
     line-height: 140%;
   }
+
+
+  .highlight code {
+    font-family: "Lucida Console", Monaco, monospace;
+  }
+
   /* keyword */
   .highlight .k {
     color: #55D;

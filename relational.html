@@ -185,19 +185,19 @@ usernames(*, name)
 <figure class="highlight">
 <section>
 <pre><code><span class='c'>// Iterating through all groups a given user has joined</span>
-<span class='k'>for</span> g &lt;- memberships(u, ?):
+<span class='k'>for</span> g &lt;- memberships(u, ?) {
   ...
-;
+}
 
 <span class='c'>// Iterating through the ids of all users who have joined a given group</span>
-<span class='k'>for</span> u &lt;- memberships(?, g):
+<span class='k'>for</span> u &lt;- memberships(?, g) {
   ...
-;
+}
 
 <span class='c'>// Iterating through the entire relation</span>
-<span class='k'>for</span> u, g &lt;- memberships:
+<span class='k'>for</span> u, g &lt;- memberships {
   ...
-;
+}
 </section>
 </figure>
 </code></pre>
@@ -494,6 +494,7 @@ are_friends(_, u) -&gt; user(u);
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -507,6 +508,7 @@ are_friends(_, u) -&gt; user(u);
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -526,7 +528,6 @@ are_friends(_, u) -&gt; user(u);
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

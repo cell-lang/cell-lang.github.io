@@ -66,28 +66,28 @@
   next_employee_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
 
   <span class='c'>// Shared attributes of all employees</span>
-  employee(<span class='m'>Employee</span>):
+  employee(<span class='m'>Employee</span>)
     first_name  : <span class='m'>String</span>,
     last_name   : <span class='m'>String</span>,
     ssn         : <span class='m'>String</span>;
 
   <span class='c'>// Attributes of salaried employees</span>
-  employee(<span class='m'>SalariedEmployee</span>):
+  employee(<span class='m'>SalariedEmployee</span>)
     weekly_salary : <span class='m'>Money</span>;
 
   <span class='c'>// Attributes of hourly employees</span>
-  employee(<span class='m'>HourlyEmployee</span>):
+  employee(<span class='m'>HourlyEmployee</span>)
     hourly_wage  : <span class='m'>Money</span>,
     hours_worked : <span class='m'>Float</span>;
 
   <span class='c'>// Attributes of all employees that earn commissions,</span>
   <span class='c'>// including those with base salary + commissions</span>
-  employee(<span class='m'>AnyCommissionEmployee</span>):
+  employee(<span class='m'>AnyCommissionEmployee</span>)
     gross_sales     : <span class='m'>Money</span>,
     commission_rate : <span class='m'>Float</span>;
 
   <span class='c'>// Attributes of employees with base salary + commissions</span>
-  employee(<span class='m'>BasePlusEmployee</span>):
+  employee(<span class='m'>BasePlusEmployee</span>)
     base_salary : <span class='m'>Money</span>;
 }
 </section>
@@ -103,14 +103,14 @@
   next_employee_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
 
   <span class='c'>// Salaried employees and their attributes</span>
-  employee(<span class='m'>SalariedEmployee</span>):
+  employee(<span class='m'>SalariedEmployee</span>)
     first_name    : <span class='m'>String</span>,
     last_name     : <span class='m'>String</span>,
     ssn           : <span class='m'>String</span>,
     weekly_salary : <span class='m'>Money</span>;
 
   <span class='c'>// Hourly employees and their attributes</span>
-  employee(<span class='m'>HourlyEmployee</span>):
+  employee(<span class='m'>HourlyEmployee</span>)
     first_name    : <span class='m'>String</span>,
     last_name     : <span class='m'>String</span>,
     ssn           : <span class='m'>String</span>,
@@ -118,7 +118,7 @@
     hours_worked  : <span class='m'>Float</span>;
 
   <span class='c'>// Commissions-only employees and their attributes</span>
-  employee(<span class='m'>CommissionEmployee</span>):
+  employee(<span class='m'>CommissionEmployee</span>)
     first_name      : <span class='m'>String</span>,
     last_name       : <span class='m'>String</span>,
     ssn             : <span class='m'>String</span>,
@@ -126,7 +126,7 @@
     commission_rate : <span class='m'>Float</span>;
 
   <span class='c'>// Employees with base salary + commissions and their attributes</span>
-  employee(<span class='m'>BasePlusEmployee</span>):
+  employee(<span class='m'>BasePlusEmployee</span>)
     first_name      : <span class='m'>String</span>,
     last_name       : <span class='m'>String</span>,
     ssn             : <span class='m'>String</span>,
@@ -205,6 +205,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -218,6 +219,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -237,7 +239,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

@@ -33,36 +33,28 @@
         <article class="content">
 <h2>Current status</h2>
 
-<p>We're now at version 0.3, but we're still in beta, since there has been a a lot of new development with this release.</p>
+<p>The latest version is 0.4, and it's still a beta.</p>
 
 <p>More in detail, the functional subset of the language seems now pretty solid. It has been used to write several non-trivial applications, the largest of which is the Cell compiler itself, and no major bugs have been found in almost two years now.</p>
 
-<p>Relational automata are at this point almost complete, in the sense that all major features that are a must-have for version 1.0 have now been implemented. They still need more testing though: a lot of major features have been introduced with the current release, and more under-the-hood optimization work is planned for the next one, so extensive testing will have to wait until after version 0.4.</p>
+<p>Relational automata are at this point almost complete, in the sense that all major features that are planned for version 1.0 have now been implemented, and performance is already pretty good. They still need more testing though: a lot of major features have been introduced with the current release, and more under-the-hood work is planned for the next one, so extensive testing will have to wait until after version 0.5.</p>
 
-<p>Reactive automata are at this stage still experimental. Not only they too haven't been tested anywhere enough but unlike their relational counterparts their design is still tentative and in a state of flux, and their implementation more complex. They're not expected to come out of beta until after version 1.0.</p>
+<p>Reactive automata are at this stage still experimental. Not only they haven't been tested anywhere enough but unlike their relational counterparts their design is still tentative and in a state of flux, and their implementation more complex. They're not expected to come out of beta until after version 1.0.</p>
 
 <p>The documentation on this website is another work in progress. It covers almost all the features of the language, but rational, design guidelines and examples are still incomplete at this stage. And there's no documentation for the standard library yet.</p>
-
-<p>So, again, this is a beta version, don't use it for anything important quite yet.</p>
 
 
 <h3>Road map</h3>
 
-<p>The next version of Cell, 0.4, will be dedicated exclusively to the optimization of relational automata (optimization of reactive automata and the functional subset of the language was done in 0.2), and won't introduce any new language features. It will be released in May (2019).</p>
+<p>The next version of Cell, 0.5, will finish everything that is still left to do for 1.0, like a standard representation and syntactic sugar for common types like dates and time; improvements to the interface of the generated code; and a minimal standard library with documentation. There will be also better support for debugging: right now when a message handler fails, it's hard to figure out exactly what went wrong, and this release will fix that. Finally, it will bring back the C++ and C# versions of the compiler (0.2, 0.3 and 0.4 have all been Java-only). Expect the Java code generator in October 2019 and the C# one shortly after that, while the C++ version will be released in the first half of the next year.</p>
 
-<p>Version 0.5 will finish everything that is still left to do for 1.0, like a standard representation and syntactic sugar for common types like dates and time; improvements to the interface of the generated code; automatic generation of message handlers for inserting new entities or relationships in a relational automaton; and a minimal standard library with documentation. There will be also better support for debugging: right now when a message handler fails, it's hard to figure out exactly what went wrong, and this release with fix that. Finally, it will bring back the C++ and C# versions of the compiler (0.2, 0.3 and 0.4 all have been, or will be, Java-only). Expect the Java code generator in July 2019 and the C# one shortly after that, while the C++ version will take a bit longer.</p>
+<p>Version 0.6 will be the released candidate for 1.0. It won't bring any new features, but it will focus exclusively on testing of relational automata (as explained before, the functional part of the language is already pretty solid, and reactive automata are expected to be still in beta for version 1.0). There's no release date yet.</p>
 
-<p>Version 0.6 will only bring a few minor changes to the syntax of the language, along with a tool for automatically converting the old syntax to the new one. It'll be a very minor release, and it'll be available only a few weeks after the C++ version of 0.5.</p>
+<p>Version 1.0 will be released once 0.6 has seen enough real world usage and is deemed solid enough to warrant the "1.0" label. That could potentially take a while, but the development of Cell will not stop in the meantime.</p>
 
-<p>Version 0.7 will be the released candidate for 1.0. It won't bring any new features, but it will focus exclusively on testing of relational automata (as explained before, the functional part of the language is already pretty solid, and reactive automata are expected to be still in beta for version 1.0). There's no release date yet.</p>
-
-<p>Version 1.0 will be released once 0.7 has seen enough real world usage and is deemed solid enough to warrant the "1.0" label. That could potentially take a while, but the development of Cell will not stop in the meantime.</p>
-
-<p>The first priority after 0.7 will be the implementation of at least the simplest versions of the network architecture.</p>
+<p>One of the first priorities after 0.6 will be the implementation of at least the simplest versions of the network architecture.</p>
 
 <p>There's also a long list of things to do for reactive automata. You can read about them <a href='reactive-future-work.html'>here</a>.</p>
-
-<p>For the functional subset of the language the most important priorities will be a proper implementation of array mutability, and balanced-tree implementations of sets and maps, to complement the current ones that use sorted arrays.</p>
 
 <p>After 1.0 is released, development will focus again on relational automata, and the most important new features will be Datalog-like inference rules with memoization, and more powerful update models. The current update model has clear limitations, but it has a couple of important properties: state transitions are atomic (that is, only the states before and after the transition can be observed, and all intermediate ones are just an implementation detail that is hidden from the developer) and it is amenable to a parallel implementation. The new models will preserve these properties, while adding more flexibility and modularity.</p>
 
@@ -104,6 +96,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -117,6 +110,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -136,7 +130,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

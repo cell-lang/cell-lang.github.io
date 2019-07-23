@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Cell &#x279e; Java compiler version 0.4</h2>
+
+<p>Version 0.4 of the Cell to Java code generator is now available. It's still a beta version, but it's a major milestone. In terms of features and optimization it's almost complete, in the sense that nearly everything that is planned for version 1.0 has now been implemented. The next release will finish the few minor features that are still missing (which for the most part are about improving the interface of the generated code and the usability of the compiler rather than the language itself) but apart from that all that separates this release from version 1.0 is just a lot of testing.</p>
+
+<p>The main goal of this release was optimizing the performance of relational automata. There's still a lot of work to do there, but I'm pleased to report that the results are already pretty good. You can read more about it <a href='benchmarks-relational.html'>here</a>.</p>
+
+<p>There's also a number of features and changes that were originally planned for a later version, and that's part of the reason this release has been a bit late.</p>
+
+<p>For starters, there's an initial implementation of array mutability. It's a work in progress and it comes with a lot of restrictions, but it's now at least possible, with a bit of extra effort, to efficiently code at least some algorithms that would have previously been too slow. The details are in the <a href='imperative.html'>imperative code</a> page.</p>
+
+<p>In the previous versions of the language sets and maps were implemented as sorted arrays, which meant that the only way to add or remove elements or key-value pairs was to rebuild from scratch the entire data structure. The language now combines sorted arrays and balanced trees to provide efficient, <code class='inline-code-box'><span class='inline-code'>O(log(N))</span></code> insertion and removal of elements or key-value pairs, using the following new builtin functions:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Inserts an element into a set</span>
+[<span class='u'>T</span>] _insert_([<span class='u'>T</span>] set, <span class='u'>T</span> elt);
+
+<span class='c'>// Removes an element from a set</span>
+[<span class='u'>T</span>] _remove_([<span class='u'>T</span>] set, <span class='u'>T</span> elt);
+
+<span class='c'>// Inserts a key-value pair into a map</span>
+[<span class='u'>K</span> -&gt; <span class='u'>V</span>] _put_([<span class='u'>K</span> -&gt; <span class='u'>V</span>] map, <span class='u'>K</span> <span class='k'>key</span>, <span class='u'>V</span> value);
+
+<span class='c'>// Removes a key and its associated value from a map</span>
+[<span class='u'>K</span> -&gt; <span class='u'>V</span>] _drop_([<span class='u'>K</span> -&gt; <span class='u'>V</span>] map, <span class='u'>K</span> <span class='k'>key</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>Just like with all other data structures in Cell, there's a strict separation between logical definition of a data structure and its physical implementations: there's no way to detect within the language whether a set/map is implemented as a sorted array, a balanced tree or a combination of the two: they are all indistinguishable, except for their performance characteristics.</p>
+
+<p>It's also possible now to pass an automaton instance as argument to another procedure:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Main</span>(<span class='m'>String</span>* args) {
+  my_auto : <span class='m'>MyRelAuto</span>;
+
+  ...
+
+  <span class='m'>DoSomething</span>(my_auto);
+
+  ...
+}
+
+<span class='m'>DoSomething</span>(<span class='m'>MyRelAuto</span> my_auto) {
+  ...
+
+  ok = my_auto &lt;- a_msg;
+
+  ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>There have been some major syntactic changes also. The body of loops and other composite statements has now to be enclosed in braces:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>for</span> x &lt;- xs {
+  y = f(x);
+  ys = (ys | y);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>If the body consists of a single statement, you can omit the braces entirely:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>for</span> x &lt;- xs
+  <span class='k'>if</span> p(x)
+    ys = (ys | x);
+</section>
+</figure>
+</code></pre>
+
+<p>The previous syntax was always a bit weird: it was meant as a temporary stopgap before a switch to a python-like syntax, but in the end the plan to make the syntax indentation-aware was abandoned, so now the language is back to a more conventional notation. The <code class='inline-code-box'><span class='inline-code'>elif</span></code> keyword for if statements and expressions with multiple branches has been removed as well. For example, this is how a <code class='inline-code-box'><span class='inline-code'>sign(..)</span></code> function could have been written before:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>## <span class='inline-code'>OLD SYNTAX</span></span>
+<span class='m'>Int</span> sign(<span class='m'>Int</span> n) {
+  <span class='k'>if</span> n &gt; <span class='n'>0</span>:
+    <span class='k'>return</span> <span class='n'>1</span>;
+  <span class='k'>elif</span> n &lt; <span class='n'>0</span>:
+    <span class='k'>return</span> -<span class='n'>1</span>;
+  <span class='k'>else</span>
+    <span class='k'>return</span> <span class='n'>0</span>;
+  ;
+}
+
+<span class='c'>## <span class='inline-code'>OLD SYNTAX</span></span>
+<span class='m'>Int</span> sign(<span class='m'>Int</span> n) =
+  <span class='k'>if</span>   n &gt; <span class='n'>0</span> <span class='k'>then</span>  <span class='n'>1</span>
+  <span class='k'>elif</span> n &lt; <span class='n'>0</span> <span class='k'>then</span> -<span class='n'>1</span>
+             <span class='k'>else</span>  <span class='n'>0</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>And this is how you would write it now:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> sign(<span class='m'>Int</span> n) {
+  <span class='k'>if</span> n &gt; <span class='n'>0</span>
+    <span class='k'>return</span> <span class='n'>1</span>;
+  <span class='k'>else</span> <span class='k'>if</span> n &lt; <span class='n'>0</span>
+    <span class='k'>return</span> -<span class='n'>1</span>;
+  <span class='k'>else</span>
+    <span class='k'>return</span> <span class='n'>0</span>;
+}
+
+<span class='m'>Int</span> sign(<span class='m'>Int</span> n) =
+  <span class='k'>if</span> n &gt; <span class='n'>0</span> <span class='k'>then</span>  <span class='n'>1</span> <span class='k'>else</span>
+  <span class='k'>if</span> n &lt; <span class='n'>0</span> <span class='k'>then</span> -<span class='n'>1</span> <span class='k'>else</span>
+                 <span class='n'>0</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>There's also been a subtle change in the syntax of mutable relation variables and insert statements. Here's the old syntax:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>## <span class='inline-code'>OLD SYNTAX</span></span>
+user(<span class='m'>UserId</span>):
+  name : <span class='m'>String</span>;
+
+<span class='c'>## <span class='inline-code'>OLD SYNTAX</span></span>
+<span class='k'>insert</span> user(an_id):
+  name = a_name;
+</section>
+</figure>
+</code></pre>
+
+<p>and this is the new one:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>user(<span class='m'>UserId</span>)
+  name : <span class='m'>String</span>;
+
+<span class='k'>insert</span> user(an_id)
+  name = a_name;
+</section>
+</figure>
+</code></pre>
+
+<p>If you squint a bit you'll see the column sign after the parentheses is now gone.</p>
+
+<p>The last user-visible change is the removal of nested relational automata. In their current form, they were never very useful in the first place, and some improvements to wired automata coming in 0.5 would have made them completely redundant anyway. They may be resurrected in a different form at some point in the future, once other pieces of the language have fallen into place.</p>
+
+<p>There have also been changes to the interface of the generated code of relational automata. The methods used for loading or saving the state of a relational automata:</p>
+
+<p><figure class="highlight"><section><pre><code>  <span class='m'>Value</span> readState();
+  <span class='b'>void</span> setState(<span class='m'>String</span>);
+</code></pre></section></figure>
+</p>
+
+<p>have been replaced with:</p>
+
+<p><figure class="highlight"><section><pre><code>  <span class='b'>void</span> load(<span class='m'>Reader</span> writer);
+  <span class='b'>void</span> save(<span class='m'>Writer</span> reader);
+</code></pre></section></figure>
+</p>
+
+<p>which are faster and a lot less memory hungry, and can deal with large datasets.</p>
+
+<p>This release also brings a number of bug fixes.</p>
+
+<p>As already mentioned, the next release (0.5) will implement those few features that are still missing for version 1.0. Expect it in October, or November at the latest.</p>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
+              </ul>
+            </li>
+            <li>Relational Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
+              </ul>
+            </li>
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

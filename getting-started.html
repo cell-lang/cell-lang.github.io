@@ -33,11 +33,11 @@
         <article class="content">
 <h2>Getting started</h2>
 
-<p>The latest version (0.3) of the Java code generator can be downloaded <a href='cellc-java.zip'>here</a>.</p>
+<p>The latest version (0.4) of the Java code generator can be downloaded <a href='cellc-java.zip'>here</a>.</p>
 
-<p>This release is Java-only, but version 0.1 of the <a href='cellc-cpp-linux.zip'>C++ (Linux)</a> and <a href='cellc-cs.zip'>C#</a> code generators is still available. They can be used to experiment with the functional subset of the language and reactive automata, which have changed very little from 0.1 to 0.3 (save for performance optimization) but if you're interested in relational automata those versions are now completely obsolete. New versions of the C++ and C# code generators will be released again with version 0.5.</p>
+<p>Version 0.1 of the <a href='cellc-cpp-linux.zip'>C++ (Linux)</a> and <a href='cellc-cs.zip'>C#</a> code generators are still available, but at this point they are completely obsolete. They will be updated again with the next version of the language, 0.5.</p>
 
-<p>After you unzip the file, you'll see four directories: <code class='inline-code-box'><span class='inline-code'>bin</span></code>, <code class='inline-code-box'><span class='inline-code'>stdlib</span></code>, <code class='inline-code-box'><span class='inline-code'>examples</span></code> and <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code>. The first one contains the compiler, the second one the standard library (which at the moment consists of just one file, <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code>), and the third one a few ready-to-build examples to get you started. To create your own project, just pick one of them and start making changes to it. You can find more information about them in <code class='inline-code-box'><span class='inline-code'>examples/README.txt</span></code>.</p>
+<p>After you unzip the file, you'll see four directories: <code class='inline-code-box'><span class='inline-code'>bin</span></code>, <code class='inline-code-box'><span class='inline-code'>stdlib</span></code>, <code class='inline-code-box'><span class='inline-code'>examples</span></code> and <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code>. The first one contains the compiler, the second one the standard library (which at the moment consists of just one file, <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code>), and the third one a few ready-to-build examples to get you started. To create your own project, just pick one of them and start making changes to it. You can find more information about them in <code class='inline-code-box'><span class='inline-code'>examples/README.txt</span></code>. If you want a more complex example to play with, the IMDB example described <a href='benchmarks-relational.html'>here</a> is available on <a href='https://github.com/cell-lang/example-imdb'>github</a>.</p>
 
 <p>Each of the code generators produces, when the compilation process is successful, one or more source files in the target language. These files can then be fed directly to a compiler for the corresponding language if your Cell source code includes a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure, or otherwise included in an existing project.</p>
 
@@ -121,6 +121,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -134,6 +135,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -153,7 +155,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

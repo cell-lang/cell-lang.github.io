@@ -39,26 +39,23 @@
 <section>
 <pre><code><span class='m'>Int</span> count_non_zero(<span class='m'>Int</span>* xs) {
   count = <span class='n'>0</span>;
-  <span class='k'>for</span> x &lt;- xs:
-    <span class='k'>if</span> x != <span class='n'>0</span>:
+  <span class='k'>for</span> x &lt;- xs
+    <span class='k'>if</span> x != <span class='n'>0</span>
       count = count + <span class='n'>1</span>;
-    ;
-  ;
   <span class='k'>return</span> count;
 }
 </section>
 </figure>
 </code></pre>
 
-<p>When using the procedural syntax, the body of the function is, instead of an expression, just a number of statements written between braces. Here we see four types of statements: assignments, returns, conditionals and for loops. All statements, including composite ones, are terminated by a semicolon (the two standalone semicolons above terminate the if and for statements respectively). If the body of an if statements contains a single atomic statements, you can more succinctly write it in postfix notation: the <code class='inline-code-box'><span class='inline-code'>count_non_zero(..)</span></code> function can be rewritten as follows:</p>
+<p>When using the procedural syntax, the body of the function is, instead of an expression, just a number of statements written between braces. Here we see four types of statements: assignments, returns, conditionals and for loops. The body of a composite statements is enclosed in braces, unless it consists of a single statements, in which case the braces are optional. Simple if statements can also written in postfix notation: the <code class='inline-code-box'><span class='inline-code'>count_non_zero(..)</span></code> function can be rewritten as follows:</p>
 
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>Int</span> count_non_zero(<span class='m'>Int</span>* xs) {
   count = <span class='n'>0</span>;
-  <span class='k'>for</span> x &lt;- xs:
+  <span class='k'>for</span> x &lt;- xs
     count = count + <span class='n'>1</span> <span class='k'>if</span> x != <span class='n'>0</span>;
-  ;
   <span class='k'>return</span> count;
 }
 </section>
@@ -70,9 +67,8 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>Maybe</span>[<span class='m'>Nat</span>] index_of_first_equal_pair((<span class='m'>Int</span>, <span class='m'>Int</span>)* ps) {
-  <span class='k'>for</span> x, y @ i &lt;- ps:
+  <span class='k'>for</span> x, y @ i &lt;- ps
     <span class='k'>return</span> <span class='a'>:just</span>(i) <span class='k'>if</span> x == y;
-  ;
   <span class='k'>return</span> <span class='a'>:nothing</span>;
 }
 </section>
@@ -86,10 +82,10 @@
 <pre><code><span class='u'>B</span> foldr(<span class='u'>A</span>* xs, <span class='u'>B</span> y0, (<span class='u'>A</span> <span class='u'>B</span> -&gt; <span class='u'>B</span>) f) {
   y = y0;
   len = |xs|;
-  <span class='k'>for</span> i &lt; len:
+  <span class='k'>for</span> i &lt; len {
     x = xs(len-i-<span class='n'>1</span>);
     y = f(x, y);
-  ;
+  }
   <span class='k'>return</span> y;
 }
 </section>
@@ -100,9 +96,17 @@
 
 <figure class="highlight">
 <section>
-<pre><code><span class='k'>for</span> i &lt;= count:     <span class='c'>// for (i=0 ; i &lt;= count ; i++)</span>
-<span class='k'>for</span> i = m..n:       <span class='c'>// for (i=m ; i &lt; n ; i++)</span>
-<span class='k'>for</span> i = m...n:      <span class='c'>// for (i=m ; i &lt;= n ; i++)</span>
+<pre><code><span class='k'>for</span> i &lt;= count {    <span class='c'>// for (i=0 ; i &lt;= count ; i++) {</span>
+  ...               <span class='c'>//   ...</span>
+}                   <span class='c'>// }</span>
+
+<span class='k'>for</span> i = m..n {      <span class='c'>// for (i=m ; i &lt; n ; i++) {</span>
+  ...               <span class='c'>//   ...</span>
+}                   <span class='c'>// }</span>
+
+<span class='k'>for</span> i = m...n {     <span class='c'>// for (i=m ; i &lt;= n ; i++) {</span>
+  ...               <span class='c'>//   ...</span>
+}                   <span class='c'>// }</span>
 </section>
 </figure>
 </code></pre>
@@ -113,13 +117,13 @@
 <section>
 <pre><code><span class='u'>T</span>* duplicates(<span class='u'>T</span>* s) {
   ds = ();
-  <span class='k'>for</span> x @ i &lt;- s; j = i+<span class='n'>1</span>..|s|:
+  <span class='k'>for</span> x @ i &lt;- s; j = i+<span class='n'>1</span>..|s| {
     y = s(j);
-    <span class='k'>if</span> x == y:
+    <span class='k'>if</span> x == y {
       ds = (ds | x);
       <span class='k'>break</span>;
-    ;
-  ;
+    }
+  }
   <span class='k'>return</span> ds;
 }
 </section>
@@ -132,15 +136,14 @@
 <section>
 <pre><code><span class='u'>T</span>* duplicates(<span class='u'>T</span>* s) {
   ds = ();
-  <span class='k'>for</span> x @ i &lt;- s:
-    <span class='k'>for</span> j = i+<span class='n'>1</span>..|s|:
+  <span class='k'>for</span> x @ i &lt;- s
+    <span class='k'>for</span> j = i+<span class='n'>1</span>..|s| {
       y = s(j);
-      <span class='k'>if</span> x == y:
+      <span class='k'>if</span> x == y {
         ds = (ds | x);
         <span class='k'>break</span>;
-      ;
-    ;
-  ;
+      }
+    }
   <span class='k'>return</span> ds;
 }
 </section>
@@ -157,15 +160,16 @@
   zs = ();
   i = <span class='n'>0</span>;
   j = <span class='n'>0</span>;
-  <span class='k'>while</span> i &lt; |xs| <span class='k'>or</span> j &lt; |ys|:
-    <span class='k'>if</span> i == |xs| <span class='k'>or</span> (j &lt; |ys| <span class='k'>and</span> ys(j) &lt; xs(i)):
+  <span class='k'>while</span> i &lt; |xs| <span class='k'>or</span> j &lt; |ys| {
+    <span class='k'>if</span> i == |xs| <span class='k'>or</span> (j &lt; |ys| <span class='k'>and</span> ys(j) &lt; xs(i)) {
       zs = (zs | ys(j));
       j = j + <span class='n'>1</span>;
-    <span class='k'>else</span>
+    }
+    <span class='k'>else</span> {
       zs = (zs | xs(i));
       i = i + <span class='n'>1</span>;
-    ;
-  ;
+    }
+  }
   <span class='k'>return</span> zs;
 }
 </section>
@@ -178,10 +182,10 @@
 <section>
 <pre><code><span class='u'>T</span> fixpoint(<span class='u'>T</span> x, (<span class='u'>T</span> -&gt; <span class='u'>T</span>) f) {
   last = x;
-  <span class='k'>loop</span>
+  <span class='k'>loop</span> {
     next = f(last);
     <span class='k'>return</span> next <span class='k'>if</span> next == last;
-  ;
+  }
 }
 </section>
 </figure>
@@ -192,9 +196,8 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>Nat</span> index_first(<span class='m'>Any</span> e, <span class='m'>Seq</span> s) {
-  <span class='k'>for</span> x @ i &lt;- s:
+  <span class='k'>for</span> x @ i &lt;- s
     <span class='k'>return</span> i <span class='k'>if</span> x == e;
-  ;
   <span class='k'>fail</span>;
 }
 </section>
@@ -238,9 +241,8 @@
 (<span class='m'>Int</span>*, <span class='m'>RandGen</span>) random_int_seq(<span class='m'>RandGen</span> init_gen, <span class='m'>Nat</span> length) {
   r = ();
   g = init_gen;
-  <span class='k'>for</span> i &lt; length:
+  <span class='k'>for</span> i &lt; length
     x, g = random_int(g);
-  ;
   <span class='k'>return</span> (r, g);
 }
 </section>
@@ -277,17 +279,15 @@
 <section>
 <pre><code><span class='m'>Int</span> sum(<span class='m'>Int</span>* xs) {
   s = <span class='n'>0</span>;
-  <span class='k'>for</span> x &lt;- xs:
+  <span class='k'>for</span> x &lt;- xs
     s = s + x;
-  ;
   <span class='k'>return</span> s;
 }
 
 <span class='m'>Int</span> sum(<span class='m'>Int</span>* xs) = {
   s = <span class='n'>0</span>;
-  <span class='k'>for</span> x &lt;- xs:
+  <span class='k'>for</span> x &lt;- xs
     s = s + x;
-  ;
   <span class='k'>return</span> s;
 };
 </section>
@@ -309,10 +309,10 @@
   l : <span class='m'>List</span>[<span class='u'>T</span>];
 
   l = <span class='a'>:empty_list</span>;
-  <span class='k'>for</span> i &lt; |xs|:
+  <span class='k'>for</span> i &lt; |xs| {
     x = xs(|xs|-i-<span class='n'>1</span>);
     l = <span class='a'>:list</span>(x, l);
-  ;
+  }
   <span class='k'>return</span> l;
 }
 </section>
@@ -351,14 +351,14 @@
 <section>
 <pre><code><span class='u'>T</span>* concat(<span class='u'>T</span>* s1, <span class='u'>T</span>* s2) {
   res = s1;
-  <span class='k'>for</span> x &lt;- s2:
+  <span class='k'>for</span> x &lt;- s2 {
     unused = (res | x);
     <span class='c'>// The following instruction causes the reallocation</span>
     <span class='c'>// of the underlying array at every iteration of the</span>
     <span class='c'>// loop because the previous (useless) instruction</span>
     <span class='c'>// has already allocated the next slot</span>
     res = (res | x);
-  ;
+  }
   <span class='k'>return</span> res;
 }
 </section>
@@ -371,9 +371,8 @@
 <section>
 <pre><code><span class='u'>T</span>* join(<span class='u'>T</span>** seqs) {
   res = ();
-  <span class='k'>for</span> s &lt;- seqs:
+  <span class='k'>for</span> s &lt;- seqs
     res = _cat_(res, s);
-  ;
   <span class='k'>return</span> res;
 }
 </section>
@@ -387,34 +386,38 @@
 <pre><code><span class='u'>T</span>* very_bad_join(<span class='u'>T</span>** seqs) {
   n = |seqs|;
   res = ();
-  <span class='k'>for</span> i = <span class='n'>1</span>...n:
+  <span class='k'>for</span> i = <span class='n'>1</span>...n {
     s = seqs(n-i);
     res = _cat_(s, res);
-  ;
+  }
   <span class='k'>return</span> res;
 }
 </section>
 </figure>
 </code></pre>
 
-<p>The language also includes a second pseudo-imperative operation, the sequence update, but it hasn't been fully implemented yet. Here's an example:</p>
+
+<h3>Imperative update of sequences</h3>
+
+<p>In some very specific circumstances, it's also possible to imperatively update sequences, without giving up any of the desirable properties of functional programming. Here's an example:</p>
 
 <figure class="highlight">
 <section>
 <pre><code><span class='c'>// reverse_permutation((1, 2, 4, 0, 3)) == (3, 0, 1, 4, 2)</span>
 <span class='c'>// reverse_permutation((3, 0, 1, 4, 2)) == (1, 2, 4, 0, 3)</span>
 <span class='m'>Nat</span>* reverse_permutation(<span class='m'>Nat</span>* p) {
+  rp : <span class='m'>Nat</span>*;
+
   rp = (<span class='n'>0</span> : i &lt; |p|);
-  <span class='k'>for</span> x @ i &lt;- p:
+  <span class='k'>for</span> x @ i &lt;- p
     rp(x) := i;
-  ;
   <span class='k'>return</span> rp;
 }
 </section>
 </figure>
 </code></pre>
 
-<p>A statement of the form <code class='inline-code-box'><span class='inline-code'>xs(i) := x;</span></code> is a functional sequence update: conceptually, it is completely equivalent to the following code (provided of course that there's no existing variable named <code class='inline-code-box'><span class='inline-code'>xj</span></code> or <code class='inline-code-box'><span class='inline-code'>j</span></code> in the current scope):</p>
+<p>A statement of the form <code class='inline-code-box'><span class='inline-code'>xs(i) := x;</span></code> is a sequence update: conceptually, it is completely equivalent to the following code (provided of course that there's no existing variable named <code class='inline-code-box'><span class='inline-code'>xj</span></code> or <code class='inline-code-box'><span class='inline-code'>j</span></code> in the current scope):</p>
 
 <figure class="highlight">
 <section>
@@ -424,7 +427,20 @@ xs = (<span class='k'>if</span> j == i <span class='k'>then</span> x <span class
 </figure>
 </code></pre>
 
-<p>And that's exactly how it is currently implemented. But in cases like the one above, it would be pretty easy for the compiler to figure out that at the time of the assignment <code class='inline-code-box'><span class='inline-code'>rp</span></code> is the only reference to that particular sequence, in which case the underlying object can be updated directly, in O(1), without any side effects. Of course, there are limits to what even a mildly sophisticated compiler can be expected to be able to infer from a static analysis of the code: such a uniqueness analysis is easy when a sequence is created and updated inside a single function; it can still be doable, in some simple cases, even if the sequence is juggled between different functions: in the case of <code class='inline-code-box'><span class='inline-code'>reverse_permutation(..)</span></code>, for example, it's easy to figure out that the returned object is not aliased, so the caller can still update it in place. I'll document the details once such analysis is implemented: it will probably be done in stages, starting with the simplest cases. For the time being, just don't use this feature unless you're dealing with really tiny sequences.</p>
+<p>But that's not how it is implemented. In a function like <code class='inline-code-box'><span class='inline-code'>reverse_permutation(..)</span></code> it's pretty easy for the compiler to figure out that at the time of the assignment <code class='inline-code-box'><span class='inline-code'>rp</span></code> is the only reference to that particular sequence, in which case the underlying data structures can be updated destructively, in O(1), without any side effects. The compiler accepts such an assignment only if it's sure that it is semantically equivalent to making a mutated copy of the target sequence.</p>
+
+<p>The implementation of this feature is a work in progress, and at the moment the compiler is unnecessarily restrictive. A sequence can be updated imperatively only if it's a local variable (not a function/method argument) whose type has been explicitly declared. It has to be allocated using either a sequence comprehension expression or a range comprehension one like for example the following ones:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>ys = (f(x) : x &lt;- xs);
+ys = (g(x, i) : x @ i &lt;- xs, p(x, i));
+ys = (f(i) : i &lt; n);
+</section>
+</figure>
+</code></pre>
+
+<p>Moreover, the only permitted operations are accessing its elements individually (<code class='inline-code-box'><span class='inline-code'>ys(i)</span></code>), reading its length (<code class='inline-code-box'><span class='inline-code'>|ys|</span></code>), appending elements to it (<code class='inline-code-box'><span class='inline-code'>ys = (ys | y);</span></code>) and of course updating it (<code class='inline-code-box'><span class='inline-code'>ys(i) := ...;</span></code>). Do anything else, like for example passing it as argument to another function, or using it to create another value, and from that point in the code on, you won't be able to mutate it any more.</p>
 
 
         </article>
@@ -464,6 +480,7 @@ xs = (<span class='k'>if</span> j == i <span class='k'>then</span> x <span class
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -477,6 +494,7 @@ xs = (<span class='k'>if</span> j == i <span class='k'>then</span> x <span class
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -496,7 +514,6 @@ xs = (<span class='k'>if</span> j == i <span class='k'>then</span> x <span class
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

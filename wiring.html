@@ -55,22 +55,22 @@
   next_buyer_id     : <span class='m'>Nat</span> = <span class='n'>0</span>;
   next_listing_id   : <span class='m'>Nat</span> = <span class='n'>0</span>;
 
-  author(<span class='m'>AuthorId</span>):
+  author(<span class='m'>AuthorId</span>)
     name : <span class='m'>String</span>;
 
-  book(<span class='m'>BookId</span>):
-    title : <span class='m'>String</span>,
-    isbn  : <span class='m'>String</span>,
-    by+   : <span class='m'>AuthorId</span>,
+  book(<span class='m'>BookId</span>)
+    title        : <span class='m'>String</span>,
+    isbn         : <span class='m'>String</span>,
+    by+          : <span class='m'>AuthorId</span>,
     listed_price : <span class='m'>Money</span>;
 
-  seller(<span class='m'>SellerId</span>):
+  seller(<span class='m'>SellerId</span>)
     name : <span class='m'>String</span>;
 
-  buyer(<span class='m'>BuyerId</span>):
+  buyer(<span class='m'>BuyerId</span>)
     name : <span class='m'>String</span>;
 
-  listing(<span class='m'>ListingId</span>):
+  listing(<span class='m'>ListingId</span>)
     seller_id : <span class='m'>SellerId</span>,
     book_id   : <span class='m'>BookId</span>,
     condition : <span class='m'>BookCondition</span>,
@@ -91,10 +91,10 @@
   next_author_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
   next_book_id   : <span class='m'>Nat</span> = <span class='n'>0</span>;
 
-  author(<span class='m'>AuthorId</span>):
+  author(<span class='m'>AuthorId</span>)
     name : <span class='m'>String</span>;
 
-  book(<span class='m'>BookId</span>):
+  book(<span class='m'>BookId</span>)
     title : <span class='m'>String</span>,
     isbn  : <span class='m'>String</span>,
     by+   : <span class='m'>AuthorId</span>,
@@ -105,17 +105,17 @@
   next_seller_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
   next_buyer_id  : <span class='m'>Nat</span> = <span class='n'>0</span>;
 
-  seller(<span class='m'>SellerId</span>):
+  seller(<span class='m'>SellerId</span>)
     name : <span class='m'>String</span>;
 
-  buyer(<span class='m'>BuyerId</span>):
+  buyer(<span class='m'>BuyerId</span>)
     name : <span class='m'>String</span>;
 }
 
 <span class='k'>schema</span> <span class='m'>Market</span> : <span class='m'>Publishing</span>, <span class='m'>Actors</span> {
   next_listing_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
 
-  listing(<span class='m'>ListingId</span>):
+  listing(<span class='m'>ListingId</span>)
     seller_id : <span class='m'>SellerId</span>,
     book_id   : <span class='m'>BookId</span>,
     condition : <span class='m'>BookCondition</span>,
@@ -218,35 +218,6 @@
 <p>Dependees are totally oblivious to the existence of dependants, so they cannot access their variables or methods in any way, and neither can the semantics of their methods be affected in any way by the presence of dependants: again, this is not inheritance, and there's no overriding of any sort going on here.</p>
 
 
-<h3>Nested automata</h3>
-
-<p>Relational automata can not only be wired together, but also nested inside one another. Here's an example:</p>
-
-<figure class="highlight">
-<section>
-<pre><code><span class='k'>schema</span> <span class='m'>CounterPair</span> {
-  counter_1 : <span class='m'>Counter</span>;
-  counter_2 : <span class='m'>Counter</span>;
-}
-</section>
-</figure>
-</code></pre>
-
-<p>It defines a new automaton, <code class='inline-code-box'><span class='inline-code'>CounterPair</span></code>, which contains two instances the <code class='inline-code-box'><span class='inline-code'>Counter</span></code> automaton defined earlier. When <code class='inline-code-box'><span class='inline-code'>CounterPair</span></code> is instantiated, the two nested instances of <code class='inline-code-box'><span class='inline-code'>Counter</span></code> are automatically created as well, bound to the <code class='inline-code-box'><span class='inline-code'>counter_1</span></code> and <code class='inline-code-box'><span class='inline-code'>counter_2</span></code> fields. This is a sample value for the state of <code class='inline-code-box'><span class='inline-code'>CounterPair</span></code>:</p>
-
-<figure class="highlight">
-<section>
-<pre><code>( counter_1: (value: <span class='n'>1</span>, updates: <span class='n'>1</span>),
-  counter_2: (value: <span class='n'>0</span>, updates: <span class='n'>0</span>)
-)
-</section>
-</figure>
-</code></pre>
-
-<p>As you can see, the state of nested automata simply becomes part of the state of their parent, and can be updated only as part of an update of the state of their parent. We'll say more about that when we talk about updates and message handlers in the next chapter.</p>
-<p>Just like mutable relation variables, and automaton variables in general, nested automata cannot be aliased, that is, variables like <code class='inline-code-box'><span class='inline-code'>counter_1</span></code> and <code class='inline-code-box'><span class='inline-code'>counter_2</span></code> cannot be copied and are in general subject to the same limitations that apply to mutable relation variables. The fields/member variables of nested automata, on the other hand, can be accessed (using the familiar <code class='inline-code-box'><span class='inline-code'>counter_1.value</span></code> syntax) just like the fields of their parents: with no restrictions for ordinary member variables, and with all the restrictions that apply in the case of mutable relation variables.</p>
-
-
         </article>
       </div>
 
@@ -284,6 +255,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -297,6 +269,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -316,7 +289,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

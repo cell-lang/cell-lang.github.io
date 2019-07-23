@@ -1010,6 +1010,25 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
 </figure>
 </code></pre>
 
+<p>There's also a number of builtin functions that are used to efficiently manipulate sets and maps. They all run in O(log(N)):</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Inserts an element into a set</span>
+[<span class='u'>T</span>] _insert_([<span class='u'>T</span>] set, <span class='u'>T</span> elt);
+
+<span class='c'>// Removes an element from a set</span>
+[<span class='u'>T</span>] _remove_([<span class='u'>T</span>] set, <span class='u'>T</span> elt);
+
+<span class='c'>// Inserts a key-value pair into a map</span>
+[<span class='u'>K</span> -&gt; <span class='u'>V</span>] _put_([<span class='u'>K</span> -&gt; <span class='u'>V</span>] map, <span class='u'>K</span> <span class='k'>key</span>, <span class='u'>V</span> value);
+
+<span class='c'>// Removes a key and its associated value from a map</span>
+[<span class='u'>K</span> -&gt; <span class='u'>V</span>] _drop_([<span class='u'>K</span> -&gt; <span class='u'>V</span>] map, <span class='u'>K</span> <span class='k'>key</span>);
+</section>
+</figure>
+</code></pre>
+
 
 <h3>Polymorphic functions</h3>
 
@@ -1167,6 +1186,7 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -1180,6 +1200,7 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -1199,7 +1220,6 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

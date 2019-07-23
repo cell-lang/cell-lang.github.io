@@ -46,16 +46,16 @@
   next_part_id     : <span class='m'>Nat</span> = <span class='n'>0</span>;
   next_supplier_id : <span class='m'>Nat</span> = <span class='n'>0</span>;
 
-  part(<span class='m'>PartId</span>):
+  part(<span class='m'>PartId</span>)
     code        : <span class='m'>String</span> [<span class='k'>unique</span>],
     description : <span class='m'>String</span>;
 
-  supplier(<span class='m'>SupplierId</span>):
+  supplier(<span class='m'>SupplierId</span>)
     name    : <span class='m'>String</span>,
     address : <span class='m'>String</span>,
     phone*  : <span class='m'>String</span>;
 
-  sells(<span class='m'>SupplierId</span>, <span class='m'>PartId</span>):
+  sells(<span class='m'>SupplierId</span>, <span class='m'>PartId</span>)
     unit_price   : <span class='m'>Money</span>,
     availability : <span class='m'>Nat</span>;
 
@@ -236,7 +236,7 @@ availability(s, p, _) -&gt; sells(s, p);
 
 <figure class="highlight">
 <section>
-<pre><code>entity(<span class='m'>EntityId</span>):
+<pre><code>entity(<span class='m'>EntityId</span>)
   mandatory_attribute               : <span class='m'>Type1</span>,
   optional_attribute?               : <span class='m'>Type2</span>,
   mandatory_multivalued_attribute+  : <span class='m'>Type3</span>,
@@ -271,7 +271,7 @@ optional_multivalued_attribute(id, _) -&gt; entity(id);
 
 <figure class="highlight">
 <section>
-<pre><code>entity(<span class='m'>EntityId</span>):
+<pre><code>entity(<span class='m'>EntityId</span>)
   unique_mandatory_attribute              : <span class='m'>Type1</span> [<span class='k'>unique</span>],
   unique_optional_attribute?              : <span class='m'>Type2</span> [<span class='k'>unique</span>],
   unique_mandatory_multivalued_attribute+ : <span class='m'>Type3</span> [<span class='k'>unique</span>],
@@ -284,7 +284,7 @@ optional_multivalued_attribute(id, _) -&gt; entity(id);
 
 <figure class="highlight">
 <section>
-<pre><code>relationship(<span class='m'>Entity1Id</span>, <span class='m'>Entity2Id</span>):
+<pre><code>relationship(<span class='m'>Entity1Id</span>, <span class='m'>Entity2Id</span>)
   mandatory_attribute               : <span class='m'>Type1</span>,
   optional_attribute?               : <span class='m'>Type2</span>,
   mandatory_multivalued_attribute+  : <span class='m'>Type3</span>,
@@ -355,6 +355,7 @@ optional_multivalued_attribute(id1, id2, _) -&gt; relationship(id1, id2);
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -368,6 +369,7 @@ optional_multivalued_attribute(id1, id2, _) -&gt; relationship(id1, id2);
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -387,7 +389,6 @@ optional_multivalued_attribute(id1, id2, _) -&gt; relationship(id1, id2);
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

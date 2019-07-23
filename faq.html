@@ -73,14 +73,31 @@
 
 <p>The third one is a very robust error-handling mechanism, based on transaction. If an exception is thrown during an update, or if your code violates any of the integrity constraints that are placed on your data model, the entire update is simply rolled back and discarded, and the state of your application is left untouched.</p>
 
-<p>Then there's support for reactive programming, which is still in its infancy. At the moment all the language provides is relational automata, which can be used to implement certain specific types of reactive software, but reactive programming itself is something much more general than that, and a lot more is coming in the future.</p>
+<p>Then there's support for reactive programming, which is still in its infancy. At the moment all the language provides is reactive automata, which can be used to implement certain specific types of reactive software, but reactive programming itself is something much more general than that, and a lot more is coming in the future.</p>
 
 <p>The last major part of the language will be its network model/architecture, which hasn't been implemented yet.</p>
 
 
 <h3>What is functional/relational programming?</h3>
 
-<p>The term "functional/relational programming" was coined (I believe) in a paper that came out more than a decade ago, <a href='https://www.google.com/search?q=out+of+the+tar+pit'>Out of the Tar Pit</a>. It refers to a programming paradigm that combines functional programming with some version of the relational model (in the case of Cell one that is very different from the one used in SQL databases), with the former providing the general purpose programming capabilities, and the latter the ability to encode, navigate, query and update large and complex application states or datasets.</p>
+<p>The term "functional/relational programming" was coined (I believe) in a paper that came out more than a decade ago, <a href='https://www.google.com/search?q=out+of+the+tar+pit'>Out of the Tar Pit</a>. It refers to a programming paradigm that combines functional programming with some version of the relational model (in the case of Cell one that is very different from the flavor used in SQL databases), with the former providing the general purpose programming capabilities, and the latter the ability to encode, navigate, query and update large and complex application states or datasets.</p>
+
+<p>The starting point of functional/relational programming is the observation that the primary source of complexity and unreliability in our programs is the presence of way too much mutable state. So in order to address that problem, the first step is to avoid state altogether whenever possible. That means doing all pure computation using the functional part of the language, and clearly separating pure code from code that has side effects.</p>
+
+<p>The next step is to identify the parts of an application's state that are redundant, and to get rid of them. A piece of information is redundant if it can be derived from other pieces of information that are already present in the system, or, in other words, if it can always be reconstructed after having been deleted. Once you've removed all redundant information what you're left with is the essential state: at this point, there's nothing else you can remove without permanently losing information. That leaves you with a much smaller state, which is therefore a lot easier to deal with. Then you need to design the data structures that encode the essential state so as to avoid invalid/inconsistent states as much as possible. These are not new ideas: they have been conventional wisdom in the database community for nearly half a century.</p>
+
+<p>For this latter step to be possible, you need a high-level data model, and here the relational model, in one form or another, is the only game in town. A high level data model also has the added benefit of making information easier to search, navigate and manipulate.</p>
+
+
+<h3>Why is data/state representation so important?</h3>
+
+<p>This is the kind of thing that is difficult to explain in the abstract, but which becomes obvious after you've implemented a nontrivial piece of software with a language that provides a high-level data model.</p>
+
+<p>But as an example, compare the mathematical definition of a set with its implementation in an imperative or even functional language. A set in mathematics is an extremely simple entity: it's just a collection of elements with no order and no duplicates. Operations like union, intersection, difference or cartesian product can be defined in a single very short line.</p>
+
+<p>Now compare that to an implementation in any imperative or even functional language that uses, say, <a href='https://en.wikipedia.org/wiki/Red%E2%80%93black_tree'>red-black trees</a>. Those data structures contain a lot of low-level "information" that has nothing to do with the abstract notion of set, and are subject to complex invariants that have to be carefully maintain every time they are updated. A typical implementation in an imperative language consists of around a thousand lines of code, and it's very difficult to get right.</p>
+
+<p>And while red-black trees may be an especially complex example, the data structures used to encode the state of any imperative (or, to a lesser extent, functional) program are every bit as low level and suffer from the same problems, like the presence of an overwhelming amount of low-level noise and complex, hard to maintain dependencies between their components, only on a much larger scale.</p>
 
 
 <h3>What is reactive programming?</h3>
@@ -132,7 +149,7 @@
 
 <p>In all likelihood, the relational model gets it bad rap from the fact that the only implementation of it developers are familiar with is the one found in SQL databases. That particular implementation was very lame to begin with and has not really evolved since its initial design nearly half a century ago. On top of that, it was designed specifically for databases, and it's not well-suited for general purpose programming. But all those flaws and limitations are specific to a particular implementation, not the relational model itself.</p>
 
-<p>The best way to illustrate the advantages of functional/relational programming over OOP is through a case study. Once version 0.5 is out and the basic set of features of the language is finally complete, I'll post and compare the implementations of a small but realistic application in the two paradigms (for a problem that is universally regarded as especially well-suited to OOP) and that will show how much shorter, simpler and more elegant the functional/relational implementation can be, even when such a comparison is made on OOP's home turf.</p>
+<p>The best way to illustrate the advantages of functional/relational programming over OOP is through a case study. Once version 0.5 is out and the basic set of features of the language is finally complete, we'll be comparing the implementations of a number of small but realistic applications in the two paradigms (for a problems that are universally regarded as especially well-suited to OOP) and that will show how much shorter, simpler and more elegant the functional/relational implementation can be, even when such a comparison is made on OOP's home turf.</p>
 
 
         </article>
@@ -172,6 +189,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -185,6 +203,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -204,7 +223,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

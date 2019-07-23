@@ -208,9 +208,8 @@
 <section>
 <pre><code><span class='u'>T</span>* concat(<span class='u'>T</span>* s1, <span class='u'>T</span>* s2) {
   s = s1;
-  <span class='k'>for</span> x &lt;- s2:
+  <span class='k'>for</span> x &lt;- s2
     s = (s | x);
-  ;
   <span class='k'>return</span> s;
 }
 </section>
@@ -751,9 +750,8 @@ x = _print_(x);
   l : <span class='m'>List</span>[<span class='u'>T</span>];
 
   l = <span class='a'>:empty_list</span>;
-  <span class='k'>for</span> x &lt;- xs:
+  <span class='k'>for</span> x &lt;- xs
     l = <span class='a'>:list</span>(x, l);
-  ;
   <span class='k'>return</span> l;
 }
 </section>
@@ -777,9 +775,8 @@ x = _print_(x);
 <section>
 <pre><code><span class='m'>List</span>[<span class='u'>T</span>] seq2list(<span class='u'>T</span>* xs) {
   l = <span class='a'>:empty_list</span>;
-  <span class='k'>for</span> x &lt;- xs:
+  <span class='k'>for</span> x &lt;- xs
     l = list(x, l);
-  ;
   <span class='k'>return</span> l;
 }
 </section>
@@ -827,6 +824,7 @@ x = _print_(x);
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -840,6 +838,7 @@ x = _print_(x);
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -859,7 +858,6 @@ x = _print_(x);
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

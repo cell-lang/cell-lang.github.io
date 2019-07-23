@@ -1,0 +1,189 @@
+<!-- transform", "scale(2.0)" -->
+
+<svg width="640" height="120" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <defs>
+
+  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
+   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-B" x1="1" y1="1">
+   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-C" x1="1" y1="1">
+   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <marker
+    id="left-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
+   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
+  </marker>
+
+  <marker
+    id="right-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
+    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
+  </marker>
+
+  <marker
+    id="round-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
+   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
+  </marker>
+
+ </defs>
+ <g>
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="20"
+    fill="#304040">4</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="50"
+    fill="#304040">5</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="80"
+    fill="#304040">2</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="40" y="110"
+    fill="#304040">9</text>
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="20"
+    fill="#304040">4</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="50"
+    fill="#304040">5</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="80"
+    fill="#304040">2</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="100" y="110"
+    fill="#304040">9</text>
+
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="170" y="35"
+    fill="#304040">9</text>
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="170" y="95"
+    fill="#304040">11</text>
+
+
+
+  <text
+    text-anchor="end"
+    font-family="sans-serif" font-size="18"
+    x="240" y="65"
+    fill="#304040">20</text>
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 14 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 44 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 74 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 50 104 H 80"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 14 L 142 26"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 44 L 142 32"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 74 L 142 86"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 110 104 L 142 92"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 176 30 L 212 54"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 176 88 L 212 64"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+
+ </g>
+</svg>

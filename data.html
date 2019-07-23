@@ -321,9 +321,7 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
 
 <p>Another data structure (or, rather, set of data structures) that benefits greatly from a clear distinction between logical definition and physical implementation is records. Remember that records in Cell are just a special case of maps, which in turn are just a special case of binary relations. This provides the ability to treat records as generic maps and, for example, to merge them (in a type-safe way: more on this later) or to build them up dynamically. On the other hand, though, representing records as maps at the physical level is nowhere as efficient as using ad-hoc data structures. So (starting with version 0.2) the compiler creates (subject to a number of conditions that are discussed elsewhere) specific low-level data structures for all record types that are explicitly declared in your code, which are just as efficient as structs or classes in languages like C or Java, and transparently switches between the optimized and generic representations whenever needed.</p>
 
-<p>Similar considerations apply to all other collection types as well. Sets are currently implemented as sorted arrays of their elements, which is reasonably efficient when building immutable sets in just one go, but does not allow (functional) insertion or removal of elements (removing or adding an element requires rebuilding the entire set). This is of course only temporary, and the final implementation will make use of either sorted arrays or balanced trees (or a combination of them), depending on the circumstances.</p>
-
-<p>Just like sets, maps and binary or ternary relations are currently implemented as sorted arrays of their elements. They support fast search based on any combination of arguments, but have to be built at once, since adding or removing an entry currently involves creating an entirely different collection. Maps will soon provide a balanced tree implementation as well though, with O(log(n)) insertion and deletion.</p>
+<p>Similar considerations apply to all other collection types as well. Sets and maps can be implemented as sorted arrays, balanced binary trees or a combination of the two. Sorted arrays are used when creating a set or map in just one go, but when you try to insert or remove an element or a key/value pair in an existing set or map, an operation that cannot be supported efficiently with arrays, the language switches to a hybrid representation that combines arrays and binary trees, so that such operations can be performed efficiently in O(log(N)). </p>
 
 <p>As we'll see in another chapter, relational automata can contain "mutable" relation variables. Those variables contain, conceptually speaking, ordinary relation values, but they are restricted in the way they can be used, so that they can be updated in place without compromising the functional nature of the language. In that case, the compiler uses a completely different implementation approach, in order to support both efficient insertion of new tuples and deletion of existing ones.</p>
 
@@ -392,6 +390,7 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -405,6 +404,7 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -424,7 +424,6 @@ person(name: <span class='s'>"John"</span>, age: <span class='n'>25</span>)
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

@@ -96,7 +96,7 @@
 
 <p>The output languages that are currently supported are C++, Java and C#. In the longer term, other interesting targets are C, JavaScript and maybe Swift, if there's demand for them. All those implementations will march along at different speeds, so don't expect them to ever be perfectly aligned in terms of functionalities or performance.</p>
 
-<p>The reason Cell was designed to be a domain-specific language, and its compiler to be a code generator, should be  obvious. Choosing the main language for your application has usually more to do with the tools, libraries and support that are available for it than it has with the language itself, and one generally has to be, by necessity, very conservative there. But a domain-specific language that integrates with your primary language, instead of replacing it, stands a much better chance of actually being useful, as it can be adopted gradually, and only when, and to the extent that, it provides a clear advantage. It's just another tool in your toolbox. You can start by identifying a small part of your application that could benefit from being written in Cell: it could be a viable alternative, for example, to an embedded SQL database for small amounts of persistent data, providing a better data model, full programmability, a better interface with the host language and, once the implementation has matured, probably better performance (possibly much better performance). Or it could be used to implement a reactive subsystem of your application, as an alternative to a reactive library, or to the tedious (and error-prone) hand-coded propagation of changes. These are just examples. Cell is nothing if not different: its strengths and weaknesses don't have a lot of overlap with those of more conventional languages, and object-oriented ones in particular, and there's no shortage of areas where it can complement them effectively.</p>
+<p>The reason Cell was designed to be a domain-specific language, and its compiler to be a code generator, should be  obvious. Choosing the main language for your application has usually more to do with the tools, libraries and support that are available for it than it has with the language itself, and one generally has to be, by necessity, very conservative there. But a domain-specific language that integrates with your primary language, instead of replacing it, stands a much better chance of actually being useful, as it can be adopted gradually, and only when, and to the extent that, it provides a clear advantage. It's just another tool in your toolbox. You can start by identifying a small part of your application that could benefit from being written in Cell: it could be a viable alternative, for example, to an in-memory embedded SQL database, providing a better data model, full programmability, a better interface with the host language and the performance of a compiled, statically typed language. Or it could be used to implement a reactive subsystem of your application, as an alternative to a reactive library, or to the tedious (and error-prone) hand-coded propagation of changes. These are just examples. Cell is nothing if not different: its strengths and weaknesses don't have a lot of overlap with those of more conventional languages, and object-oriented ones in particular, and there's no shortage of areas where it can complement them effectively.</p>
 
 
         </article>
@@ -136,6 +136,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -149,6 +150,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -168,7 +170,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

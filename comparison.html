@@ -37,9 +37,7 @@
 
 <p>We're now going to re-implement the Cell code we saw in the previous chapter in Java, in order to get a better sense of the differences between the two programming paradigms, OOP and the functional/relational approach used in Cell. Were're not trying here to replicate more "advanced" features of Cell, like orthogonal persistence, transactions, or the ability to record and replay the execution of the application. We just want to show how they compare in terms of the usual metrics that we value as software engineers, things like simplicity, reliability, maintainability, overall development effort and so on.</p>
 
-<p>On the Java side, in order to avoid boring boilerplate code that would make the comparison less clear, we'll be only partially following one of the fundamental tenets of OOP, encapsulation. All member variables will be public, but they are intended to be read-only outside the class they belong to. Any change to the state of any object will only be carried out by methods of its class. This is similar to what happens in Cell with relational automata, whose state is visible in read-only mode to the outside world, but can be mutated only by the message handlers of the same automaton, although there are several major differences here, one of them being the fact that in Cell that's actually enforced by the language, while in Java it is left to the programmer's self-discipline.</p>
-
-<p>In the Java version we will also omit all constructors and a number of very simple methods, since their implementation will be obvious.</p>
+<p>On the Java side, in order to avoid boring boilerplate code that would make the comparison less clear, we'll be only partially following one of the fundamental tenets of OOP, encapsulation. All member variables will be public, but they are intended to be read-only outside the class they belong to. Any change to the state of any object will only be carried out by methods of its class. We will also omit constructors and some very simple methods, since their implementation will be obvious.</p>
 
 
 <h3>Data structures</h3>
@@ -54,22 +52,22 @@
 <span class='k'>schema</span> <span class='m'>OnlineForum</span> {
   next_id : <span class='m'>Int</span> = <span class='n'>0</span>;
 
-  user(<span class='m'>UserId</span>):
+  user(<span class='m'>UserId</span>)
     username       : <span class='m'>String</span> [<span class='k'>unique</span>],
     signup_date    : <span class='m'>Date</span>,
     first_name     : <span class='m'>String</span>,
     last_name      : <span class='m'>String</span>,
     date_of_birth? : <span class='m'>Date</span>;
 
-  chat_group(<span class='m'>GroupId</span>):
+  chat_group(<span class='m'>GroupId</span>)
     name  : <span class='m'>String</span>,
     admin : <span class='m'>UserId</span>;
 
-  member(<span class='m'>UserId</span>, <span class='m'>GroupId</span>):
+  member(<span class='m'>UserId</span>, <span class='m'>GroupId</span>)
     joined_on : <span class='m'>Date</span>,
     karma     : <span class='m'>Int</span>;
 
-  friends(<span class='m'>UserId</span> | <span class='m'>UserId</span>):
+  friends(<span class='m'>UserId</span> | <span class='m'>UserId</span>)
     since : <span class='m'>Date</span>;
 
   admin(_, id) -&gt; user(id);
@@ -140,13 +138,13 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>OnlineForum</span>.join_group(user: <span class='m'>UserId</span>, group: <span class='m'>GroupId</span>, date: <span class='m'>Date</span>) {
-  <span class='k'>insert</span> member(<span class='k'>this</span>.user, <span class='k'>this</span>.group):
+  <span class='k'>insert</span> member(<span class='k'>this</span>.user, <span class='k'>this</span>.group)
     joined_on = <span class='k'>this</span>.date,
     karma     = <span class='n'>0</span>;
 }
 
 <span class='m'>OnlineForum</span>.add_friendship(user1: <span class='m'>UserId</span>, user2: <span class='m'>UserId</span>, since: <span class='m'>Date</span>) {
-  <span class='k'>insert</span> friends(<span class='k'>this</span>.user1, <span class='k'>this</span>.user2):
+  <span class='k'>insert</span> friends(<span class='k'>this</span>.user1, <span class='k'>this</span>.user2)
     since = <span class='k'>this</span>.since;
 }
 </section>
@@ -214,9 +212,8 @@
 <pre><code><span class='m'>OnlineForum</span>.delete_user(id: <span class='m'>UserId</span>) {
   id = <span class='k'>this</span>.id;
   <span class='k'>delete</span> user(id), friends(id, *);
-  <span class='k'>for</span> g &lt;- member(id, ?):
+  <span class='k'>for</span> g &lt;- member(id, ?)
     leave_group(id, g);
-  ;
 }
 
 <span class='m'>OnlineForum</span>.delete_group(id: <span class='m'>GroupId</span>) {
@@ -231,12 +228,12 @@
   leave_group(<span class='m'>UserId</span> user, <span class='m'>GroupId</span> group) {
     <span class='k'>delete</span> member(user, group);
     members = [u : u &lt;- member(?, group), u != user];
-    <span class='k'>if</span> members != []:
+    <span class='k'>if</span> members != [] {
       new_admin = any(max_by(members, karma($, group)));
       <span class='k'>update</span> admin(group, new_admin);
+    }
     <span class='k'>else</span>
       <span class='k'>delete</span> chat_group(group);
-    ;
   }
 }
 </section>
@@ -427,6 +424,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -440,6 +438,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -459,7 +458,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

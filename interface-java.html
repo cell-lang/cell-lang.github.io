@@ -92,7 +92,7 @@
 <span class='k'>type</span> <span class='m'>List</span>[<span class='u'>T</span>] = empty_list, list(<span class='u'>T</span>, <span class='m'>List</span>[<span class='u'>T</span>]);
 
 <span class='k'>schema</span> <span class='m'>DrawingBoard</span> {
-  ref_point(<span class='m'>Point</span>):
+  ref_point(<span class='m'>Point</span>)
     shapes : <span class='m'>List</span>[<span class='m'>Shape</span>];
 }
 </section>
@@ -271,8 +271,9 @@
 <span class='k'>class</span> <span class='m'>Counter</span> {
   Counter();
 
-  <span class='m'>Value</span> readState();
-  <span class='b'>void</span> setState(<span class='m'>String</span> newState);
+  <span class='b'>void</span> load(<span class='m'>Reader</span> writer);
+  <span class='b'>void</span> save(<span class='m'>Writer</span> reader);
+
   <span class='b'>void</span> execute(<span class='m'>String</span> message);
 
   <span class='b'>long</span> value();
@@ -302,20 +303,20 @@ class Reset_Long implements CounterMsg {
   long inner;
 } --></p>
 
-<p>As you can see, the generated Java class has the same name of the Cell automaton it derives from, and it belongs to the <code class='inline-code-box'><span class='inline-code'>net.cell_lang</span></code> package. The first three methods, <code class='inline-code-box'><span class='inline-code'>readState()</span></code>, <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code>, are the same for all relational automata. All other methods are just accessors that are specific to a particular automaton, and can be used to read pieces of its state, or to invoke its methods.</p>
+<p>As you can see, the generated Java class has the same name of the Cell automaton it derives from, and it belongs to the <code class='inline-code-box'><span class='inline-code'>net.cell_lang</span></code> package. The first three methods, <code class='inline-code-box'><span class='inline-code'>load(..)</span></code>, <code class='inline-code-box'><span class='inline-code'>save(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code>, are the same for all relational automata. All other methods are just accessors that are specific to a particular automaton, and can be used to read pieces of its state, or to invoke its methods.</p>
 
-<p>The <code class='inline-code-box'><span class='inline-code'>readState()</span></code> method is the equivalent of the <code class='inline-code-box'><span class='inline-code'>read</span></code> instruction in Cell: it takes a snapshot of the state of the automaton and returns it as a <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code> object. Saving the state of an automaton to a file in text form can be done with the instruction <code class='inline-code-box'><span class='inline-code'>counter.readState().print(writer);</span></code>, where <code class='inline-code-box'><span class='inline-code'>writer</span></code> is a valid instance of <code class='inline-code-box'><span class='inline-code'>java.io.Writer</span></code>.</p>
+<p>The <code class='inline-code-box'><span class='inline-code'>save(..)</span></code> method is the equivalent of the <code class='inline-code-box'><span class='inline-code'>read</span></code> instruction in Cell, in that it takes a snapshot of the state of the automaton, which is written to the provided <code class='inline-code-box'><span class='inline-code'>java.io.Writer</span></code> object. The state is saved in the standard text format used for all Cell values.</p>
 
-<p><code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> is used to set the state of an automaton instance, and is the equivalent of the <code class='inline-code-box'><span class='inline-code'>write</span></code> instruction in Cell. It can be used at any time in the life of the automaton instance, any number of times. The new state has to be provided in text form. Here's an example:</p>
+<p><code class='inline-code-box'><span class='inline-code'>load(..)</span></code> is used to set the state of an automaton instance, which is read from a <code class='inline-code-box'><span class='inline-code'>java.io.Reader</span></code> object, and is the equivalent of the <code class='inline-code-box'><span class='inline-code'>write</span></code> instruction in Cell. It can be used at any time in the life of the automaton instance, any number of times. The new state has to be provided in the standard text format. Here's an example:</p>
 
 <p><figure class="highlight">
 <section>
-<pre><code>counter.setState(<span class='s'>"(value: -10, updates: 0)"</span>);</code></pre>
+<pre><code>counter.load(<span class='k'>new</span> <span class='m'>StringReader</span>(<span class='s'>"(value: -10, updates: 0)"</span>));</code></pre>
 </section>
 </figure>
 </p>
 
-<p>If the provided state is not a valid one, <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> will throw an exception. In that case, the automaton instance will just retain the state it had before, and will still be perfectly functional.</p>
+<p>If the provided state is not a valid one, <code class='inline-code-box'><span class='inline-code'>load(..)</span></code> will throw an exception. In that case, the automaton instance will just retain the state it had before, and will still be perfectly functional.</p>
 
 <p><code class='inline-code-box'><span class='inline-code'>execute(..)</span></code> is used to send the automaton a message, which has to be passed in text form. A few examples:</p>
 
@@ -329,11 +330,11 @@ counter.execute(<span class='s'>"reset(-1)"</span>);
 </figure>
 </code></pre>
 
-<p>Errors handling works in the same way as with <code class='inline-code-box'><span class='inline-code'>setState()</span></code>. If an error occurs an exception will be thrown, but the automaton will remain fully operational, and its state will be left untouched.</p>
+<p>Errors handling works in the same way as with <code class='inline-code-box'><span class='inline-code'>load(..)</span></code>. If an error occurs an exception will be thrown, but the automaton will remain fully operational, and its state will be left untouched.</p>
 
 <p>The two methods <code class='inline-code-box'><span class='inline-code'>value()</span></code> and <code class='inline-code-box'><span class='inline-code'>updates()</span></code> are <code class='inline-code-box'><span class='inline-code'>Counter</span></code>-specific accessors that return the values of the <code class='inline-code-box'><span class='inline-code'>value</span></code> and <code class='inline-code-box'><span class='inline-code'>updates</span></code> member variables respectively. Note that the types of such variables is just <code class='inline-code-box'><span class='inline-code'>Int</span></code>, which can be mapped directly to <code class='inline-code-box'><span class='inline-code'>long</span></code> in Java, with no need to use <code class='inline-code-box'><span class='inline-code'>net.cell_lang.Value</span></code>.</p>
 
-<p>If you don't want those automatically generated methods, just use the <code class='inline-code-box'><span class='inline-code'>-nag</span></code> flag when running the Cell compiler.</p>
+<p>Accessors for member and mutable relation variables are not generated automatically: if you want them just use the <code class='inline-code-box'><span class='inline-code'>-g</span></code> flag when running the Cell compiler.</p>
 
 <p>Let's now take a look at a more complex automaton, <code class='inline-code-box'><span class='inline-code'>Supply</span></code>. Here's the declaration of the generated Java class:</p>
 
@@ -342,9 +343,10 @@ counter.execute(<span class='s'>"reset(-1)"</span>);
 <span class='k'>class</span> <span class='m'>Supply</span> {
   Supply();
 
-  <span class='m'>Value</span> readState();
-  <span class='k'>void</span> setState(<span class='b'>String</span>);
-  <span class='k'>void</span> execute(<span class='b'>String</span>);
+  <span class='b'>void</span> load(<span class='m'>Reader</span> writer);
+  <span class='b'>void</span> save(<span class='m'>Writer</span> reader);
+
+  <span class='b'>void</span> execute(<span class='m'>String</span> message);
 
   <span class='c'>// User-defined methods</span>
   <span class='m'>Value</span> lowestPriceSuppliers();
@@ -396,9 +398,9 @@ counter.execute(<span class='s'>"reset(-1)"</span>);
 </code></pre></section></figure>
 </p>
 
-<p>The first three methods of the <code class='inline-code-box'><span class='inline-code'>Supply</span></code> class, <code class='inline-code-box'><span class='inline-code'>readState()</span></code>, <code class='inline-code-box'><span class='inline-code'>setState(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code>, are the same as before. The next two (both named <code class='inline-code-box'><span class='inline-code'>lowestPriceSuppliers(..)</span></code>) are just the compiled Java version of the corresponding Cell methods of the <code class='inline-code-box'><span class='inline-code'>Supply</span></code> automaton.</p>
+<p>The first three methods, <code class='inline-code-box'><span class='inline-code'>load(..)</span></code>, <code class='inline-code-box'><span class='inline-code'>save(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code>, are the same as before. The next two (both named <code class='inline-code-box'><span class='inline-code'>lowestPriceSuppliers(..)</span></code>) are just the compiled Java version of the corresponding Cell methods of the <code class='inline-code-box'><span class='inline-code'>Supply</span></code> automaton.</p>
 
-<p>Everything else is just automatically generated accessors for the data stored by the automaton. Again, if don't want them just use the <code class='inline-code-box'><span class='inline-code'>-nag</span></code> option when compiling.</p>
+<p>Everything else is just automatically generated accessors for the data stored by the automaton. Again, they are generated only if you use the <code class='inline-code-box'><span class='inline-code'>-g</span></code> flag when compiling.</p>
 
 <p>The two methods <code class='inline-code-box'><span class='inline-code'>nextPartId()</span></code> and <code class='inline-code-box'><span class='inline-code'>nextSupplierId()</span></code> are just accessors for the corresponding member variables, just like <code class='inline-code-box'><span class='inline-code'>value()</span></code> and <code class='inline-code-box'><span class='inline-code'>updates()</span></code> in <code class='inline-code-box'><span class='inline-code'>Counter</span></code>.</p>
 
@@ -655,6 +657,7 @@ waterSensor.setElapsedMillisecs(<span class='n'>100</span>);
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -668,6 +671,7 @@ waterSensor.setElapsedMillisecs(<span class='n'>100</span>);
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -687,7 +691,6 @@ waterSensor.setElapsedMillisecs(<span class='n'>100</span>);
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

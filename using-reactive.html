@@ -58,7 +58,7 @@
 <span class='m'>Main</span>(<span class='m'>String</span>* args) {
   switch : <span class='m'>Switch</span>;
 
-  <span class='k'>for</span> switch_on, switch_off, exp_is_on &lt;- switch_test_data:
+  <span class='k'>for</span> switch_on, switch_off, exp_is_on &lt;- switch_test_data {
     <span class='c'>// Setting the new values of the inputs for the next</span>
     <span class='c'>// propagation step. Internal state and outputs are</span>
     <span class='c'>// not affected at this stage.</span>
@@ -71,27 +71,28 @@
 
     <span class='c'>// Now checking that the state of the</span>
     <span class='c'>// only output is the expected one</span>
-    <span class='k'>if</span> exp_is_on == nothing:
+    <span class='k'>if</span> exp_is_on == nothing {
       <span class='c'>// Here we expect <span class='inline-code'>is_on</span> to be undefined</span>
-      <span class='k'>if</span> switch.is_on??:
+      <span class='k'>if</span> switch.is_on?? {
         <span class='m'>Print</span>(<span class='s'>"Error: output was supposed to be undefined\n"</span>);
         <span class='k'>return</span>;
-      ;
-    <span class='k'>else</span>
+      }
+    }
+    <span class='k'>else</span> {
       <span class='c'>// First we check <span class='inline-code'>is_on</span> is defined</span>
-      <span class='k'>if</span> <span class='k'>not</span> switch.is_on??:
+      <span class='k'>if</span> <span class='k'>not</span> switch.is_on?? {
         <span class='m'>Print</span>(<span class='s'>"Error: output was supposed to be defined\n"</span>);
         <span class='k'>return</span>;
-      ;
+      }
       <span class='c'>// Now we check that it has the expected value</span>
-      <span class='k'>if</span> value(exp_is_on) != switch.is_on:
+      <span class='k'>if</span> value(exp_is_on) != switch.is_on {
         <span class='m'>Print</span>(<span class='s'>"Error: unexpected output value\n"</span>);
         <span class='k'>return</span>;
-      ;
-    ;
+      }
+    }
 
     <span class='m'>Print</span>(<span class='s'>"OK\n"</span>);
-  ;
+  }
 }
 </section>
 </figure>
@@ -121,14 +122,13 @@
   str = <span class='s'>"line 1\nline 2\nline 3\nline4\n"</span>;
 
   <span class='c'>// Feeding the input characters into the automaton</span>
-  <span class='k'>for</span> ch &lt;- untag(str):
+  <span class='k'>for</span> ch &lt;- untag(str) {
     lines.char = ch;
     done = <span class='k'>apply</span> lines;
     <span class='c'>// If the output <span class='inline-code'>line</span> is active, we just print it</span>
-    <span class='k'>if</span> lines.line?:
+    <span class='k'>if</span> lines.line?
       <span class='m'>Print</span>(lines.line &amp; <span class='s'>"\n"</span>);
-    ;
-  ;
+  }
 }
 </section>
 </figure>
@@ -163,7 +163,7 @@
   <span class='c'>// Initialization</span>
   done = <span class='k'>apply</span> water_sensor;
 
-  <span class='k'>for</span> reading, time, exp_states &lt;- water_sensor_test_data:
+  <span class='k'>for</span> reading, time, exp_states &lt;- water_sensor_test_data {
     <span class='c'>// Setting the value of the only input</span>
     water_sensor.raw_reading = reading;
 
@@ -174,20 +174,20 @@
     <span class='c'>// Updating <span class='inline-code'>water_sensor</span> and recording all</span>
     <span class='c'>// the intermediate values of the only output</span>
     states = ();
-    <span class='k'>loop</span>
+    <span class='k'>do</span>
       done = <span class='k'>apply</span> water_sensor;
       states = (states | water_sensor.sensor_state);
     <span class='k'>while</span> <span class='k'>not</span> done;
 
     <span class='c'>// Checking that the states of the sensor are</span>
     <span class='c'>// the expected ones</span>
-    <span class='k'>if</span> states != exp_states:
+    <span class='k'>if</span> states != exp_states {
       <span class='m'>Print</span>(<span class='s'>"Error\n"</span>);
       <span class='k'>return</span>;
+    }
     <span class='k'>else</span>
       <span class='m'>Print</span>(<span class='s'>"OK\n"</span>);
-    ;
-  ;
+  }
 }
 </section>
 </figure>
@@ -237,6 +237,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -250,6 +251,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -269,7 +271,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

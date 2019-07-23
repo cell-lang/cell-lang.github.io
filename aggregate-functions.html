@@ -38,13 +38,13 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>schema</span> <span class='m'>Market</span> {
-  product(<span class='m'>ProductId</span>):
+  product(<span class='m'>ProductId</span>)
     description : <span class='m'>String</span>;
 
-  customer(<span class='m'>CustomerId</span>):
+  customer(<span class='m'>CustomerId</span>)
     name : <span class='m'>String</span>;
 
-  purchase(<span class='m'>PurchaseId</span>):
+  purchase(<span class='m'>PurchaseId</span>)
     item    : <span class='m'>ProductId</span>,
     buyer   : <span class='m'>CustomerId</span>,
     amount  : <span class='m'>Int</span>,
@@ -61,9 +61,8 @@
 <pre><code><span class='k'>using</span> <span class='m'>Market</span> {
   <span class='m'>Int</span> total(<span class='m'>Date</span> date) {
     total = <span class='n'>0</span>;
-    <span class='k'>for</span> p &lt;- date(?, <span class='k'>this</span>.date):
+    <span class='k'>for</span> p &lt;- date(?, <span class='k'>this</span>.date)
       total = total + amount(p);
-    ;
     <span class='k'>return</span> total;
   }
 }
@@ -79,9 +78,8 @@
 
 <span class='m'>Int</span> sum([<span class='m'>Int</span>] xs) {
   s = <span class='n'>0</span>;
-  <span class='k'>for</span> x &lt;- xs:
+  <span class='k'>for</span> x &lt;- xs
     s = s + x;
-  ;
   <span class='k'>return</span> s;
 }
 
@@ -120,196 +118,7 @@
 
 <p>The first step in the evaluation of an aggregate function call is the evaluation of its aggregate variables. Let's say the numbers we want to add are <code class='inline-code-box'><span class='inline-code'>4 5 2 9</span></code>. Here's a graphical depiction of the how <code class='inline-code-box'><span class='inline-code'>s</span></code> is calculated:</p>
 
-<p><!-- transform", "scale(2.0)" -->
-
-<svg width="640" height="120" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
- <defs>
-
-  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
-   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <linearGradient id="gradient-B" x1="1" y1="1">
-   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <linearGradient id="gradient-C" x1="1" y1="1">
-   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <marker
-    id="left-arrow-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
-   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
-  </marker>
-
-  <marker
-    id="right-arrow-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
-    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
-  </marker>
-
-  <marker
-    id="round-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
-   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
-  </marker>
-
- </defs>
- <g>
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="20"
-    fill="#304040">4</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="50"
-    fill="#304040">5</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="80"
-    fill="#304040">2</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="110"
-    fill="#304040">9</text>
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="20"
-    fill="#304040">4</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="50"
-    fill="#304040">5</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="80"
-    fill="#304040">2</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="110"
-    fill="#304040">9</text>
-
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="170" y="35"
-    fill="#304040">9</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="170" y="95"
-    fill="#304040">11</text>
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="240" y="65"
-    fill="#304040">20</text>
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 14 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 44 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 74 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 104 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 14 L 142 26"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 44 L 142 32"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 74 L 142 86"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 104 L 142 92"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 176 30 L 212 54"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 176 88 L 212 64"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
- </g>
-</svg>
-</p>
+<p><div><img src='sum-eval.svg' style='width:100%'></div></p>
 
 <p>The definition of an aggregate variable consists of two parts: an initialization expression between the <code class='inline-code-box'><span class='inline-code'>=</span></code> and <code class='inline-code-box'><span class='inline-code'>:</span></code> signs (just <code class='inline-code-box'><span class='inline-code'>x</span></code> in this case) and a reduction rule after the column: <code class='inline-code-box'><span class='inline-code'>s1 s2 -&gt; s1 + s2</span></code>. First the initialization expression is evaluated for each input elements. Then the resulting values are repeatedly merged pairwise using the reduction rule until there's only one left.</p>
 
@@ -328,196 +137,7 @@
 
 <p>Here's the evaluation process of the aggregate variable <code class='inline-code-box'><span class='inline-code'>c</span></code>:</p>
 
-<p><!-- transform", "scale(2.0)" -->
-
-<svg width="640" height="120" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
- <defs>
-
-  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
-   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <linearGradient id="gradient-B" x1="1" y1="1">
-   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <linearGradient id="gradient-C" x1="1" y1="1">
-   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <marker
-    id="left-arrow-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
-   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
-  </marker>
-
-  <marker
-    id="right-arrow-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
-    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
-  </marker>
-
-  <marker
-    id="round-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
-   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
-  </marker>
-
- </defs>
- <g>
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="20"
-    fill="#304040">4</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="50"
-    fill="#304040">5</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="80"
-    fill="#304040">2</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="110"
-    fill="#304040">9</text>
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="20"
-    fill="#304040">1</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="50"
-    fill="#304040">1</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="80"
-    fill="#304040">1</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="110"
-    fill="#304040">1</text>
-
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="170" y="35"
-    fill="#304040">2</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="170" y="95"
-    fill="#304040">2</text>
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="240" y="65"
-    fill="#304040">4</text>
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 14 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 44 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 74 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 104 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 14 L 142 26"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 44 L 142 32"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 74 L 142 86"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 104 L 142 92"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 176 30 L 212 54"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 176 88 L 212 64"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
- </g>
-</svg>
-</p>
+<p><div><img src='count-eval.svg' style='width:100%'></div></p>
 
 <p>Incidentally, note that usually the size operator <code class='inline-code-box'><span class='inline-code'>|..|</span></code> (which can be applied to both mutable relation variables and their subsets as we've already seen in a previous chapter) is a much faster alternative to <code class='inline-code-box'><span class='inline-code'>count(..)</span></code>, since in most cases it can produce its result in constant time.</p>
 
@@ -532,196 +152,7 @@
 </figure>
 </code></pre>
 
-<p><!-- transform", "scale(2.0)" -->
-
-<svg width="640" height="120" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
- <defs>
-
-  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
-   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <linearGradient id="gradient-B" x1="1" y1="1">
-   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <linearGradient id="gradient-C" x1="1" y1="1">
-   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <marker
-    id="left-arrow-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
-   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
-  </marker>
-
-  <marker
-    id="right-arrow-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
-    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
-  </marker>
-
-  <marker
-    id="round-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
-   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
-  </marker>
-
- </defs>
- <g>
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="20"
-    fill="#304040">4</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="50"
-    fill="#304040">5</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="80"
-    fill="#304040">2</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="110"
-    fill="#304040">9</text>
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="20"
-    fill="#304040">4</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="50"
-    fill="#304040">5</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="80"
-    fill="#304040">2</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="100" y="110"
-    fill="#304040">9</text>
-
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="170" y="35"
-    fill="#304040">20</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="170" y="95"
-    fill="#304040">18</text>
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="248" y="65"
-    fill="#304040">360</text>
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 14 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 44 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 74 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 50 104 H 80"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 14 L 142 26"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 44 L 142 32"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 74 L 142 86"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 110 104 L 142 92"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 176 30 L 212 54"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 176 88 L 212 64"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
- </g>
-</svg>
-</p>
+<p><div><img src='prod-eval.svg' style='width:100%'></div></p>
 
 <p><code class='inline-code-box'><span class='inline-code'>norm(..)</span></code> calculates the L2 norm (that is, the square root of the sum of the squares) of a collection of floating point numbers:</p>
 
@@ -734,209 +165,7 @@
 </figure>
 </code></pre>
 
-<p><!-- transform", "scale(2.0)" -->
-
-<svg width="640" height="120" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
- <defs>
-
-  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
-   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <linearGradient id="gradient-B" x1="1" y1="1">
-   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <linearGradient id="gradient-C" x1="1" y1="1">
-   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
-   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
-  </linearGradient>
-
-  <marker
-    id="left-arrow-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
-   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
-  </marker>
-
-  <marker
-    id="right-arrow-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
-    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
-  </marker>
-
-  <marker
-    id="round-endpoint"
-    refY="50" refX="50"
-    markerHeight="5" markerWidth="5"
-    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
-   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
-  </marker>
-
- </defs>
- <g>
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="20"
-    fill="#304040">4.0</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="50"
-    fill="#304040">5.0</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="80"
-    fill="#304040">2.0</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="40" y="110"
-    fill="#304040">9.0</text>
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="120" y="20"
-    fill="#304040">16.0</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="120" y="50"
-    fill="#304040">25.0</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="120" y="80"
-    fill="#304040">4.0</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="120" y="110"
-    fill="#304040">81.0</text>
-
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="210" y="35"
-    fill="#304040">41.0</text>
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="210" y="95"
-    fill="#304040">85.0</text>
-
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="308" y="65"
-    fill="#304040">126.0</text>
-
-
-  <text
-    text-anchor="end"
-    font-family="sans-serif" font-size="18"
-    x="540" y="65"
-    fill="#304040">11.224972160321824</text>
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 48 14 H 78"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 48 44 H 78"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 48 74 H 78"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 48 104 H 78"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 126 14 L 168 26"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 126 44 L 168 32"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 126 74 L 168 86"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 126 104 L 168 92"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 216 30 L 252 54"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 216 88 L 252 64"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
-
-  <path
-    marker-end="url(#right-arrow-endpoint)"
-    d="M 316 60 H 354"
-    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#000000"
-    fill-opacity="0" fill="url(#gradient-A)"/>
-
- </g>
-</svg>
-</p>
+<p><div><img src='norm-eval.svg' style='width:100%'></div></p>
 
 <p>An aggregate function can make use of more than one aggregate variables. Here's one way to define a function that calculates the average of its inputs, which is not defined for empty collections:</p>
 
@@ -1015,7 +244,7 @@
 
 <h3>Future query language</h3>
 
-<p>Aggregate functions are at the moment just a more convenient way to implement logic that could otherwise be implemented with only marginally more effort using a loop, and their design may seem pretty bizarre, but in fact they're just a piece of larger puzzle. Aggregate functions are just the first bit of a future query language that will become a major part of Cell at some point in the future.</p>
+<p>Aggregate functions are at the moment just a more convenient way to implement logic that could otherwise be implemented with only marginally more effort using a loop, and their design may seem pretty bizarre, but in fact they're just a piece of larger puzzle. Aggregate functions are just the first bit of a future declarative language that will become a major part of Cell at some point in the future.</p>
 
 
         </article>
@@ -1055,6 +284,7 @@
                 <li><a href='procedures.html'>Procedures</a></li>
                 <li><a href='typechecking.html'>Type checking</a></li>
                 <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Relational Automata
@@ -1068,6 +298,7 @@
                 <li><a href='design.html'>Design Process</a></li>
                 <li><a href='updates.html'>State updates</a></li>
                 <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
               </ul>
             </li>
             <li>Reactive Automata
@@ -1087,7 +318,6 @@
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
-                <li><a href='benchmarks.html'>Benchmarks</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

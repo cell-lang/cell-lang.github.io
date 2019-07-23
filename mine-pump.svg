@@ -1,0 +1,205 @@
+<!-- transform", "scale(2.0)" -->
+
+<svg width="640" height="480" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <defs>
+
+  <linearGradient id="gradient-A" x1="1" y1="1" x2="1" y2="0">
+   <stop stop-color="#9cb3e0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#b2cdff" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-B" x1="1" y1="1">
+   <stop stop-color="#b8a8c0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8c8f0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <linearGradient id="gradient-C" x1="1" y1="1">
+   <stop stop-color="#b8b8a0" stop-opacity="1" offset="0"/>
+   <stop stop-color="#d8d8c0" stop-opacity="1" offset="1"/>
+  </linearGradient>
+
+  <marker
+    id="left-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
+   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
+  </marker>
+
+  <marker
+    id="right-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
+    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
+  </marker>
+
+  <marker
+    id="round-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="mcircle" orient="auto" markerUnits="strokeWidth">
+   <circle stroke-width="10" stroke="#80a0a0" fill="#59667f" cy="50" cx="50" r="40"/>
+  </marker>
+
+ </defs>
+ <g>
+  <title>Layer 1</title>
+  <g id="sump">
+
+   <rect
+     id="sump-water"
+     x="40" y="360" width="560" height="120"
+     fill="url(#gradient-A)" stroke="#59667f" stroke-width="0"/>
+
+   <path
+     id="sump-border"
+     fill="none" stroke="#59667f" stroke-width="2" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null"
+     d="M 40 320 V 479 H 600 V 320"/>
+
+  </g>
+
+  <rect
+    id="pump-box"
+    x="140" y="180" width="120" height="60"
+    ry="10" rx="10"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#9080B0"
+    fill="url(#gradient-B)"/>
+
+  <rect
+    id="controller-box"
+    x="340" y="100" width="120" height="60"
+    ry="10" rx="10"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="1" stroke="#6080A0"
+    fill="url(#gradient-C)"/>
+
+  <rect
+    id="in-pipe"
+    x="197" y="240" width="6" height="180"
+    stroke-width="1" stroke="#6080a0"
+    fill="url(#gradient-A)"/>
+
+  <rect
+    id="out-pipe"
+    x="20" y="207" width="120" height="6"
+    stroke-width="1" stroke="#6080a0"
+    fill="url(#gradient-A)"/>
+
+  <path
+    id="low-water-sensor"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 466 116 H 560 V 400"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="high-water-sensor"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 466 144 H 520 V 330"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="sensor-methane"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 370 166 V 250"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="sensor-CO2"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 400 166 V 250"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="sensor-airflow"
+    marker-start="url(#left-arrow-endpoint)" marker-end="url(#round-endpoint)"
+    d="M 430 166 V 250"
+    stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="pump-control"
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 340 130 H 200 V 174"
+    stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <path
+    id="operator-feedback"
+    marker-end="url(#right-arrow-endpoint)"
+    d="M 400 100 V 40"
+    stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#80a0a0"
+    fill-opacity="0" fill="url(#gradient-A)"/>
+
+  <text
+    xml:space="preserve"
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18"
+    x="192" y="216"
+    fill="#304040">
+    pump
+  </text>
+
+  <text
+    xml:space="preserve"
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18"
+    x="394" y="136"
+    fill="#304040">
+    controller
+  </text>
+
+  <text
+    xml:space="preserve"
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18"
+    x="394" y="24"
+    fill="#304040">
+    operator
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="369" y="272"
+    fill="#304040">
+    C
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="400" y="272"
+    fill="#304040">
+    M
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="430" y="272"
+    fill="#304040">
+    A
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="502" y="336"
+    fill="#304040">
+    H
+  </text>
+
+  <text
+    text-anchor="middle"
+    font-family="sans-serif" font-size="18" font-weight="bold"
+    x="572" y="406"
+    fill="#304040">
+    L
+  </text>
+
+ </g>
+</svg>
