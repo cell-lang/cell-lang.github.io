@@ -39,6 +39,8 @@
 
 <p>On the Java side, in order to avoid boring boilerplate code that would make the comparison less clear, we'll be only partially following one of the fundamental tenets of OOP, encapsulation. All member variables will be public, but they are intended to be read-only outside the class they belong to. Any change to the state of any object will only be carried out by methods of its class. We will also omit constructors and some very simple methods, since their implementation will be obvious.</p>
 
+<p>Both the Cell and Java versions of the code are available on <a href='https://github.com/cell-lang/example-online-forum'>github</a>.</p>
+
 
 <h3>Data structures</h3>
 
@@ -68,7 +70,7 @@
     karma     : <span class='m'>Int</span>;
 
   friends(<span class='m'>UserId</span> | <span class='m'>UserId</span>)
-    since : <span class='m'>Date</span>;
+    since : <span class='m'>Time</span>;
 
   admin(_, id) -&gt; user(id);
   member(u, g) -&gt; user(u), chat_group(g);
@@ -143,7 +145,7 @@
     karma     = <span class='n'>0</span>;
 }
 
-<span class='m'>OnlineForum</span>.add_friendship(user1: <span class='m'>UserId</span>, user2: <span class='m'>UserId</span>, since: <span class='m'>Date</span>) {
+<span class='m'>OnlineForum</span>.add_friendship(user1: <span class='m'>UserId</span>, user2: <span class='m'>UserId</span>, since: <span class='m'>Time</span>) {
   <span class='k'>insert</span> friends(<span class='k'>this</span>.user1, <span class='k'>this</span>.user2)
     since = <span class='k'>this</span>.since;
 }

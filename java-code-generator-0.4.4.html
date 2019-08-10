@@ -31,15 +31,15 @@
     <div id="main-container">
       <div id="main">
         <article class="content">
-<h2>Cell &#x279e; Java compiler version 0.2</h2>
+<h2>Cell &#x279e; Java compiler version 0.4.4</h2>
 
-<p>Version 0.2 of the Cell to Java code generator is now available. The compiler is now able to take advantage of type declarations to generate optimized code. Preliminary benchmarks are available <a href='benchmarks.html'>here</a>.</p>
+<p>Version 0.4.4 of the Cell to Java code generator is now available. It brings a number of bug fixes and a couple new features.</p>
 
-<p>There have been a few other minor changes. The map lookup operation, <code class='inline-code-box'><span class='inline-code'>map(key, !!)</span></code>, now can be written more succinctly as <code class='inline-code-box'><span class='inline-code'>map(key)</span></code>. That bit of syntactic sugar was already available for mutable relation variables, but now is available for all binary relations.</p>
+<p>The first one is a standard representation and syntactic sugar for characters, dates and time. The details are explained in the <a href='data.html'>data</a> chapter.</p>
 
-<p>There's also another couple changes that have been been backported to version 0.1 as well. The use of parentheses for grouping complex expression has changed again (hopefully for the last time). That's explained in the chapter on <a href='functions.html'>functions</a>, in the "Evaluation order" paragraph. The other change is support for unicode inside string literals. Source files have to be in UTF-8 format, and non-ascii characters are only allowed inside string literals and comments.</p>
+<p>The second one is the ability for a relational automaton to send messages to other automata it is wired to, which is explained in the chapter on <a href='updates.html'>updates</a>.</p>
 
-<p>Version 0.2 is going to be Java-only, since there's still a number of features missing that are needed before the language can be used in the real world. They will be implemented with version 0.3 (ETA: January/February 2019 for the Java version) which will also bring code generators for C, C++ and C#.</p>
+<p>Among the bug fixes one is especially important as it fixes a compiler crash in the presence of certain types of foreign keys, so if you're using any of the 0.4.X (with X &lt; 4) versions you should should upgrade right away.</p>
 
 
         </article>

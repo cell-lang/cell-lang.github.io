@@ -341,7 +341,7 @@
 <pre><code><span class='k'>type</span> <span class='m'>Distance</span>   = meters(<span class='m'>Float</span>);
 <span class='k'>type</span> <span class='m'>TimeSpan</span>   = seconds(<span class='m'>Float</span>);
 <span class='k'>type</span> <span class='m'>String</span>     = string(<span class='m'>Nat</span>*);
-<span class='k'>type</span> <span class='m'>Date</span>       = date((&lt;<span class='n'>1</span>..<span class='n'>31</span>&gt;, &lt;<span class='n'>1</span>..<span class='n'>12</span>&gt;, <span class='m'>Int</span>));
+<span class='k'>type</span> <span class='m'>Fraction</span>   = fraction((<span class='m'>Int</span>, <span class='m'>NzNat</span>));
 
 <span class='k'>type</span> <span class='m'>Point</span>      = cartesian_point((x: <span class='m'>Float</span>, y: <span class='m'>Float</span>)),
                   polar_point((ro: <span class='m'>Float</span>, theta: <span class='m'>Float</span>));
@@ -359,7 +359,7 @@
 
 <figure class="highlight">
 <section>
-<pre><code><span class='k'>type</span> <span class='m'>Date</span>       = date(&lt;<span class='n'>1</span>..<span class='n'>31</span>&gt;, &lt;<span class='n'>1</span>..<span class='n'>12</span>&gt;, <span class='m'>Int</span>);
+<pre><code><span class='k'>type</span> <span class='m'>Fraction</span>   = fraction(<span class='m'>Int</span>, <span class='m'>NzNat</span>);
 
 <span class='k'>type</span> <span class='m'>Point</span>      = cartesian_point(x: <span class='m'>Float</span>, y: <span class='m'>Float</span>),
                   polar_point(ro: <span class='m'>Float</span>, theta: <span class='m'>Float</span>);
@@ -646,7 +646,7 @@
 </figure>
 </code></pre>
 
-<p>An alternative to <code class='inline-code-box'><span class='inline-code'>Maybe</span></code> is the <code class='inline-code-box'><span class='inline-code'>Opt</span></code> type. It represents the absence of value with an empty sequence, and its presence with a 1-element tuple. It may be preferrable (in some cases, at least) because standard sequence manipulation constructs and functions can be applied to it as well. Here's the definition:</p>
+<p>An alternative to <code class='inline-code-box'><span class='inline-code'>Maybe</span></code> is the <code class='inline-code-box'><span class='inline-code'>Opt</span></code> type. It represents the absence of value with an empty sequence, and its presence with a 1-element tuple. It may be preferable (in some cases, at least) because standard sequence manipulation constructs and functions can be applied to it as well. Here's the definition:</p>
 
 <figure class="highlight">
 <section>
@@ -673,11 +673,12 @@
 </figure>
 </code></pre>
 
-<p>We can also define the type of all one-character strings, and in doing so we can use those strings to represent individual characters in a type safe way:</p>
+<p>There are also types for dates and time:</p>
 
 <figure class="highlight">
 <section>
-<pre><code><span class='k'>type</span> <span class='m'>Char</span> = string((<span class='m'>Nat</span>));
+<pre><code><span class='k'>type</span> <span class='m'>Time</span> = time(<span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>Date</span> = date(<span class='m'>Int</span>);
 </section>
 </figure>
 </code></pre>

@@ -104,7 +104,7 @@
 </figure>
 </code></pre>
 
-<p>but in the latter case you're allowed to ommit the <code class='inline-code-box'><span class='inline-code'>&lt;</span></code> and <code class='inline-code-box'><span class='inline-code'>&gt;</span></code> symbols, if the type between them is not a union type. In order to access the value of the message you need to use the keyword <code class='inline-code-box'><span class='inline-code'>this</span></code>, as demonstrated in the last handler, <code class='inline-code-box'><span class='inline-code'>Counter.reset(Int)</span></code>. Note that the same keyword is also used in several object-oriented languages, but the meaning is different: in OOP it's used to refer to the target of a method (that is, the object that "receives the message") while here it's used to refer to the message itself. There's no way in this context to refer to (the value of) the automaton instance that receives the message (only its individual fields can be accessed), because that value cannot be aliased as we explained in the previous chapter.</p>
+<p>but in the latter case you're allowed to ommit the <code class='inline-code-box'><span class='inline-code'>&lt;</span></code> and <code class='inline-code-box'><span class='inline-code'>&gt;</span></code> symbols, if the type between them is not a union type. In order to access the value of the message you need to use the keyword <code class='inline-code-box'><span class='inline-code'>this</span></code>, as demonstrated in the last handler, <code class='inline-code-box'><span class='inline-code'>Counter.reset(Int)</span></code>. Note that the same keyword is also used in several object-oriented languages, but the meaning is different: in OOP it's used to refer to the target of a method (that is, the object that "receives the message") while here it's used to refer to the message itself. There's no way in this context to refer to (the value of) the automaton instance that receives the message (only its individual fields can be accessed), because that value cannot be aliased as we explained in the previous chapters.</p>
 
 <p>Any number of message handlers can be merged without restrictions, whenever that's convenient. The four message handlers of <code class='inline-code-box'><span class='inline-code'>Counter</span></code> can for example be rewritten as follow:</p>
 
@@ -149,7 +149,7 @@
 
 <p>In spite of a few superficial similarities, message handlers differ from methods in OOP (or even messages in the actor model) in several significant ways:</p>
 
-<ul><li>Similarily to messages in the actor model, but unlike methods in OOP, messages in Cell are just ordinary values, that can be manipulated like any other piece of data: they can be copied, passed around, sent over a network and saved to a file. It's very easy, for instance, to store and keep a record of all messages that have been received by any given automaton instance.</li><li>Another similarity with the actor model is that message handlers don't return a value: there's a strict separation between commands/messages and queries/methods. Such a programming model is more reliable when writing distributed applications.</li><li>Automata can only receive messages, not send them, even to themselves. There's no such thing as "message passing" between automata. That's by design and it's never going to change: automata are meant to be self-contained entities, oblivious to the world around them, the only exception being other automata they're wired to, which are read-only to them anyway. Any inter-automata update logic there is, it has to go somewhere else. For the time being, that typically means it has to be dealt with in the host language, not in Cell.</li><li>The scope of the side effects caused by a message handler is limited to the automaton instance that received the message. The state of other automata is not affected, and that includes both dependees and dependants of the automaton that receives the message.</li><li>All update instructions that are issued as part of the execution of a message handler do not take effect immediately. Instead, they are retained and applied only when the message handler returns, which means that during the entire execution of the latter the state of the automaton doesn't change at all. Not only that, but also the specific order in which those commands are issued is ignored. This is a major difference, that completely changes the way you have to write and think about update code. It comes with a long list of trade-offs, and it certainly puts an extra burden on the developer. I believe the advantages outweigh the disadvantages, but the latter are substantial. We'll discuss all the trade-offs in detail later.</li></ul>
+<ul><li>Similarily to messages in the actor model, but unlike methods in OOP, messages in Cell are just ordinary values, that can be manipulated like any other piece of data: they can be copied, passed around, sent over a network and saved to a file. It's very easy, for instance, to store and keep a record of all messages that have been received by any given automaton instance.</li><li>Another similarity with the actor model is that message handlers don't return a value: there's a strict separation between commands/messages and queries/methods. Such a programming model is more reliable when writing distributed applications.</li><li>Automata can only receive messages, not send them, even to themselves. There's no such thing as "message passing" between automata. That's by design and it's never going to change: automata are meant to be self-contained entities, oblivious to the world around them, the only exception being other automata they're wired to. Any inter-automata update logic there is, it has to go somewhere else. For the time being, that typically means it has to be dealt with in the host language, not in Cell. There's only one exception to this, and it's an important one: a message handler can send a message to the dependees of the current automaton.</li><li>The scope of the side effects caused by a message handler is limited to the automaton instance that received the message and its dependees. The state of other automata is not affected, and that includes the dependants of the target of the message.</li><li>All update instructions that are issued as part of the execution of a message handler do not take effect immediately. Instead, they are retained and applied only when the message handler returns, which means that during the entire execution of the latter the state of the automaton doesn't change at all. Not only that, but also the specific order in which those commands are issued is ignored. This is a major difference, that completely changes the way you have to write and think about update code. It comes with a long list of trade-offs, which we'll discuss in detail later.</li></ul>
 
 
 <h3>Atomic update instructions</h3>
@@ -479,6 +479,49 @@
 <p>Now each message handler just calculates the new value for <code class='inline-code-box'><span class='inline-code'>value</span></code>, which is then passed on to the mutator method <code class='inline-code-box'><span class='inline-code'>update_value(..)</span></code> which issues the commands needed to update both <code class='inline-code-box'><span class='inline-code'>value</span></code> and <code class='inline-code-box'><span class='inline-code'>updates</span></code>. Mutator methods must be declared inside a using block, have no return value, can take any number of arguments and can be polymorphich just like functions and ordinary read-only methods. They can be invoked only from message handlers and other mutator methods of the same automaton.</p>
 
 <p>In order to better understand the respective roles of message handlers and mutator methods and the differences between them it's useful to review the life cycle of an update. Once an automaton receives a message, the corresponding handler is invoked. A message handler is the entry point for any update to any relational automaton: an update starts when a handler is invoked, and finishes when the handler returns, after which the state of the automaton is finally updated. Until the handler returns no other handler can be invoked, and therefore no other message can be received: the execution of two message handlers of the same automaton cannot be interleaved or nested, message handlers cannot invoke each other in any way, and automata cannot send messages to themselves. Mutators on the other hand can only be run as part of the execution of a message handler, and cannot be invoked in any other context. The update commands they issue are only applied when their enclosing handler returns, and if they fail they cause the entire handler to fail. Message handlers can only be invoked from the outside, and they constitute the public interface of relational automata with regards to updates, while mutators are only meant to provide a way to implement message handlers in a modular way.</p>
+
+
+<h3>Wired automata</h3>
+
+<p>As already explained, automata are passive entities that can only receive but not send messages, with one exception: the body of a message handler can send a message to the dependees of the current automaton. Here's an example, extending something we saw in a previous chapter:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Logins</span> {
+  usernames(<span class='m'>Nat</span>, <span class='m'>String</span>) [<span class='k'>key</span>: <span class='n'>0</span>, <span class='k'>key</span>: <span class='n'>1</span>];
+  memberships(<span class='m'>Nat</span>, <span class='m'>String</span>);
+}
+
+<span class='m'>Logins</span>.remove_user(id: <span class='m'>Nat</span>) {
+  <span class='k'>delete</span> usernames(<span class='k'>this</span>.id, *), memberships(<span class='k'>this</span>.id, *);
+}
+
+<span class='k'>schema</span> <span class='m'>ChatServer</span> : <span class='m'>Logins</span> {
+  connected_users(<span class='m'>Nat</span>);
+}
+
+<span class='m'>ChatServer</span>.disconnect(id: <span class='m'>Nat</span>) {
+  <span class='k'>delete</span> connected_users(<span class='k'>this</span>.id);
+  <span class='k'>super</span> &lt;- remove_user(id: <span class='k'>this</span>.id);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Just as before, <code class='inline-code-box'><span class='inline-code'>Logins</span></code> contains information about users who have logged in and the chat groups they've joined, while <code class='inline-code-box'><span class='inline-code'>ChatServer</span></code> keeps a list of the users who have connected to the server (a user here can be connected without being logged in: the steps of the process are connect -&gt; login -&gt; logout -&gt; disconnect). Whenever a user disconnects from the server, it must be automatically logged out, and removed from all chat groups he's in. That's done by the <code class='inline-code-box'><span class='inline-code'>super &lt;- remove_user(id: this.id)</span></code> statement inside the body of <code class='inline-code-box'><span class='inline-code'>ChatServer.disconnect(..)</span></code>. The general form of the statement is:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>super</span> &lt;- message;
+</section>
+</figure>
+</code></pre>
+
+<p>where <code class='inline-code-box'><span class='inline-code'>message</span></code> can of course be an arbitrary expression. The execution of the message handler of the dependee is regarded as part of that of the dependant: the two succeed or fail together, and all updates are applied at the same time, so the effects of sending a message are not visible during the execution of the message handler of the dependant, and the order it's issued relative to other update instructions is irrelevant.</p>
+
+<p>If there's more than one dependee, the compiler uses the type of the message to decide which one it should be sent to. If there's any ambiguity (that is, if a message of the given type is accepted by more than one dependee) the compiler will reject your code, as there's no way yet to explicitly specify the intended target.</p>
+
+<p>A message handler can send only one message to each dependee. Sending more than one to the same target will cause a runtime error.</p>
 
 
 <h3>Execution model and error handling</h3>

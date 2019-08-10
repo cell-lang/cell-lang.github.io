@@ -74,9 +74,9 @@
 );
 
 <span style="color: #008800">CREATE</span> <span style="color: #008800">TABLE</span> <span style="color: #0066BB">FRIENDSHIPS</span>(
-  USER_1  <span style="color: #333399">INT</span>     <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
-  USER_2  <span style="color: #333399">INT</span>     <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
-  SINCE   <span style="color: #333399">DATE</span>    <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  USER_1  <span style="color: #333399">INT</span>      <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  USER_2  <span style="color: #333399">INT</span>      <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  SINCE   <span style="color: #333399">DATETIME</span> <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
   <span style="color: #008800">PRIMARY</span> <span style="color: #008800">KEY</span> (USER_1, USER_2),
   <span style="color: #008800">FOREIGN</span> <span style="color: #008800">KEY</span> (USER_1) <span style="color: #008800">REFERENCES</span> <span style="color: #0066BB">USERS</span>(ID),
   <span style="color: #008800">FOREIGN</span> <span style="color: #008800">KEY</span> (USER_2) <span style="color: #008800">REFERENCES</span> <span style="color: #0066BB">USERS</span>(ID)
@@ -131,7 +131,7 @@
   <span class='c'>// declared symmetric, the order in which the</span>
   <span class='c'>// user identifiers are stored doesn't matter</span>
   friends(<span class='m'>UserId</span> | <span class='m'>UserId</span>)
-    since : <span class='m'>Date</span>;
+    since : <span class='m'>Time</span>;
 
   <span class='c'>// The <span class='inline-code'>friends</span> relation can only reference valid users</span>
   friends(u1, u2) -&gt; user(u1), user(u2);
@@ -334,7 +334,7 @@ karma(<span class='m'>UserId</span>, <span class='m'>GroupId</span>, <span class
 <figure class="highlight">
 <section>
 <pre><code>friends(<span class='m'>UserId</span> | <span class='m'>UserId</span>)
-  since : <span class='m'>Date</span>;
+  since : <span class='m'>Time</span>;
 </section>
 </figure>
 </code></pre>
@@ -347,12 +347,12 @@ karma(<span class='m'>UserId</span>, <span class='m'>GroupId</span>, <span class
 friends(<span class='m'>UserId</span> | <span class='m'>UserId</span>);
 
 <span class='c'>// Users #0 and #1 have been online friends since #2</span>
-since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class='m'>Date</span>);
+since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class='m'>Time</span>);
 </section>
 </figure>
 </code></pre>
 
-<p><code class='inline-code-box'><span class='inline-code'>friends</span></code> look similar to <code class='inline-code-box'><span class='inline-code'>member</span></code>, with the only difference being that its two arguments are separated by a vertical bar instead of a comma, which tells the compiler that the <code class='inline-code-box'><span class='inline-code'>friends</span></code> relation is symmetric. Without that, the fact that users <code class='inline-code-box'><span class='inline-code'>u1</span></code> and <code class='inline-code-box'><span class='inline-code'>u2</span></code> are online friends could be recorded as either the <code class='inline-code-box'><span class='inline-code'>u1, u2</span></code> or <code class='inline-code-box'><span class='inline-code'>u2, u1</span></code> entry inside <code class='inline-code-box'><span class='inline-code'>friends</span></code>, or even both of them. That would of course be a problem, because it would force us to account for both possibilities when checking if two users are friends or when deleting such fact from the dataset, thereby making our code more complex and error prone than it needs to be. The problem would be even worse for the <code class='inline-code-box'><span class='inline-code'>since</span></code> relation, as it could end up with two conflicting facts inside it: <code class='inline-code-box'><span class='inline-code'>u1, u2, d1</span></code> and <code class='inline-code-box'><span class='inline-code'>u2, u1, d2</span></code>. By declaring the arguments of <code class='inline-code-box'><span class='inline-code'>friends</span></code> and the first two arguments of <code class='inline-code-box'><span class='inline-code'>since</span></code> symmetric, all these issues will be automatically deal with by the compiler whenever we read the dataset, and insert, update or delete the data in it.</p>
+<p><code class='inline-code-box'><span class='inline-code'>friends</span></code> look similar to <code class='inline-code-box'><span class='inline-code'>member</span></code>, with the only difference being that its two arguments are separated by a vertical bar instead of a comma, which tells the compiler that the <code class='inline-code-box'><span class='inline-code'>friends</span></code> relation is symmetric. Without that, the fact that users <code class='inline-code-box'><span class='inline-code'>u1</span></code> and <code class='inline-code-box'><span class='inline-code'>u2</span></code> are online friends could be recorded as either the <code class='inline-code-box'><span class='inline-code'>u1, u2</span></code> or <code class='inline-code-box'><span class='inline-code'>u2, u1</span></code> entry inside <code class='inline-code-box'><span class='inline-code'>friends</span></code>, or even both of them. That would of course be a problem, because it would force us to account for both possibilities when checking if two users are friends or when deleting such fact from the dataset, thereby making our code more complex and error prone than it needs to be. The problem would be even worse for the <code class='inline-code-box'><span class='inline-code'>since</span></code> relation, as it could end up with two conflicting facts inside it: <code class='inline-code-box'><span class='inline-code'>u1, u2, t1</span></code> and <code class='inline-code-box'><span class='inline-code'>u2, u1, t2</span></code>. By declaring the arguments of <code class='inline-code-box'><span class='inline-code'>friends</span></code> and the first two arguments of <code class='inline-code-box'><span class='inline-code'>since</span></code> symmetric, all these issues will be automatically deal with by the compiler whenever we read the dataset, and insert, update or delete the data in it.</p>
 
 
 <h3>Messages and message handlers</h3>
