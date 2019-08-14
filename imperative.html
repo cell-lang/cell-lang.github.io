@@ -75,7 +75,56 @@
 </figure>
 </code></pre>
 
-<p>All the above for loops are actually "foreach" loops: they traverse a sequence and execute the body for each of its elements. You can also have standard "for" loops, which iterate over a range of integer. Here's how you can define a Haskell-style <code class='inline-code-box'><span class='inline-code'>foldr(..)</span></code> function:</p>
+<p>You can also iterate over sets and relations, but in that case the iteration order is implementation-defined and the index of the element/tuple is not available, since those types of collections are not ordered. The syntax is also slightly different. This is the implementation of the polymorphic function <code class='inline-code-box'><span class='inline-code'>accumulate(..)</span></code> that we used in the previous chapter:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> accumulate([<span class='u'>T</span>] s, (<span class='u'>T</span> -&gt; <span class='m'>Int</span>) f) {
+  sum = <span class='n'>0</span>;
+  <span class='k'>for</span> e &lt;- s
+    sum = sum + f(e);
+  <span class='k'>return</span> sum;
+}
+
+<span class='m'>Int</span> accumulate([+<span class='u'>T</span>, <span class='u'>T</span>] r, (<span class='u'>T</span> -&gt; <span class='m'>Int</span>) f) {
+  sum = <span class='n'>0</span>;
+  <span class='k'>for</span> a b &lt;- r <span class='c'>// No comma between <span class='inline-code'>a</span> and <span class='inline-code'>b</span> in this case</span>
+    sum = sum + f(a) + f(b);
+  <span class='k'>return</span> sum;
+}
+
+<span class='m'>Int</span> accumulate([+<span class='u'>T</span>, <span class='u'>T</span>, <span class='u'>T</span>] r, (<span class='u'>T</span> -&gt; <span class='m'>Int</span>) f) {
+  sum = <span class='n'>0</span>;
+  <span class='k'>for</span> a b c &lt;- r <span class='c'>// No comma between <span class='inline-code'>a</span>, <span class='inline-code'>b</span> and <span class='inline-code'>c</span></span>
+    sum = sum + f(a) + f(b) + f(c);
+  <span class='k'>return</span> sum;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>If you don't need one of the loop variables, you can replace it with an underscore, just like in comprehension expressions:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Int</span> sum_left((<span class='m'>Int</span>, <span class='m'>Any</span>)* ps) {
+  sum = <span class='n'>0</span>;
+  <span class='k'>for</span> n, _ &lt;- ps
+    sum = sum + n;
+  <span class='k'>return</span> sum;
+}
+
+<span class='m'>Float</span> right_col_prod([<span class='m'>Any</span>, <span class='m'>Float</span>] r) {
+  prod = <span class='n'>1.0</span>;
+  <span class='k'>for</span> _ x &lt;- r
+    prod = prod * x;
+  <span class='k'>return</span> prod;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>All the above for loops are actually "foreach" loops: they traverse a collection and execute the body for each of its elements or entries. You can also have standard "for" loops, which iterate over a range of integer. Here's how you can define a Haskell-style <code class='inline-code-box'><span class='inline-code'>foldr(..)</span></code> function:</p>
 
 <figure class="highlight">
 <section>
@@ -249,6 +298,18 @@
 </figure>
 </code></pre>
 
+<p>Here too you can replace variables you don't use with an underscore:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='u'>A</span> left((<span class='u'>A</span>, <span class='u'>B</span>) pair) {
+  a, _ = pair;
+  <span class='k'>return</span> a;
+}
+</section>
+</figure>
+</code></pre>
+
 
 <h3>Just another type of expressions</h3>
 
@@ -343,7 +404,7 @@
 
 <h3>Imperative programming</h3>
 
-<p>Cell also includes a couple of pseudo-imperative features, as some algorithms are just a lot easier to write in an imperative style. We've already seen the first one, the functional insert operation. It generally takes amortized O(1), with a pretty small constant factor. Here's how it works: every time a new sequence is created, the runtime allocates some extra memory at the end of the array. When you try to insert a new element at the end, the runtime tries to make use of that extra space to store the new element. Existing references to the original sequence are not affected, as each of them stores not just a pointer to the array, but also its own copy of the length of the sequence, so they just ignore the extra elements and keep seeing only the original part of the sequence.</p>
+<p>Cell also includes a couple of pseudo-imperative features, as some algorithms are just a lot easier to write in an imperative style. We've already seen the first one, the functional insert operation. It generally takes amortized <strong>O(1)</strong>, with a pretty small constant factor. Here's how it works: every time a new sequence is created, the runtime allocates some extra memory at the end of the array. When you try to insert a new element at the end, the runtime tries to make use of that extra space to store the new element. Existing references to the original sequence are not affected, as each of them stores not just a pointer to the array, but also its own copy of the length of the sequence, so they just ignore the extra elements and keep seeing only the original part of the sequence.</p>
 <p>The same thing, by the way, happens with the <code class='inline-code-box'><span class='inline-code'>_slice_(..)</span></code> builtin function (which is aliased in the standard library by the function <code class='inline-code-box'><span class='inline-code'>slice(..)</span></code>, and used by other standard functions like <code class='inline-code-box'><span class='inline-code'>take(..)</span></code> or <code class='inline-code-box'><span class='inline-code'>drop(..)</span></code>): creating a subsequence is fast, because the newly created object only needs to store a pointer to the first element of the subsequence and its length.</p>
 <p>Going back to the functional insertion, the runtime needs to make a copy of the original sequence only in two cases: when it runs out of space at the end, in which case the entire sequence is reallocated with extra space, or when the next slot is already taken, likely because it was used by a previous insertion operation. You should take care to avoid the latter case, as much as possible. The following (buggy) function runs in O((N1+N2)^2), where N1 and N2 are the lengths of <code class='inline-code-box'><span class='inline-code'>s1</span></code> and <code class='inline-code-box'><span class='inline-code'>s2</span></code> respectively, because of the (useless, in this case) <code class='inline-code-box'><span class='inline-code'>unused = (res | x);</span></code> instruction:</p>
 
@@ -365,14 +426,14 @@
 </figure>
 </code></pre>
 
-<p>Once you remove the faulty instruction, the function runs in O(N1+N2), as you would expect. The <code class='inline-code-box'><span class='inline-code'>_cat_(..)</span></code> builtin function, which is used by the <code class='inline-code-box'><span class='inline-code'>&amp;</span></code> operator for sequences and strings, works in a similar way, so if you build a long sequence/string by appending shorter sequences/strings to its right, the whole process runs in linear time, with respect to the length of the resulting sequence. This is how the <code class='inline-code-box'><span class='inline-code'>join(..)</span></code> function is defined in the standard library:</p>
+<p>Once you remove the faulty instruction, the function runs in O(N1+N2), as you would expect. The <code class='inline-code-box'><span class='inline-code'>&amp;</span></code> operator, which is used for concatenating sequences and strings, works in a similar way, so if you build a long sequence/string by appending shorter sequences/strings to its right, the whole process runs in linear time, with respect to the length of the resulting sequence. This is how the <code class='inline-code-box'><span class='inline-code'>join(..)</span></code> function is defined in the standard library:</p>
 
 <figure class="highlight">
 <section>
 <pre><code><span class='u'>T</span>* join(<span class='u'>T</span>** seqs) {
   res = ();
   <span class='k'>for</span> s &lt;- seqs
-    res = _cat_(res, s);
+    res = res &amp; s;
   <span class='k'>return</span> res;
 }
 </section>
@@ -388,7 +449,7 @@
   res = ();
   <span class='k'>for</span> i = <span class='n'>1</span>...n {
     s = seqs(n-i);
-    res = _cat_(s, res);
+    res = s &amp; res;
   }
   <span class='k'>return</span> res;
 }
@@ -427,7 +488,7 @@ xs = (<span class='k'>if</span> j == i <span class='k'>then</span> x <span class
 </figure>
 </code></pre>
 
-<p>But that's not how it is implemented. In a function like <code class='inline-code-box'><span class='inline-code'>reverse_permutation(..)</span></code> it's pretty easy for the compiler to figure out that at the time of the assignment <code class='inline-code-box'><span class='inline-code'>rp</span></code> is the only reference to that particular sequence, in which case the underlying data structures can be updated destructively, in O(1), without any side effects. The compiler accepts such an assignment only if it's sure that it is semantically equivalent to making a mutated copy of the target sequence.</p>
+<p>But that's not how it is implemented. In a function like <code class='inline-code-box'><span class='inline-code'>reverse_permutation(..)</span></code> it's pretty easy for the compiler to figure out that at the time of the assignment <code class='inline-code-box'><span class='inline-code'>rp</span></code> is the only reference to that particular sequence, in which case the underlying data structures can be updated destructively, in <strong>O(1)</strong>, without any side effects. The compiler accepts such an assignment only if it's sure that it is semantically equivalent to making a mutated copy of the target sequence.</p>
 
 <p>The implementation of this feature is a work in progress, and at the moment the compiler is unnecessarily restrictive. A sequence can be updated imperatively only if it's a local variable (not a function/method argument) whose type has been explicitly declared. It has to be allocated using either a sequence comprehension expression or a range comprehension one like for example the following ones:</p>
 
@@ -511,9 +572,14 @@ ys = (f(i) : i &lt; n);
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

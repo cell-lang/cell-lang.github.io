@@ -67,7 +67,7 @@
 
     <span class='c'>// Propagation step. The values of all outputs, state</span>
     <span class='c'>// variables and other internal signals is updated here.</span>
-    done = <span class='k'>apply</span> switch;
+    done = apply switch;
 
     <span class='c'>// Now checking that the state of the</span>
     <span class='c'>// only output is the expected one</span>
@@ -116,7 +116,7 @@
   lines : <span class='m'>Lines</span>;
 
   <span class='c'>// Initializing the automaton variable <span class='inline-code'>lines</span></span>
-  done = <span class='k'>apply</span> lines;
+  done = apply lines;
 
   <span class='c'>// Multiline string used as a test input</span>
   str = <span class='s'>"line 1\nline 2\nline 3\nline4\n"</span>;
@@ -124,7 +124,7 @@
   <span class='c'>// Feeding the input characters into the automaton</span>
   <span class='k'>for</span> ch &lt;- untag(str) {
     lines.char = ch;
-    done = <span class='k'>apply</span> lines;
+    done = apply lines;
     <span class='c'>// If the output <span class='inline-code'>line</span> is active, we just print it</span>
     <span class='k'>if</span> lines.line?
       <span class='m'>Print</span>(lines.line &amp; <span class='s'>"\n"</span>);
@@ -161,7 +161,7 @@
   water_sensor : <span class='m'>WaterSensor</span>;
 
   <span class='c'>// Initialization</span>
-  done = <span class='k'>apply</span> water_sensor;
+  done = apply water_sensor;
 
   <span class='k'>for</span> reading, time, exp_states &lt;- water_sensor_test_data {
     <span class='c'>// Setting the value of the only input</span>
@@ -175,7 +175,7 @@
     <span class='c'>// the intermediate values of the only output</span>
     states = ();
     <span class='k'>do</span>
-      done = <span class='k'>apply</span> water_sensor;
+      done = apply water_sensor;
       states = (states | water_sensor.sensor_state);
     <span class='k'>while</span> <span class='k'>not</span> done;
 
@@ -268,9 +268,14 @@
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

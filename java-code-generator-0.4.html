@@ -41,7 +41,7 @@
 
 <p>For starters, there's an initial implementation of array mutability. It's a work in progress and it comes with a lot of restrictions, but it's now at least possible, with a bit of extra effort, to efficiently code at least some algorithms that would have previously been too slow. The details are in the <a href='imperative.html'>imperative code</a> page.</p>
 
-<p>In the previous versions of the language sets and maps were implemented as sorted arrays, which meant that the only way to add or remove elements or key-value pairs was to rebuild from scratch the entire data structure. The language now combines sorted arrays and balanced trees to provide efficient, <code class='inline-code-box'><span class='inline-code'>O(log(N))</span></code> insertion and removal of elements or key-value pairs, using the following new builtin functions:</p>
+<p>In the previous versions of the language sets and maps were implemented as sorted arrays, which meant that the only way to add or remove elements or key-value pairs was to rebuild from scratch the entire data structure. The language now combines sorted arrays and balanced trees to provide efficient, <strong>O(log(N))</strong> insertion and removal of elements or key-value pairs, using the following new builtin functions:</p>
 
 <figure class="highlight">
 <section>
@@ -205,7 +205,7 @@ user(<span class='m'>UserId</span>):
 
 <p>This release also brings a number of bug fixes.</p>
 
-<p>As already mentioned, the next release (0.5) will implement those few features that are still missing for version 1.0. Expect it in October, or November at the latest.</p>
+<p>As already mentioned, the next release (0.5) will implement those few features that are still missing for version 1.0. Expect it in October, or early November at the latest.</p>
 
 
         </article>
@@ -276,9 +276,14 @@ user(<span class='m'>UserId</span>):
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

@@ -44,16 +44,7 @@
 </figure>
 </code></pre>
 
-<p>The signature of the function comes first, followed by the <code class='inline-code-box'><span class='inline-code'>=</span></code> sign, then an expression that forms the body of the function and a semicolon that terminates the declaration. The type of the arguments and the return type are mandatory. To compare two values for equality just use the <code class='inline-code-box'><span class='inline-code'>==</span></code> operator, and to check if they're different use <code class='inline-code-box'><span class='inline-code'>!=</span></code>. The if/then/else is a conditional expression, and can have any number of branches (note the use of the <code class='inline-code-box'><span class='inline-code'>elif</span></code> keyword):</p>
-
-<figure class="highlight">
-<section>
-<pre><code>&lt; -<span class='n'>1</span>..<span class='n'>1</span>&gt; sign(<span class='m'>Int</span> x) = <span class='k'>if</span>   x &gt; <span class='n'>0</span>  <span class='k'>then</span>  <span class='n'>1</span>
-                       <span class='k'>elif</span> x &lt; <span class='n'>0</span>  <span class='k'>then</span> -<span class='n'>1</span>
-                                   <span class='k'>else</span>  <span class='n'>0</span>;
-</section>
-</figure>
-</code></pre>
+<p>The signature of the function comes first, followed by the <code class='inline-code-box'><span class='inline-code'>=</span></code> sign, then an expression that forms the body of the function and a semicolon that terminates the declaration. The type of the arguments and the return type are mandatory. To compare two values for equality just use the <code class='inline-code-box'><span class='inline-code'>==</span></code> operator, and to check if they're different use <code class='inline-code-box'><span class='inline-code'>!=</span></code>. The <code class='inline-code-box'><span class='inline-code'>if</span></code> .. <code class='inline-code-box'><span class='inline-code'>then</span></code> .. <code class='inline-code-box'><span class='inline-code'>else</span></code> .. is a conditional expression, similar to .. <code class='inline-code-box'><span class='inline-code'>?</span></code> .. <code class='inline-code-box'><span class='inline-code'>:</span></code> .. in C or Java.</p>
 
 <p>Functions with no arguments in a referentially transparent language are of course just constants. They are declared and referenced without using parentheses:</p>
 
@@ -85,9 +76,9 @@
 
 <figure class="highlight">
 <section>
-<pre><code><span class='m'>Int</span> factorial(<span class='m'>Int</span> n)  = <span class='k'>if</span>   n == <span class='n'>0</span> <span class='k'>then</span> <span class='n'>1</span>
-                        <span class='k'>elif</span> n &gt; <span class='n'>0</span>  <span class='k'>then</span> n * factorial(n-<span class='n'>1</span>)
-                                    <span class='k'>else</span> <span class='k'>undefined</span>;
+<pre><code><span class='m'>Int</span> factorial(<span class='m'>Int</span> n)  = <span class='k'>if</span> n == <span class='n'>0</span> <span class='k'>then</span> <span class='n'>1</span>                  <span class='k'>else</span>
+                        <span class='k'>if</span> n &gt; <span class='n'>0</span>  <span class='k'>then</span> n * factorial(n-<span class='n'>1</span>) <span class='k'>else</span>
+                                       <span class='k'>undefined</span>;
 </section>
 </figure>
 </code></pre>
@@ -109,11 +100,11 @@
 
 <p>Currently there's no support for multiline comments.</p>
 
-<p>When symbols or tagged values are used inside expressions they have to be written with a leading <code class='inline-code-box'><span class='inline-code'>:</span></code> (save for <code class='inline-code-box'><span class='inline-code'>true</span></code> and <code class='inline-code-box'><span class='inline-code'>false</span></code> of course), so as to distinguish them from variables or constants in the case of symbols and function calls in the case of tagged values. That can be annoying especially when you're pasting inside your source code large chuncks of data that comes from somewhere else and which is usually written without the <code class='inline-code-box'><span class='inline-code'>:</span></code>, so in that case you can make use of a literal block <code class='inline-code-box'><span class='inline-code'>#{...}</span></code>. Inside it you don't have to write the leading <code class='inline-code-box'><span class='inline-code'>:</span></code>, and you cannot access variables, constants, functions or use any other computational feature of the language. It's just data. As an example, the following two definitions of the constant <code class='inline-code-box'><span class='inline-code'>a_large_value</span></code> are equivalent:</p>
+<p>When symbols or tagged values are used inside expressions they have to be written with a leading <code class='inline-code-box'><span class='inline-code'>:</span></code> (save for <code class='inline-code-box'><span class='inline-code'>true</span></code> and <code class='inline-code-box'><span class='inline-code'>false</span></code> of course), so as to distinguish them from variables or constants in the case of symbols and function calls in the case of tagged values. That can be annoying especially when you're pasting inside your source code large chuncks of data that comes from somewhere else and which is usually written without the <code class='inline-code-box'><span class='inline-code'>:</span></code>, so in that case you can make use of a literal block <code class='inline-code-box'><span class='inline-code'>#{...}</span></code>. Inside it you don't have to write the leading <code class='inline-code-box'><span class='inline-code'>:</span></code>, and you cannot access variables, constants, functions or use any other computational feature of the language. It's just data. As an example, the following two definitions of the constant <code class='inline-code-box'><span class='inline-code'>a_complex_value</span></code> are equivalent:</p>
 
 <figure class="highlight">
 <section>
-<pre><code><span class='m'>Any</span> a_large_value = (
+<pre><code><span class='m'>Any</span> a_complex_value = (
     <span class='a'>:alpha</span>,
     <span class='a'>:bravo</span>,
     <span class='a'>:meters</span>(<span class='n'>200</span>),
@@ -125,7 +116,7 @@
     ]
   );
 
-<span class='m'>Any</span> a_large_value = #{(
+<span class='m'>Any</span> a_complex_value = #{(
     alpha,
     bravo,
     meters(<span class='n'>200</span>),
@@ -212,7 +203,7 @@ nearby(<span class='n'>2</span>) == (<span class='n'>1</span>, <span class='n'>2
 
 <figure class="highlight">
 <section>
-<pre><code><span class='c'>// True if "elt" is an element of "a_set", false otherwise</span>
+<pre><code><span class='c'>// True if <span class='inline-code'>elt</span> is an element of <span class='inline-code'>a_set</span>, false otherwise</span>
 a_set(elt)
 </section>
 </figure>
@@ -222,16 +213,16 @@ a_set(elt)
 
 <figure class="highlight">
 <section>
-<pre><code><span class='c'>// Checks whether "a_bin_rel" contains the entry "arg0, arg1"</span>
+<pre><code><span class='c'>// Checks whether <span class='inline-code'>a_bin_rel</span> contains the entry <span class='inline-code'>arg0, arg1</span></span>
 a_bin_rel(arg0, arg1)
 
 <span class='c'>// True if there exists an entry whose first</span>
 <span class='c'>// element if arg0, false otherwise</span>
-a_bin_rel(arg0, *)
+a_bin_rel(arg0, _)
 
-<span class='c'>// True if "a_bin_rel" contains an entry whose</span>
-<span class='c'>// second element is "arg1", false otherwise</span>
-a_bin_rel(*, arg1)
+<span class='c'>// True if <span class='inline-code'>a_bin_rel</span> contains an entry whose</span>
+<span class='c'>// second element is <span class='inline-code'>arg1</span>, false otherwise</span>
+a_bin_rel(_, arg1)
 </section>
 </figure>
 </code></pre>
@@ -240,24 +231,24 @@ a_bin_rel(*, arg1)
 
 <figure class="highlight">
 <section>
-<pre><code><span class='c'>// If "a_bin_rel" contains one and only one entry</span>
+<pre><code><span class='c'>// If <span class='inline-code'>a_bin_rel</span> contains one and only one entry</span>
 <span class='c'>// whose left element is equal to arg0, returns the</span>
 <span class='c'>// corresponding right element. Fails otherwise.</span>
-a_bin_rel(arg0, !!)
+a_bin_rel(arg0, !)
 
-<span class='c'>// If "a_bin_rel" contains one and only one entry</span>
+<span class='c'>// If <span class='inline-code'>a_bin_rel</span> contains one and only one entry</span>
 <span class='c'>// whose right element is equal to arg1, returns</span>
 <span class='c'>// the corresponding left element. Fails otherwise</span>
-a_bin_rel(!!, arg1)
+a_bin_rel(!, arg1)
 </section>
 </figure>
 </code></pre>
 
-<p>There's also (starting with version 0.2 of the compiler) some syntactic sugar for the first of the above two operations:</p>
+<p>There's also some syntactic sugar for the first of the above two operations:</p>
 
 <figure class="highlight">
 <section>
-<pre><code>a_map_or_bin_rel(<span class='k'>key</span>) <span class='c'>// Same as a_map_or_bin_rel(key, !!)</span>
+<pre><code>a_map_or_bin_rel(<span class='k'>key</span>) <span class='c'>// Same as a_map_or_bin_rel(key, !)</span>
 </section>
 </figure>
 </code></pre>
@@ -266,10 +257,10 @@ a_bin_rel(!!, arg1)
 
 <figure class="highlight">
 <section>
-<pre><code><span class='c'>// Returns the value of "a_field"</span>
+<pre><code><span class='c'>// Returns the value of <span class='inline-code'>a_field</span></span>
 a_record.a_field
 
-<span class='c'>// Return true if "a_record" has field "a_field", false otherwise</span>
+<span class='c'>// Return true if <span class='inline-code'>a_record</span> has field <span class='inline-code'>a_field</span>, false otherwise</span>
 a_record.a_field?
 </section>
 </figure>
@@ -303,24 +294,24 @@ a_record.a_field?
 
 <figure class="highlight">
 <section>
-<pre><code><span class='c'>// True if "a_tern_rel" includes the triple</span>
-<span class='c'>// "arg0, arg1, arg2", false otherwise</span>
+<pre><code><span class='c'>// True if <span class='inline-code'>a_tern_rel</span> includes the triple</span>
+<span class='c'>// <span class='inline-code'>arg0, arg1, arg2</span>, false otherwise</span>
 a_tern_rel(arg0, arg1, arg2)
 
 <span class='c'>// Partial membership test, any value for</span>
 <span class='c'>// the middle argument will do</span>
-a_tern_rel(arg0, *, arg2)
+a_tern_rel(arg0, _, arg2)
 
 <span class='c'>// Partial membership test, any pair of values</span>
 <span class='c'>// for left and right arguments will do</span>
-a_tern_rel(*, arg1, *)
+a_tern_rel(_, arg1, _)
 
 <span class='c'>// Look up the corresponding values in the first, second</span>
 <span class='c'>// or third columns respectively, if those values exist</span>
 <span class='c'>// and are unique. Fail otherwise</span>
-a_tern_rel(!!, arg1, arg2)
-a_tern_rel(arg0, !!, arg2)
-a_tern_rel(arg0, arg1, !!)
+a_tern_rel(!, arg1, arg2)
+a_tern_rel(arg0, !, arg2)
+a_tern_rel(arg0, arg1, !)
 </section>
 </figure>
 </code></pre>
@@ -369,6 +360,19 @@ a_tern_rel(arg0, arg1, !!)
 </figure>
 </code></pre>
 
+<p>If one or more of the elements in the tuple are not used, you can replace the corresponding variable with an underscore:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// left(((1, 2), (3, 4), (5, 6))) == (1, 3, 5)</span>
+<span class='u'>A</span>* left((<span class='u'>A</span>, <span class='u'>B</span>)* seq) = (x : x, _ &lt;- seq);
+
+<span class='c'>// middle(((1, 2, 3), (4, 5, 6), (7, 8, 9))) == (2, 5, 8)</span>
+<span class='u'>B</span>* middle((<span class='u'>A</span>, <span class='u'>B</span>, <span class='u'>C</span>)* seq) = (y : _, y, _ &lt;- seq);
+</section>
+</figure>
+</code></pre>
+
 <p>And you can of course combine all the above features:</p>
 
 <figure class="highlight">
@@ -409,7 +413,7 @@ a_tern_rel(arg0, arg1, !!)
 </figure>
 </code></pre>
 
-<p>Note that the above example (and many of those that follow) is just that, an example, and not the recommended way to write that function. The following implementation is logically equivalent, but a lot more efficient (when used properly, it runs in amortized O(1)):</p>
+<p>Note that the above example (and many of those that follow) is just that, an example, and not the recommended way to write that function. The following implementation is logically equivalent, but a lot more efficient (when used properly, it runs in amortized <strong>O(1)</strong>):</p>
 
 <figure class="highlight">
 <section>
@@ -437,12 +441,23 @@ a_tern_rel(arg0, arg1, !!)
 <figure class="highlight">
 <section>
 <pre><code>[<span class='u'>A</span>, <span class='u'>B</span>] bin_rel_union([<span class='u'>A</span>, <span class='u'>B</span>] r1, [<span class='u'>A</span>, <span class='u'>B</span>] r2) = [
-  x, y : x, y &lt;- r1 | x, y &lt;- r2
+  x, y : x y &lt;- r1 | x y &lt;- r2
 ];
 
 [<span class='u'>A</span>, <span class='u'>B</span>, <span class='u'>C</span>] tern_rel_union([<span class='u'>A</span>, <span class='u'>B</span>, <span class='u'>C</span>] r1, [<span class='u'>A</span>, <span class='u'>B</span>, <span class='u'>C</span>] r2) = [
-  x, y, z : x, y, z &lt;- r1 | x, y, z &lt;- r2
+  x, y, z : x y z &lt;- r1 | x y z &lt;- r2
 ];
+</section>
+</figure>
+</code></pre>
+
+<p>Here too you can replace variables that are not needed with underscores:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='u'>K</span>] keys([<span class='u'>K</span> -&gt; <span class='u'>V</span>] map) = [k : k _ &lt;- map];
+
+[<span class='u'>V</span>] values([<span class='u'>K</span> -&gt; <span class='u'>V</span>] map) = [v : _ k &lt;- map];
 </section>
 </figure>
 </code></pre>
@@ -452,7 +467,7 @@ a_tern_rel(arg0, arg1, !!)
 <figure class="highlight">
 <section>
 <pre><code>[<span class='u'>A</span> -&gt; <span class='u'>B</span>] map_union([<span class='u'>A</span> -&gt; <span class='u'>B</span>] m1, [<span class='u'>A</span> -&gt; <span class='u'>B</span>] m2) = [
-  x -&gt; y : x, y &lt;- m1 | x, y &lt;- m2
+  x -&gt; y : x y &lt;- m1 | x y &lt;- m2
 ];
 </section>
 </figure>
@@ -485,17 +500,17 @@ a_tern_rel(arg0, arg1, !!)
 
 <figure class="highlight">
 <section>
-<pre><code>[<span class='u'>T</span>] set(<span class='u'>T</span>* s) = [x : x &lt;~ s];
+<pre><code>[<span class='u'>T</span>] set(<span class='u'>T</span>* s) = [x : x &lt;- s];
 </section>
 </figure>
 </code></pre>
 
-<p>When the source is a sequence, rather than a set or a relations, you need to use the <code class='inline-code-box'><span class='inline-code'>&lt;~</span></code> arrow instead of <code class='inline-code-box'><span class='inline-code'>&lt;-</span></code> and the same index variable and tuple destructuring functionalities that we saw for sequence comprehension are available. An example:</p>
+<p>When the source is a sequence, rather than a set or a relation, the same index variable and tuple destructuring functionalities that we saw for sequence comprehension are available, although the syntax is slightly different. An example:</p>
 
 <figure class="highlight">
 <section>
 <pre><code>[<span class='m'>Nat</span>, <span class='u'>A</span>, <span class='u'>B</span>] pair_seq_to_indexed_tern_rel((<span class='u'>A</span>, <span class='u'>B</span>)* seq) = [
-  i, x, y : x, y @ i &lt;~ seq
+  i, x, y : (x, y) @ i &lt;- seq <span class='c'>// Note the parentheses around <span class='inline-code'>x, y</span></span>
 ];
 </section>
 </figure>
@@ -512,7 +527,7 @@ a_tern_rel(arg0, arg1, !!)
 </figure>
 </code></pre>
 
-<p>You can also calculate a new value and assign it to a variable inside the loop. The following expression iterates through all the elements of <code class='inline-code-box'><span class='inline-code'>xs</span></code>, stores the value of <code class='inline-code-box'><span class='inline-code'>f(x)</span></code> in <code class='inline-code-box'><span class='inline-code'>y</span></code>, skips the iteraction when <code class='inline-code-box'><span class='inline-code'>p(y)</span></code> is false, and finally inserts the value of <code class='inline-code-box'><span class='inline-code'>g(x, y)</span></code> in the output set.</p>
+<p>You can also calculate a new value and assign it to a variable inside the loop. The following expression iterates through all the elements of <code class='inline-code-box'><span class='inline-code'>xs</span></code>, stores the value of <code class='inline-code-box'><span class='inline-code'>f(x)</span></code> in <code class='inline-code-box'><span class='inline-code'>y</span></code>, skips the iteration when <code class='inline-code-box'><span class='inline-code'>p(y)</span></code> is false, and if it's not it finally inserts the value of <code class='inline-code-box'><span class='inline-code'>g(x, y)</span></code> in the output set.</p>
 
 <figure class="highlight">
 <section>
@@ -523,7 +538,7 @@ a_tern_rel(arg0, arg1, !!)
 
 <p>There's one more type of clause that you can use in set/relation comprehension expression, but we'll defer its discussion until we've examined pattern matching.</p>
 
-<p>You can also iterate through a projection of a relation, that is, a subset of it obtained by filtering it based on the value of some of the arguments. The following pairs of expressions are all equivalent, but the ones that are not commented out are a lot faster, because they don't need to do a linear scan of the entire relation:</p>
+<p>You can also iterate through a projection of a relation, that is, a subset of it obtained by filtering it based on the value of some of its arguments. The following pairs of expressions are all equivalent, but the ones that are not commented out are a lot faster, because they don't need to do a linear scan of the entire relation:</p>
 
 <figure class="highlight">
 <section>
@@ -585,7 +600,7 @@ a_tern_rel(arg0, arg1, !!)
 
 <span class='c'>// Evaluates to true if and only if the sequence <span class='inline-code'>xs</span> contains</span>
 <span class='c'>// an element <span class='inline-code'>x</span> at index <span class='inline-code'>i</span> such that <span class='inline-code'>p(x, i)</span> is true</span>
-(x @ i &lt;~ xs : p(x, i))
+(x @ i &lt;- xs : p(x, i))
 </section>
 </figure>
 </code></pre>
@@ -595,7 +610,7 @@ a_tern_rel(arg0, arg1, !!)
 
 <h3>Operators</h3>
 
-<p>This is the list of all cell operators, in order of decreasing precedence:</p>
+<p>This is the list of all Cell operators, in order of decreasing precedence:</p>
 
 <p><table class="types-table">
   <tr><td><code>and or</code></td></tr>
@@ -970,16 +985,16 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
 <section>
 <pre><code><span class='m'>Int</span> pow_2_32 = <span class='n'>4294967296</span>;
 
-<span class='m'>Int</span> mod_2_32(<span class='m'>Int</span> n) = mod(n, pow_2_32);
+<span class='m'>Int</span> mod_2_32(<span class='m'>Int</span> n) = _mod_(n, pow_2_32);
 
 <span class='m'>Int</span> hashcode(<span class='m'>Any</span> value) =
   &lt;+&gt;     = hashcode(_print_(value)),
-  &lt;*..*&gt;  = xor(value / pow_2_32, mod_2_32(value)),
+  &lt;*..*&gt;  = _xor_(value / pow_2_32, mod_2_32(value)),
   &lt;!&gt;     = hashcode(_bits_(value)),
   ()      = mod_2_32(sum((hashcode(e) : e &lt;- value))),
-  []      = mod_2_32(sum((hashcode(e) : e &lt;- isort(value)))),
-  [,]     = mod_2_32(sum((hashcode(a) + hashcode(b) : a, b &lt;- isort(value)))),
-  [,,]    = mod_2_32(sum((hashcode(a) + hashcode(b) + hashcode(c) : a, b, c &lt;- isort(value)))),
+  []      |
+  [,]     |
+  [,,]    = mod_2_32(accumulate(value, hashcode($))),
   t?(v?)  = mod_2_32(hashcode(t) + hashcode(v));
 </section>
 </figure>
@@ -988,46 +1003,7 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
 
 <h3>Builtin functions</h3>
 
-<p>In the above example, <code class='inline-code-box'><span class='inline-code'>isort(..)</span></code> is a family of polymorphic functions defined in the standard library that take as argument either a set or a relation and return a sequence containing its entries sorted in an implementation-defined order. Functions whose names start and end with an underscore (like <code class='inline-code-box'><span class='inline-code'>_print_(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>_bits_(..)</span></code> above) are builtin functions. Builtin functions provide functionalities that are either impossible to implement directly in Cell, or that cannot be implemented efficiently, or that are just convenient to have as builtins for whatever reason. Some of them have aliases in the standard library. The <code class='inline-code-box'><span class='inline-code'>&amp;</span></code> operator for sequences, for example, is defined in terms of <code class='inline-code-box'><span class='inline-code'>_cat_(..)</span></code> builtin function (doing so will enable an O(1) implementation of sequence concatenation that uses ropes instead of arrays as the underlying physical data structure). Here's the most useful ones among those that don't have aliases:</p>
-
-<figure class="highlight">
-<section>
-<pre><code><span class='c'>// Returns a string containing the textual</span>
-<span class='c'>// representation of any value</span>
-<span class='m'>String</span> _print_(<span class='m'>Any</span>)
-
-<span class='c'>// Given the textual representation of a value returns either the</span>
-<span class='c'>// parsed value or the position of the error if parsing fails</span>
-<span class='m'>Result</span>[<span class='m'>Any</span>, <span class='m'>Nat</span>] _parse_(<span class='m'>String</span>)
-
-<span class='c'>// Converts an integer number into a floating point one</span>
-<span class='m'>Float</span> _float_(<span class='m'>Int</span>);
-
-<span class='c'>// Given a 64-bit floating point number, returns the</span>
-<span class='c'>// same bit pattern reinterpreted as a 64-bit integer</span>
-<span class='m'>Int</span> _bits_(<span class='m'>Float</span>)
-</section>
-</figure>
-</code></pre>
-
-<p>There's also a number of builtin functions that are used to efficiently manipulate sets and maps. They all run in O(log(N)):</p>
-
-<figure class="highlight">
-<section>
-<pre><code><span class='c'>// Inserts an element into a set</span>
-[<span class='u'>T</span>] _insert_([<span class='u'>T</span>] set, <span class='u'>T</span> elt);
-
-<span class='c'>// Removes an element from a set</span>
-[<span class='u'>T</span>] _remove_([<span class='u'>T</span>] set, <span class='u'>T</span> elt);
-
-<span class='c'>// Inserts a key-value pair into a map</span>
-[<span class='u'>K</span> -&gt; <span class='u'>V</span>] _put_([<span class='u'>K</span> -&gt; <span class='u'>V</span>] map, <span class='u'>K</span> <span class='k'>key</span>, <span class='u'>V</span> value);
-
-<span class='c'>// Removes a key and its associated value from a map</span>
-[<span class='u'>K</span> -&gt; <span class='u'>V</span>] _drop_([<span class='u'>K</span> -&gt; <span class='u'>V</span>] map, <span class='u'>K</span> <span class='k'>key</span>);
-</section>
-</figure>
-</code></pre>
+<p>In the above example, <code class='inline-code-box'><span class='inline-code'>accumulate(..)</span></code> is a function that takes as input either a set or a relation, applies an integer function to all its elements (for a set) or arguments (for a relation) and returns the sum of the results. Just ignore it for now: we'll see how to implement it in the next chapter. Functions whose names start and end with an underscore (like <code class='inline-code-box'><span class='inline-code'>_mod_(..)</span></code>, <code class='inline-code-box'><span class='inline-code'>_xor_(..)</span></code>, <code class='inline-code-box'><span class='inline-code'>_print_(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>_bits_(..)</span></code> above) are builtin functions. Builtin functions provide functionalities that are either impossible to implement directly in Cell, or that cannot be implemented efficiently, or that are just convenient to have as builtins for whatever reason. Some of them have aliases in the standard library. The <code class='inline-code-box'><span class='inline-code'>&amp;</span></code> operator for sequences, for example, is defined in terms of <code class='inline-code-box'><span class='inline-code'>_cat_(..)</span></code> builtin function (doing so will enable an <strong>O(1)</strong> implementation of sequence concatenation that uses ropes instead of arrays as the underlying physical data structure). You can find a list of all builtin functions in the standard library documentation.</p>
 
 
 <h3>Polymorphic functions</h3>
@@ -1217,9 +1193,14 @@ sort_two_int_pairs(((<span class='m'>Int</span>, <span class='m'>Int</span>), (<
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

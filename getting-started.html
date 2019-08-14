@@ -33,15 +33,15 @@
         <article class="content">
 <h2>Getting started</h2>
 
-<p>The latest version (0.4.4) of the Java code generator can be downloaded <a href='cellc-java.zip'>here</a>.</p>
+<p>The latest version (0.5) of the Java code generator can be downloaded <a href='cellc-java.zip'>here</a>.</p>
 
-<p>Version 0.1 of the <a href='cellc-cpp-linux.zip'>C++ (Linux)</a> and <a href='cellc-cs.zip'>C#</a> code generators are still available, but at this point they are completely obsolete. They will be updated again with the next version of the language, 0.5.</p>
+<p>Version 0.1 of the <a href='cellc-cpp-linux.zip'>C++ (Linux)</a> and <a href='cellc-cs.zip'>C#</a> code generators are still available, but at this point they are completely obsolete. They will be updated again with one of the next minor (0.5.X) versions of the compiler.</p>
 
-<p>After you unzip the file, you'll see four directories: <code class='inline-code-box'><span class='inline-code'>bin</span></code>, <code class='inline-code-box'><span class='inline-code'>stdlib</span></code>, <code class='inline-code-box'><span class='inline-code'>examples</span></code> and <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code>. The first one contains the compiler, the second one the standard library (which at the moment consists of just one file, <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code>), and the third one a few ready-to-build examples to get you started. To create your own project, just pick one of them and start making changes to it. You can find more information about them in <code class='inline-code-box'><span class='inline-code'>examples/README.txt</span></code>. If you want a more complex example to play with, the IMDB example described <a href='benchmarks-relational.html'>here</a> is available on <a href='https://github.com/cell-lang/example-imdb'>github</a>.</p>
+<p>After you unzip the file, you'll see four directories: <code class='inline-code-box'><span class='inline-code'>bin</span></code>, <code class='inline-code-box'><span class='inline-code'>stdlib</span></code>, <code class='inline-code-box'><span class='inline-code'>examples</span></code> and <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code>. The first one contains the compiler, the second one the standard library (which at the moment consists of just one file, <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code>), and the third one a few ready-to-build examples to get you started. To create your own project, just pick one of them and start making changes to it. You can find more information about them in <code class='inline-code-box'><span class='inline-code'>examples/README.txt</span></code>. If you want a more complex example to play with, the IMDB example described <a href='benchmarks-relational.html'>here</a> is available on <a href='https://github.com/cell-lang/example-imdb'>github</a>, and so is the introductory <a href='https://github.com/cell-lang/example-online-forum'>example</a>.</p>
 
 <p>Each of the code generators produces, when the compilation process is successful, one or more source files in the target language. These files can then be fed directly to a compiler for the corresponding language if your Cell source code includes a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure, or otherwise included in an existing project.</p>
 
-<p>There's no documentation for the standard library yet, you'll have to delve into the <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code> file, which is very small anyway.</p>
+<p>There documentation for the standard library (which is really minimal at the moment) is available <a href='standard-library.html'>here</a>.</p>
 
 <p>The <code class='inline-code-box'><span class='inline-code'>sublime-text</span></code> directory contains syntax highlighting files for Sublime Text. Just copy them in the <code class='inline-code-box-long'><span class='inline-code'>~/.config/sublime-text-3/Packages/User</span></code> directory on Linux, or its equivalent in other operating systems.</p>
 
@@ -57,7 +57,7 @@
 
 <p>The Java code generator is provided as a jar file, <code class='inline-code-box'><span class='inline-code'>cellc-java.jar</span></code>. To run it, just type <code class='inline-code-box-long'><span class='inline-code'>java -jar cellc-java.jar &lt;project file&gt; &lt;output directory&gt;</span></code>, assuming <code class='inline-code-box'><span class='inline-code'>cellc-java.jar</span></code> is in the current directory . The compiler will produce a <code class='inline-code-box'><span class='inline-code'>Generated.java</span></code> file containing the core logic, and a separate file for each of the public classes you'll be interacting with. Their interface is documented in pseudo-Java code in another generated file, <code class='inline-code-box'><span class='inline-code'>interfaces.txt</span></code>.</p>
 
-<p>In order to compile your code in debug mode, and have it print a complete stack trace when an error occurs, you'll have to use the <code class='inline-code-box'><span class='inline-code'>-d</span></code> option of the compiler: <code class='inline-code-box-long'><span class='inline-code'>java -jar cellc-java.jar -d &lt;project file&gt; &lt;output directory&gt;</span></code>. Execution times normally increase by less than 50% in debug mode.</p>
+<p>In order to compile your code in debug mode, and have it print a complete stack trace when an error occurs, you'll have to use the <code class='inline-code-box'><span class='inline-code'>-d</span></code> option of the compiler: <code class='inline-code-box-long'><span class='inline-code'>java -jar cellc-java.jar -d &lt;project file&gt; &lt;output directory&gt;</span></code>.</p>
 
 <p>If you want to inspect the content of a variable containing a Cell object when debugging the generated code, just print the output of its <code class='inline-code-box'><span class='inline-code'>toString()</span></code> method.</p>
 
@@ -68,7 +68,7 @@
 
 <p>The C++ code generator is provided as a Linux binary, but if you're using another Unix-like platform like OS X/macOS you can try to compile it yourself using the source code in <code class='inline-code-box'><span class='inline-code'>src</span></code>. If you're using GCC you can build it by just typing <code class='inline-code-box'><span class='inline-code'>g++ -O3 -DNDEBUG cellc.cpp -o cellc</span></code> in <code class='inline-code-box'><span class='inline-code'>src</span></code> and then replacing the executable in <code class='inline-code-box'><span class='inline-code'>bin</span></code> with the one you built yourself.</p>
 
-<p>The <code class='inline-code-box'><span class='inline-code'>NDEBUG</span></code> preprocessor symbol is used to choose between debug and release mode. It's the same symbol used by the C <code class='inline-code-box'><span class='inline-code'>assert(..)</span></code> macro. Defining it when compiling the generated C++ code will disable all the extra debugging code. With GCC, that can be done with the <code class='inline-code-box'><span class='inline-code'>-DNDEBUG</span></code> command line argument. The code compiled in debug mode is an order of magnitude slower, so make sure that symbol is defined when building your production binaries.</p>
+<p>The <code class='inline-code-box'><span class='inline-code'>NDEBUG</span></code> preprocessor symbol is used to choose between debug and release mode. It's the same symbol used by the C <code class='inline-code-box'><span class='inline-code'>assert(..)</span></code> macro. Defining it when compiling the generated C++ code will disable all the extra debugging code. With GCC, that can be done with the <code class='inline-code-box'><span class='inline-code'>-DNDEBUG</span></code> command line argument. The code compiled in debug mode is an order of magnitude slower when using C++ as a target language, so make sure that symbol is defined when building your production binaries.</p>
 
 <p>To print the value of a Cell variable <code class='inline-code-box'><span class='inline-code'>my_var</span></code> (which, as explained before, will be named <code class='inline-code-box'><span class='inline-code'>my_var_V</span></code> in the generated code) in GDB you'll need to type <code class='inline-code-box'><span class='inline-code'>call print(my_var_V)</span></code> at the debugger prompt.</p>
 
@@ -79,7 +79,7 @@
 
 <p>The C# code generator should work on any platform that support .NET, through either the Microsoft or Mono implementation.</p>
 
-<p>In order to compile your code in debug mode, and have it print a complete stack trace when an error occurs, you'll have to use the <code class='inline-code-box'><span class='inline-code'>-d</span></code> option of the compiler: <code class='inline-code-box'><span class='inline-code'>cellc-cs.exe -d project.txt</span></code>. Execution times approximately double in debug mode.</p>
+<p>In order to compile your code in debug mode, and have it print a complete stack trace when an error occurs, you'll have to use the <code class='inline-code-box'><span class='inline-code'>-d</span></code> option of the compiler: <code class='inline-code-box'><span class='inline-code'>cellc-cs.exe -d project.txt</span></code>.</p>
 
 <p>If you want to inspect the content of a variable containing a Cell object when debugging the generated code, just print the output of its <code class='inline-code-box'><span class='inline-code'>ToString()</span></code> method.</p>
 
@@ -152,9 +152,14 @@
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

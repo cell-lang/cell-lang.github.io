@@ -45,23 +45,23 @@
 <span class='c'>// type CounterMsg = incr, decr, reset, reset(Int);</span>
 
 <span class='m'>Counter</span>.incr {
-  <span class='k'>set</span> value = value + <span class='n'>1</span>;
-  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
+  set value = value + <span class='n'>1</span>;
+  set updates = updates + <span class='n'>1</span>;
 }
 
 <span class='m'>Counter</span>.decr {
-  <span class='k'>set</span> value = value - <span class='n'>1</span>;
-  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
+  set value = value - <span class='n'>1</span>;
+  set updates = updates + <span class='n'>1</span>;
 }
 
 <span class='m'>Counter</span>.reset {
-  <span class='k'>set</span> value = <span class='n'>0</span>;
-  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
+  set value = <span class='n'>0</span>;
+  set updates = updates + <span class='n'>1</span>;
 }
 
 <span class='m'>Counter</span>.reset(<span class='m'>Int</span>) {
-  <span class='k'>set</span> value = untag(<span class='k'>this</span>);
-  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
+  set value = untag(<span class='k'>this</span>);
+  set updates = updates + <span class='n'>1</span>;
 }
 </section>
 </figure>
@@ -85,8 +85,8 @@
 <pre><code><span class='k'>type</span> <span class='m'>IncrCounterMsg</span> = incr;
 
 <span class='m'>Counter</span>.<span class='m'>IncrCounterMsg</span> {
-  <span class='k'>set</span> value = value + <span class='n'>1</span>;
-  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
+  set value = value + <span class='n'>1</span>;
+  set updates = updates + <span class='n'>1</span>;
 }
 </section>
 </figure>
@@ -97,8 +97,8 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>Counter</span>.&lt;incr&gt; {
-  <span class='k'>set</span> value = value + <span class='n'>1</span>;
-  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
+  set value = value + <span class='n'>1</span>;
+  set updates = updates + <span class='n'>1</span>;
 }
 </section>
 </figure>
@@ -118,8 +118,8 @@
     decr      = value - <span class='n'>1</span>,
     reset     = <span class='n'>0</span>,
     reset(n?) = n;
-  <span class='k'>set</span> value = new_value;
-  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
+  set value = new_value;
+  set updates = updates + <span class='n'>1</span>;
 }
 </section>
 </figure>
@@ -130,8 +130,8 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>Counter</span>.<span class='m'>CounterMsg</span> {
-  <span class='k'>set</span> value = new_value(<span class='k'>this</span>);
-  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
+  set value = new_value(<span class='k'>this</span>);
+  set updates = updates + <span class='n'>1</span>;
 }
 
 <span class='k'>using</span> <span class='m'>Counter</span> {
@@ -451,14 +451,8 @@
 <span class='m'>Counter</span>.decr {
   update_value(value - <span class='n'>1</span>);
 }
-</section>
-</figure>
-</code></pre>
 
-
-<figure class="highlight">
-<section>
-<pre><code><span class='m'>Counter</span>.reset {
+<span class='m'>Counter</span>.reset {
   update_value(<span class='n'>0</span>);
 }
 
@@ -468,8 +462,8 @@
 
 <span class='k'>using</span> <span class='m'>Counter</span> {
   update_value(<span class='m'>Int</span> new_value) {
-    <span class='k'>set</span> value = new_value;
-    <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
+    set value = new_value;
+    set updates = updates + <span class='n'>1</span>;
   }
 }
 </section>
@@ -508,7 +502,7 @@
 </figure>
 </code></pre>
 
-<p>Just as before, <code class='inline-code-box'><span class='inline-code'>Logins</span></code> contains information about users who have logged in and the chat groups they've joined, while <code class='inline-code-box'><span class='inline-code'>ChatServer</span></code> keeps a list of the users who have connected to the server (a user here can be connected without being logged in: the steps of the process are connect -&gt; login -&gt; logout -&gt; disconnect). Whenever a user disconnects from the server, it must be automatically logged out, and removed from all chat groups he's in. That's done by the <code class='inline-code-box'><span class='inline-code'>super &lt;- remove_user(id: this.id)</span></code> statement inside the body of <code class='inline-code-box'><span class='inline-code'>ChatServer.disconnect(..)</span></code>. The general form of the statement is:</p>
+<p>Just as before, <code class='inline-code-box'><span class='inline-code'>Logins</span></code> contains information about users who have logged in and the chat groups they've joined, while <code class='inline-code-box'><span class='inline-code'>ChatServer</span></code> keeps a list of the users who have connected to the server (a user here can be connected without being logged in: the steps of the process are connect -&gt; login -&gt; logout -&gt; disconnect). Whenever a user disconnects from the server, they must be automatically logged out, and removed from all chat groups they're in. That's done by the <code class='inline-code-box'><span class='inline-code'>super &lt;- remove_user(id: this.id)</span></code> statement inside the body of <code class='inline-code-box'><span class='inline-code'>ChatServer.disconnect(..)</span></code>. The general form of the statement is:</p>
 
 <figure class="highlight">
 <section>
@@ -546,7 +540,7 @@
 <span class='k'>using</span> <span class='m'>Game</span> {
   increment_experience(<span class='m'>Int</span> amount) {
     new_experience = experience + amount;
-    <span class='k'>set</span> experience = new_experience;
+    set experience = new_experience;
     <span class='k'>if</span> new_experience &gt; next_level_experience(level) {
       level_up();
       top_up_health();
@@ -554,11 +548,11 @@
   }
 
   level_up() {
-    <span class='k'>set</span> level = level + <span class='n'>1</span>;
+    set level = level + <span class='n'>1</span>;
   }
 
   top_up_health() {
-    <span class='k'>set</span> health = max_health(level);
+    set health = max_health(level);
   }
 }
 </section>
@@ -646,9 +640,14 @@
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

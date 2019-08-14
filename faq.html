@@ -111,18 +111,18 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>Thermostat</span> {
-  <span class='k'>input</span>:
+  input:
     temperature: <span class='m'>Float</span>;
 
-  <span class='k'>output</span>:
+  output:
     on: <span class='m'>Bool</span>;
 
-  <span class='k'>state</span>:
+  state:
     <span class='c'>// When the system is initialized, <span class='inline-code'>on</span> is true if</span>
     <span class='c'>// and only if the current temperature exceeds 28°C</span>
     on: <span class='m'>Bool</span> = temperature &gt; <span class='n'>28.0</span>;
 
-  <span class='k'>rules</span>:
+  rules:
     <span class='c'>// Switching on the air conditioner when</span>
     <span class='c'>// the temperature exceeds 28°C</span>
     on = <span class='k'>true</span> <span class='k'>when</span> temperature &gt; <span class='n'>28.0</span>;
@@ -220,9 +220,14 @@
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

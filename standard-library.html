@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Standard library</h2>
+
+<p>The standard library right now consists of a single file, <a href='https://github.com/cell-lang/compiler/blob/master/src/stdlib/prelude.cell'>prelude.cell</a>, which is required even for the most trivial programs.</p>
+
+<p>The prelude defines a number of basic data types shown here:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Symbol</span>         = &lt;+&gt;;
+<span class='k'>type</span> <span class='m'>Int</span>            = &lt;*..*&gt;;
+<span class='k'>type</span> <span class='m'>Float</span>          = &lt;!&gt;;
+
+<span class='k'>type</span> <span class='m'>Any</span>            = <span class='m'>Symbol</span>, <span class='m'>Int</span>, <span class='m'>Float</span>, <span class='m'>Any</span>*, [<span class='m'>Any</span>],
+                      [<span class='m'>Any</span>, <span class='m'>Any</span>], [<span class='m'>Any</span>, <span class='m'>Any</span>, <span class='m'>Any</span>], &lt;+&gt;(<span class='m'>Any</span>);
+
+<span class='k'>type</span> <span class='m'>Bool</span>           = <span class='k'>true</span>, <span class='k'>false</span>;
+<span class='k'>type</span> <span class='m'>True</span>           = <span class='k'>true</span>;
+<span class='k'>type</span> <span class='m'>False</span>          = <span class='k'>false</span>;
+
+<span class='k'>type</span> <span class='m'>Nat</span>            = &lt;<span class='n'>0</span>..*&gt;;
+<span class='k'>type</span> <span class='m'>NzNat</span>          = &lt;<span class='n'>1</span>..*&gt;;
+
+<span class='k'>type</span> <span class='m'>Bit</span>            = &lt;<span class='n'>0</span>..<span class='n'>1</span>&gt;;
+<span class='k'>type</span> <span class='m'>Byte</span>           = &lt;<span class='n'>0</span>..<span class='n'>255</span>&gt;;
+
+<span class='k'>type</span> <span class='m'>String</span>         = string(<span class='m'>Nat</span>*);
+<span class='k'>type</span> <span class='m'>Ascii</span>          = string(&lt;<span class='n'>0</span>..<span class='n'>127</span>&gt;*);
+
+<span class='k'>type</span> <span class='m'>Nothing</span>        = nothing;
+<span class='k'>type</span> <span class='m'>Just</span>[<span class='u'>T</span>]        = just(<span class='u'>T</span>);
+<span class='k'>type</span> <span class='m'>Maybe</span>[<span class='u'>T</span>]       = nothing, just(<span class='u'>T</span>);
+
+<span class='k'>type</span> <span class='m'>Success</span>[<span class='u'>T</span>]     = success(<span class='u'>T</span>);
+<span class='k'>type</span> <span class='m'>Failure</span>[<span class='u'>T</span>]     = failure(<span class='u'>T</span>);
+<span class='k'>type</span> <span class='m'>Result</span>[<span class='u'>R</span>, <span class='u'>E</span>]   = success(<span class='u'>R</span>), failure(<span class='u'>E</span>);
+
+<span class='k'>type</span> <span class='m'>Date</span>           = date(<span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>Time</span>           = time(<span class='m'>Int</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>They've all been described in the chapter on <a href='types.html'>types</a>. It also defines one protocol, <code class='inline-code-box'><span class='inline-code'>Ord</span></code>, described <a href='miscellanea.html'>here</a>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>protocol</span> <span class='m'>Ord</span>:
+  (_&lt;_) : <span class='m'>Ord</span>, <span class='m'>Ord</span> -&gt; <span class='m'>Bool</span>;
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Operators</h3>
+
+<p>The operators <code class='inline-code-box'><span class='inline-code'>+</span></code>, <code class='inline-code-box'><span class='inline-code'>-</span></code>, <code class='inline-code-box'><span class='inline-code'>*</span></code>, <code class='inline-code-box'><span class='inline-code'>/</span></code>, <code class='inline-code-box'><span class='inline-code'>&lt;</span></code>, <code class='inline-code-box'><span class='inline-code'>&gt;</span></code>, <code class='inline-code-box'><span class='inline-code'>&lt;=</span></code> and <code class='inline-code-box'><span class='inline-code'>&gt;=</span></code> are defined for any combination of integers and floating point numbers, and behave just like in any other language. <code class='inline-code-box'><span class='inline-code'>-</span></code> can also be used for set difference and <code class='inline-code-box'><span class='inline-code'>*</span></code> to repeat a string any number of times:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>[<span class='n'>0</span>, <span class='n'>1</span>, <span class='n'>2</span>, <span class='n'>3</span>] - [<span class='n'>0</span>, <span class='n'>2</span>, <span class='n'>4</span>]    <span class='c'>// [1, 3]</span>
+<span class='n'>3</span> * <span class='s'>"ab"</span>                    <span class='c'>// "ababab"</span>
+</section>
+</figure>
+</code></pre>
+
+<p>The operator <code class='inline-code-box'><span class='inline-code'>^</span></code> is used for exponentiation: it can work any combination of integers and floating point numbers, but it always returns a floating point number:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='n'>3</span>   ^ <span class='n'>2</span>       <span class='c'>// 9.0</span>
+<span class='n'>3.0</span> ^ <span class='n'>2</span>       <span class='c'>// 9.0</span>
+<span class='n'>3</span>   ^ <span class='n'>2.0</span>     <span class='c'>// 9.0</span>
+<span class='n'>3.0</span> ^ <span class='n'>2.0</span>     <span class='c'>// 9.0</span>
+</section>
+</figure>
+</code></pre>
+
+<p><code class='inline-code-box'><span class='inline-code'>&amp;</span></code> is used for concatenating sequences and strings, for set union and for merging maps:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>(<span class='n'>0</span>, <span class='n'>1</span>, <span class='n'>2</span>) &amp; (<span class='n'>3</span>, <span class='n'>4</span>, <span class='n'>5</span>)       <span class='c'>// (0, 1, 2, 3, 4, 5)</span>
+<span class='s'>"abc"</span> &amp; <span class='s'>"def"</span>               <span class='c'>// "abcdef"</span>
+[<span class='n'>0</span>, <span class='n'>1</span>, <span class='n'>2</span>] &amp; [<span class='n'>1</span>, <span class='n'>2</span>, <span class='n'>3</span>]       <span class='c'>// [0, 1, 2, 3]</span>
+[<span class='n'>0</span> -&gt; <span class='s'>"A"</span>] &amp; [<span class='n'>1</span> -&gt; <span class='s'>"B"</span>]     <span class='c'>// [0 -&gt; "A", 1 -&gt; "B"]</span>
+</section>
+</figure>
+</code></pre>
+
+<p>In order to be merged successfully, two maps cannot have keys in common, or the operation will fail. To access the individual characters of a string, use <code class='inline-code-box'><span class='inline-code'>[]</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='s'>"abcdef"</span>[<span class='n'>0</span>]     <span class='c'>// `a`</span>
+<span class='s'>"abcdef"</span>[<span class='n'>3</span>]     <span class='c'>// `d`</span>
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Builtin functions</h3>
+
+<p>Builtin function technically don't belong to <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code>, but they're discussed here because they're as fundamental as prelude functions. Their names begin and end with an underscore. Some of them are used to manipulate numbers:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Integer modulo. Same as <span class='inline-code'>x % y</span> in <span class='inline-code'>C</span></span>
+<span class='m'>Int</span> _mod_(<span class='m'>Int</span> x, <span class='m'>Int</span> y)
+
+<span class='c'>// Bitwise <span class='inline-code'>and</span>. Same as <span class='inline-code'>x &amp; y</span> in <span class='inline-code'>C</span></span>
+<span class='m'>Int</span> _and_(<span class='m'>Int</span> x, <span class='m'>Int</span> y)
+
+<span class='c'>// Bitwise <span class='inline-code'>or</span>. Same as <span class='inline-code'>x | y</span> in <span class='inline-code'>C</span></span>
+<span class='m'>Int</span> _or_(<span class='m'>Int</span> x, <span class='m'>Int</span> y)
+
+<span class='c'>// Same as <span class='inline-code'>x ^ y</span> in <span class='inline-code'>C</span></span>
+<span class='m'>Int</span> _xor_(<span class='m'>Int</span> x, <span class='m'>Int</span> y)
+
+<span class='c'>// Converts an integer to a floating point number</span>
+<span class='c'>// _float_(5) == 5.0</span>
+<span class='m'>Float</span> _float_(<span class='m'>Int</span>)
+
+<span class='c'>// Given a 64-bit floating point number, returns the same</span>
+<span class='c'>// bit pattern reinterpreted as a 64-bit integer. Same as</span>
+<span class='c'>// <span class='inline-code'>* (long long *) &amp; x</span> in <span class='inline-code'>C</span> if <span class='inline-code'>x</span> is of type double</span>
+<span class='m'>Int</span> _bits_(<span class='m'>Float</span> x)
+
+<span class='c'>// Mantissa of a floating point number</span>
+<span class='m'>Int</span> _mantissa_(<span class='m'>Float</span>)
+
+<span class='c'>// Decimal exponent of a floating point number</span>
+<span class='m'>Int</span> _dec_exp_(<span class='m'>Float</span>)
+</section>
+</figure>
+</code></pre>
+
+<p>A second group are used to efficiently manipulate sets and maps. Their time complexity is <strong>O(log(N))</strong>, where <strong>N</strong> is the size of the input set or map:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Inserts an element into a set</span>
+[<span class='u'>T</span>] _insert_([<span class='u'>T</span>] set, <span class='u'>T</span> elt);
+
+<span class='c'>// Removes an element from a set</span>
+[<span class='u'>T</span>] _remove_([<span class='u'>T</span>] set, <span class='u'>T</span> elt);
+
+<span class='c'>// Inserts a key-value pair into a map</span>
+[<span class='u'>K</span> -&gt; <span class='u'>V</span>] _put_([<span class='u'>K</span> -&gt; <span class='u'>V</span>] map, <span class='u'>K</span> <span class='k'>key</span>, <span class='u'>V</span> value);
+
+<span class='c'>// Removes a key and its associated value from a map</span>
+[<span class='u'>K</span> -&gt; <span class='u'>V</span>] _drop_([<span class='u'>K</span> -&gt; <span class='u'>V</span>] map, <span class='u'>K</span> <span class='k'>key</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>Finally, we have builting functions for generating the textual representation of a value and for parsing the textual representation into its corresponding value:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Returns a string containing the representation of any value</span>
+<span class='c'>// _print_([1, 2, 3]) == "[1, 2, 3]"</span>
+<span class='m'>Ascii</span> _print_(<span class='m'>Any</span>)
+
+<span class='c'>// Given the textual representation of a value returns</span>
+<span class='c'>// either the parsed value or the position (row, column)</span>
+<span class='c'>// of the error if parsing fails</span>
+<span class='c'>// _parse_("point(x: 2, y: 5)") == success(point(x: 2, y: 5))</span>
+<span class='c'>// _parse_("point(x: 2, y: )") == failure((1, 15))</span>
+<span class='m'>Result</span>[<span class='m'>Any</span>, (<span class='m'>Nat</span>, <span class='m'>Nat</span>)] _parse_(<span class='m'>String</span>)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Numeric functions</h3>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Absolute value</span>
+<span class='m'>Nat</span> abs(<span class='m'>Int</span>)
+
+<span class='c'>// Sum of a sequence of integers</span>
+<span class='m'>Int</span> sum(<span class='m'>Int</span>*)
+
+<span class='c'>// bit(false) <span class='inline-code'>-&gt;</span> 0</span>
+<span class='c'>// bit(true)  <span class='inline-code'>-&gt;</span> 1</span>
+<span class='m'>Bit</span> bit(<span class='m'>Bool</span>)
+
+<span class='c'>// Square root</span>
+<span class='m'>Float</span> sqrt(<span class='m'>Float</span>)
+<span class='m'>Float</span> sqrt(<span class='m'>Int</span>)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Sequences</h3>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Takes the first <span class='inline-code'>n</span> elements of sequence <span class='inline-code'>s</span>, or the</span>
+<span class='c'>// entire sequence if the length of <span class='inline-code'>s</span> is less than <span class='inline-code'>n</span></span>
+<span class='c'>// Time complexity: <span class='inline-code'>O(1)</span></span>
+<span class='c'>// take((10, 20, 30, 40), 3) <span class='inline-code'>-&gt;</span> (10, 20, 30)</span>
+<span class='c'>// take((10, 20), 3)         <span class='inline-code'>-&gt;</span> (10, 20)</span>
+<span class='u'>T</span>* take(<span class='u'>T</span>* s, <span class='m'>Int</span> n)
+
+<span class='c'>// Returns <span class='inline-code'>s</span> minus its first <span class='inline-code'>n</span> elements, or the empty</span>
+<span class='c'>// sequence if the length of <span class='inline-code'>s</span> is less than <span class='inline-code'>n</span></span>
+<span class='c'>// Time complexity: <span class='inline-code'>O(1)</span></span>
+<span class='c'>// drop((10, 20, 30, 40, 50), 3) <span class='inline-code'>-&gt;</span> (40, 50)</span>
+<span class='c'>// drop((10, 20), 3)             <span class='inline-code'>-&gt;</span> ()</span>
+<span class='u'>T</span>* drop(<span class='u'>T</span>* s, <span class='m'>Int</span> n)
+
+<span class='c'>// Subsequence of <span class='inline-code'>s</span> from index <span class='inline-code'>i</span> to <span class='inline-code'>i+n-1</span> inclusive</span>
+<span class='c'>// Fails if the length of <span class='inline-code'>s</span> is less than <span class='inline-code'>i+n</span></span>
+<span class='c'>// Time complexity: <span class='inline-code'>O(1)</span></span>
+<span class='u'>T</span>* slice(<span class='u'>T</span>* s, <span class='m'>Int</span> i, <span class='m'>Int</span> n)
+
+<span class='c'>// Reverses a sequence</span>
+<span class='u'>T</span>* reverse(<span class='u'>T</span>* s)
+
+<span class='c'>// Concatenates a sequence of sequences</span>
+<span class='c'>// join(((1, 2), (3, 4, 5), (6))) <span class='inline-code'>-&gt;</span> (1, 2, 3, 4, 5, 6)</span>
+<span class='u'>T</span>* join(<span class='u'>T</span>** seqs)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Sets</h3>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Checks whether two sets are disjoint</span>
+<span class='c'>// Time complexity: <span class='inline-code'>O(|s1| * log(|s2|))</span></span>
+<span class='m'>Bool</span> disjoint([<span class='m'>Any</span>] s1, [<span class='m'>Any</span>] s2)
+
+<span class='c'>// Checks whether <span class='inline-code'>s1</span> is a subset of <span class='inline-code'>s2</span></span>
+<span class='c'>// Time complexity: <span class='inline-code'>O(|s1| * log(|s2|))</span></span>
+<span class='m'>Bool</span> subset([<span class='m'>Any</span>] s1, [<span class='m'>Any</span>] s2)
+
+<span class='c'>// Union of a set of sets</span>
+<span class='c'>// union([[1, 2], [2, 3, 4], [8, 10]]) <span class='inline-code'>-&gt;</span> [1, 2, 3, 4, 8, 10]</span>
+[<span class='u'>T</span>] union([[<span class='u'>T</span>]] sets)
+
+<span class='c'>// Intersection of two sets</span>
+<span class='c'>// Time complexity: <span class='inline-code'>O(|s1| * log(|s2|))</span></span>
+[<span class='u'>T</span>] intersection([<span class='u'>T</span>] s1, [<span class='u'>T</span>] s2)
+
+<span class='c'>// Returns an arbitrary element of a set. Fails is the set is empty</span>
+<span class='c'>// This function is deterministic: for any given set it</span>
+<span class='c'>// will always return the same elements, but which</span>
+<span class='c'>// specific element is returned is implementation-defined</span>
+<span class='u'>T</span> any([<span class='u'>T</span>])
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Maps</h3>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Merges a sequence of maps. Fails if two maps have a common</span>
+<span class='c'>// key unless all common keys are associated to the same value</span>
+[<span class='u'>A</span> -&gt; <span class='u'>B</span>] merge([<span class='u'>A</span> -&gt; <span class='u'>B</span>]*)
+
+<span class='c'>// Merges a set of maps. Fails if two maps have a common key</span>
+<span class='c'>// unless all common keys are associated to the same value</span>
+[<span class='u'>A</span> -&gt; <span class='u'>B</span>] merge([[<span class='u'>A</span> -&gt; <span class='u'>B</span>]] maps)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Maximum and minimum</h3>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Maximum and minimum</span>
+<span class='m'>Ord</span> min(<span class='m'>Ord</span> a, <span class='m'>Ord</span> b)
+<span class='m'>Ord</span> max(<span class='m'>Ord</span> a, <span class='m'>Ord</span> b)
+
+<span class='c'>// Returns all elements <span class='inline-code'>x</span> of <span class='inline-code'>s</span> that minimize <span class='inline-code'>f(x)</span></span>
+<span class='u'>T</span>* min_by(<span class='u'>T</span>* s, (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>) f)
+[<span class='u'>T</span>] min_by([<span class='u'>T</span>] s, (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>) f)
+
+<span class='c'>// Returns all elements <span class='inline-code'>x</span> of <span class='inline-code'>s</span> that maximize <span class='inline-code'>f(x)</span></span>
+<span class='u'>T</span>* max_by(<span class='u'>T</span>* s, (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>) f)
+[<span class='u'>T</span>] max_by([<span class='u'>T</span>] s, (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>) f)
+
+<span class='c'>// Maximum and minimum element of nonempty sequences and sets</span>
+<span class='m'>Ord</span> min(<span class='m'>Ord</span>+ ns)
+<span class='m'>Ord</span> max(<span class='m'>Ord</span>+ ns)
+<span class='m'>Ord</span> min([+<span class='m'>Ord</span>] ns)
+<span class='m'>Ord</span> max([+<span class='m'>Ord</span>] ns)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Strings</h3>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Creates a string from a sequence of characters</span>
+<span class='c'>// <span class='inline-code'>string(chs)</span> is equivalent to <span class='inline-code'>:string(chs)</span></span>
+<span class='m'>String</span> string(<span class='m'>Nat</span>*)
+
+<span class='c'>// Length of a function</span>
+<span class='m'>Nat</span> length(<span class='m'>String</span>)
+
+<span class='c'>// Reverses a string</span>
+<span class='m'>String</span> reverse(<span class='m'>String</span>)
+
+<span class='c'>// Same as <span class='inline-code'>T* slice(T*, Int, Int)</span>, but for strings instead of sequences</span>
+<span class='m'>String</span> substr(<span class='m'>String</span> s, <span class='m'>Int</span> i, <span class='m'>Int</span> n)
+
+<span class='c'>// Same as <span class='inline-code'>T* take(T*, Int)</span>, but for strings instead of sequences</span>
+<span class='m'>String</span> take(<span class='m'>String</span>, <span class='m'>Int</span>)
+
+<span class='c'>// Same as <span class='inline-code'>T* drop(T*, Int)</span>, but for strings instead of sequences</span>
+<span class='m'>String</span> drop(<span class='m'>String</span>, <span class='m'>Int</span>)
+
+<span class='c'>// Concatenates a sequence of strings</span>
+<span class='c'>// append(("ab", "c", "def")) <span class='inline-code'>-&gt;</span> "abcdef"</span>
+<span class='m'>String</span> append(<span class='m'>String</span>*)
+
+<span class='c'>// Concatenates a sequence of strings but also</span>
+<span class='c'>// inserts another string between them</span>
+<span class='c'>// append(("ab", "c", "def"), ", ") <span class='inline-code'>-&gt;</span> "ab, c, def"</span>
+<span class='m'>String</span> append(<span class='m'>String</span>*, <span class='m'>String</span>)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Maybe and Result types</h3>
+
+<p>The prelude contains also a bunch of functions to work with the <code class='inline-code-box'><span class='inline-code'>Maybe[T]</span></code> and <code class='inline-code-box'><span class='inline-code'>Result[V, E]</span></code> types. They're shown here with their implementation:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Just a way to write the symbol <span class='inline-code'>nothing</span> without the leading colon</span>
+<span class='m'>Nothing</span> nothing = <span class='a'>:nothing</span>;
+
+<span class='c'>// Ditto.</span>
+<span class='m'>Just</span>[<span class='u'>T</span>] just(<span class='u'>T</span> x) = <span class='a'>:just</span>(x);
+
+<span class='c'>// Helper constructor</span>
+<span class='m'>Maybe</span>[<span class='u'>T</span>] maybe(<span class='u'>T</span> x, <span class='m'>Bool</span> cond) = <span class='k'>if</span> cond <span class='k'>then</span> <span class='a'>:just</span>(x) <span class='k'>else</span> <span class='a'>:nothing</span>;
+
+<span class='c'>// Given a value of the form <span class='inline-code'>just(x)</span>, returns <span class='inline-code'>x</span></span>
+<span class='c'>// Note that this is a total function: it only accepts values of the</span>
+<span class='c'>// form <span class='inline-code'>just(..)</span>. See the example below for an explanation</span>
+<span class='u'>T</span> value(<span class='m'>Just</span>[<span class='u'>T</span>]) =
+  just(x?)  = x;
+
+<span class='c'>// Same as <span class='inline-code'>value(..)</span>, but accepts also the value <span class='inline-code'>nothing</span></span>
+<span class='c'>// Obviously <span class='inline-code'>value_unsafe(:nothing)</span> throws an exception</span>
+<span class='u'>T</span> value_unsafe(<span class='m'>Maybe</span>[<span class='u'>T</span>]) =
+  just(x?)  = x,
+  _         = <span class='k'>undefined</span>;
+
+<span class='c'>// Applies <span class='inline-code'>f(..)</span> to the value inside <span class='inline-code'>m</span>, if there's one at all</span>
+<span class='m'>Maybe</span>[<span class='u'>B</span>] apply(<span class='m'>Maybe</span>[<span class='u'>A</span>] m, (<span class='u'>A</span> -&gt; <span class='u'>B</span>) f) =
+  just(x?)  = just(f(x)),
+  nothing   = nothing;
+
+<span class='c'>// Given a sequence of <span class='inline-code'>Maybe[T]</span>, drops the tag from the elements</span>
+<span class='c'>// of the form <span class='inline-code'>just(x)</span>, and discards the others</span>
+<span class='u'>T</span>* values(<span class='m'>Maybe</span>[<span class='u'>T</span>]* s) = (value(e) : e &lt;- s, e != nothing);
+
+<span class='c'>// Checks whether a <span class='inline-code'>Result[V, E]</span> value is of the form <span class='inline-code'>success(..)</span></span>
+<span class='c'>// The way this function is defined allows the compiler to narrow</span>
+<span class='c'>// down the type of the argument if this function is used in the</span>
+<span class='c'>// condition of a <span class='inline-code'>if</span> expression or statement</span>
+<span class='m'>True</span>  succeeded(<span class='m'>Success</span>[<span class='u'>T</span>]) = <span class='k'>true</span>;
+<span class='m'>False</span> succeeded(<span class='m'>Failure</span>[<span class='u'>T</span>]) = <span class='k'>false</span>;
+
+<span class='c'>// Same as <span class='inline-code'>not succeeded(..)</span></span>
+<span class='m'>False</span> failed(<span class='m'>Success</span>[<span class='u'>T</span>]) = <span class='k'>false</span>;
+<span class='m'>True</span>  failed(<span class='m'>Failure</span>[<span class='u'>T</span>]) = <span class='k'>true</span>;
+
+<span class='c'>// Given a value of the form <span class='inline-code'>success(..)</span>, return its content</span>
+<span class='c'>// Note that this is a total function: it doesn't accept values of</span>
+<span class='c'>// the form <span class='inline-code'>failure(..)</span>. See example below for an explanation</span>
+<span class='u'>T</span> result(<span class='m'>Success</span>[<span class='u'>T</span>])
+  success(r?) = r;
+
+<span class='c'>// Given a value of the form <span class='inline-code'>failure(..)</span>, returns the error value</span>
+<span class='c'>// This too is a total function: it doesn't accept values of the form</span>
+<span class='c'>// <span class='inline-code'>success(..)</span>. See example below for an explanation</span>
+<span class='u'>T</span> error(<span class='m'>Failure</span>[<span class='u'>T</span>])
+  failure(e?) = e;
+</section>
+</figure>
+</code></pre>
+
+<p>The usage of some of these functions is non-obvious, and it's best explained with an example. The following procedure reads the content of a text file, and tries to parse it. If the operation is successful, it just returns the parsed value. If it fails, either because the file cannot be read or because its content is not a valid (textual representation of a) Cell value, it returns a default value:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Any</span> <span class='m'>ReadValueFromFile</span>(<span class='m'>String</span> filename, <span class='m'>Any</span> default) {
+  <span class='c'>// The return type of <span class='inline-code'>FileRead(..)</span> is <span class='inline-code'>Maybe[Byte*]</span></span>
+  res = <span class='m'>FileRead</span>(filename);
+
+  <span class='c'>// If the file could not be read, we just return the default value</span>
+  <span class='c'>// The <span class='inline-code'>res == nothing</span> comparison in the condition of an <span class='inline-code'>if</span></span>
+  <span class='c'>// statement allows the compiler to narrow down the type of <span class='inline-code'>res</span></span>
+  <span class='k'>return</span> default <span class='k'>if</span> res == nothing;
+
+  <span class='c'>// Now the typechecker knows that <span class='inline-code'>res</span> can only be of the</span>
+  <span class='c'>// form <span class='inline-code'>just(..)</span>, so it can be passed as argument to <span class='inline-code'>value(..)</span></span>
+  content = value(res);
+
+  <span class='c'>// Assuming for simplicity that the content is an ASCII string</span>
+  str = string(content);
+
+  <span class='c'>// Trying to parse the content string.</span>
+  <span class='c'>// The return type of <span class='inline-code'>_parse_(..)</span> is <span class='inline-code'>Result[Any, (Nat, Nat)]</span></span>
+  res = _parse_(str);
+
+  <span class='k'>if</span> succeeded(res) {
+    <span class='c'>// Since <span class='inline-code'>succeeded(res)</span> returns <span class='inline-code'>true</span> if and only if</span>
+    <span class='c'>// <span class='inline-code'>res</span> is of the form <span class='inline-code'>success(..)</span>, the typechecker</span>
+    <span class='c'>// is able to infer that inside this code block the type of <span class='inline-code'>res</span></span>
+    <span class='c'>// is <span class='inline-code'>Success[Any]</span>, so it accepts the call <span class='inline-code'>result(res)</span></span>
+    <span class='c'>// which would have otherwise been rejected</span>
+    <span class='k'>return</span> result(res);
+  }
+  <span class='k'>else</span> {
+    <span class='c'>// Here the typechecker has narrowed down the type of <span class='inline-code'>res</span> to</span>
+    <span class='c'>// <span class='inline-code'>Failure[(Nat, Nat)]</span>, so it now accepts the call <span class='inline-code'>error(res)</span></span>
+    row, col = error(res);
+    <span class='m'>Print</span>(<span class='s'>"Parsing error: row "</span> &amp; _print_(row) &amp; <span class='s'>", column "</span> &amp; _print_(col) &amp; <span class='s'>"\n"</span>);
+    <span class='k'>return</span> default;
+  }
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The implementation of <code class='inline-code-box'><span class='inline-code'>ReadValueFromFile(..)</span></code> relies on the unusual typechecking capabilities of the Cell compiler. Everything is explained in detail in the "Type refinement" section of the chapter on <a href='typechecking.html'>typechecking</a>.</p>
+
+
+<h3>Miscellanea</h3>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>untag(..)</span></code> function drops the tag from a tagged value:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// untag(:any_tag(25)) <span class='inline-code'>-&gt;</span> 25</span>
+<span class='u'>T</span> untag(&lt;+&gt;(<span class='u'>T</span>)) =
+  t?(v?) = v;
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Builtin procedures</h3>
+
+<p>Just like builtin functions, builtin procedures are not technically part of <code class='inline-code-box'><span class='inline-code'>prelude.cell</span></code>, but they are listed here for convenience:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Reads the content of a given file, and returns it</span>
+<span class='c'>// wrapped in a Maybe type. Returns <span class='inline-code'>nothing</span> if the</span>
+<span class='c'>// file cannot be read, for whatever reason</span>
+<span class='m'>Maybe</span>[<span class='m'>Byte</span>*] <span class='m'>FileRead</span>(<span class='m'>String</span> filename)
+
+<span class='c'>// Write the given sequence of bytes to a file, overwriting the</span>
+<span class='c'>// existing content. Returns <span class='inline-code'>true</span> on success, <span class='inline-code'>false</span> on failure</span>
+<span class='m'>Bool</span> <span class='m'>FileWrite</span>(<span class='m'>String</span> filename, <span class='m'>Byte</span>* data)
+
+<span class='c'>// Just like <span class='inline-code'>FileWrite(..)</span>, but if the file already exists it</span>
+<span class='c'>// appends to the existing content instead of overwriting it.</span>
+<span class='c'>// Returns <span class='inline-code'>true</span> on success, <span class='inline-code'>false</span> on failure</span>
+<span class='m'>Bool</span> <span class='m'>FileAppend</span>(<span class='m'>String</span> filename, <span class='m'>Byte</span>* data)
+
+<span class='c'>// Prints the content of a given string to the standard output</span>
+<span class='m'>Print</span>(<span class='m'>String</span> output)
+
+<span class='c'>// Reads the next character from the standard input, and returns</span>
+<span class='c'>// it wrapped in a Maybe type. Returns <span class='inline-code'>nothing</span> on EOF</span>
+<span class='m'>Maybe</span>[<span class='m'>Nat</span>] <span class='m'>GetChar</span>()
+
+<span class='c'>// Exits the application with the given error code</span>
+<span class='m'>Exit</span>(<span class='m'>Nat</span>)
+
+<span class='c'>// Returns the current UTC time</span>
+<span class='m'>Time</span> <span class='m'>Now</span>()
+
+<span class='c'>// The first call to <span class='inline-code'>Ticks()</span> returns <span class='inline-code'>0</span>. Every subsequent call</span>
+<span class='c'>// returns the number of milliseconds elapsed since the first call</span>
+<span class='m'>Nat</span> <span class='m'>Ticks</span>()
+
+<span class='c'>// Takes as argument any relational automaton instance</span>
+<span class='c'>// Returns an error message if the last message sent</span>
+<span class='c'>// to the instance failed, or just the empty string if</span>
+<span class='c'>// it succeeded.</span>
+<span class='m'>String</span> <span class='m'>Error</span>(..)
+</section>
+</figure>
+</code></pre>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
+              </ul>
+            </li>
+            <li>Relational Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
+              </ul>
+            </li>
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

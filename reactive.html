@@ -44,7 +44,7 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>MineController</span> {
-  <span class='k'>input</span>:
+  input:
     lower_sensor_submerged : <span class='m'>Bool</span>;
     upper_sensor_submerged : <span class='m'>Bool</span>;
 
@@ -52,20 +52,20 @@
     co_level      : <span class='m'>Int</span>;
     airflow_level : <span class='m'>Int</span>;
 
-  <span class='k'>output</span>:
+  output:
     pump_on           : <span class='m'>Bool</span>;
     evacuation_needed : <span class='m'>Bool</span>;
     error_detected    : <span class='m'>Bool</span>;
 
-  <span class='k'>state</span>:
+  state:
     needs_draining : <span class='m'>Bool</span> = upper_sensor_submerged;
 
-  <span class='k'>static</span>:
+  static:
     max_methane_level : <span class='m'>Nat</span> = <span class='n'>10</span>;
     max_co_level      : <span class='m'>Nat</span> = <span class='n'>20</span>;
     min_airflow_level : <span class='m'>Nat</span> = <span class='n'>100</span>;
 
-  <span class='k'>rules</span>:
+  rules:
     <span class='c'>// Setting needs_draining when the water submerges the</span>
     <span class='c'>// upper water sensor and resetting is when the water</span>
     <span class='c'>// level falls below the level of the lower water sensor</span>
@@ -320,16 +320,16 @@ v = h(s0, s1) <span class='k'>if</span> p(s0) : s1;
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>ChangeCounter</span> {
-  <span class='k'>input</span>:
+  input:
     signal : <span class='m'>Any</span>;
 
-  <span class='k'>output</span>:
+  output:
     changes : <span class='m'>Int</span>;
 
-  <span class='k'>state</span>:
+  state:
     changes : <span class='m'>Int</span> = <span class='n'>0</span>;
 
-  <span class='k'>rules</span>:
+  rules:
     changes = changes + <span class='n'>1</span> : signal;
 }
 </section>
@@ -348,17 +348,17 @@ v = h(s0, s1) <span class='k'>if</span> p(s0) : s1;
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>Switch</span> {
-  <span class='k'>input</span>:
+  input:
     switch_on  : <span class='m'>Bool</span>;
     switch_off : <span class='m'>Bool</span>;
 
-  <span class='k'>output</span>:
+  output:
     is_on : <span class='m'>Bool</span>;
 
-  <span class='k'>state</span>:
+  state:
     is_on : <span class='m'>Bool</span> = switch_on;
 
-  <span class='k'>rules</span>:
+  rules:
     is_on = <span class='k'>true</span>  <span class='k'>when</span> switch_on;
     is_on = <span class='k'>false</span> <span class='k'>when</span> switch_off;
 }
@@ -370,10 +370,10 @@ v = h(s0, s1) <span class='k'>if</span> p(s0) : s1;
 
 <figure class="highlight">
 <section>
-<pre><code><span class='k'>state</span>:
+<pre><code>state:
   needs_draining : <span class='m'>Bool</span> = upper_sensor_submerged;
 
-<span class='k'>rules</span>:
+rules:
   needs_draining = <span class='k'>true</span>  <span class='k'>when</span> upper_sensor_submerged;
   needs_draining = <span class='k'>false</span> <span class='k'>when</span> <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
                               <span class='k'>not</span> upper_sensor_submerged;
@@ -385,7 +385,7 @@ v = h(s0, s1) <span class='k'>if</span> p(s0) : s1;
 
 <figure class="highlight">
 <section>
-<pre><code><span class='k'>rules</span>:
+<pre><code>rules:
   draining_switch = <span class='m'>Switch</span>(
     switch_on  = upper_sensor_submerged,
     switch_off = <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
@@ -443,7 +443,7 @@ v = h(s0, s1) <span class='k'>if</span> p(s0) : s1;
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>MyAuto</span> input_1, input_2 {
-  <span class='k'>input</span>:
+  input:
     input_1 : <span class='m'>Type1</span>;
     input_2 : <span class='m'>Type2</span>;
     input_3 : <span class='m'>Type3</span>;
@@ -472,16 +472,16 @@ v = h(s0, s1) <span class='k'>if</span> p(s0) : s1;
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>Lines</span> char -&gt; line {
-  <span class='k'>input</span>:
+  input:
     char* : <span class='m'>Nat</span>;
 
-  <span class='k'>output</span>:
+  output:
     line* : <span class='m'>String</span>;
 
-  <span class='k'>state</span>:
+  state:
     buffer : <span class='m'>Nat</span>* = ();
 
-  <span class='k'>rules</span>:
+  rules:
     <span class='c'>// The state variable buffer is updated every time <span class='inline-code'>char</span> is active</span>
     buffer = <span class='k'>if</span> char != new_line <span class='k'>then</span> (buffer | char) <span class='k'>else</span> () : char;
 
@@ -574,16 +574,16 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
 <span class='k'>type</span> <span class='m'>WaterSensorState</span> = initializing, unknown, submerged(<span class='m'>Bool</span>);
 
 <span class='k'>reactive</span> <span class='m'>WaterSensor</span> raw_reading -&gt; sensor_state {
-  <span class='k'>input</span>:
+  input:
     raw_reading* : <span class='m'>Maybe</span>[<span class='m'>Bool</span>];
 
-  <span class='k'>output</span>:
+  output:
     sensor_state : <span class='m'>WaterSensorState</span>;
 
-  <span class='k'>state</span>:
+  state:
     sensor_state : <span class='m'>WaterSensorState</span> = <span class='a'>:initializing</span>;
 
-  <span class='k'>rules</span>:
+  rules:
     <span class='c'>// <span class='inline-code'>good_reading</span> is a discrete signal defined as the value</span>
     <span class='c'>// carried by <span class='inline-code'>raw_reading</span> when the latter is active and</span>
     <span class='c'>// not equal to <span class='inline-code'>:nothing</span></span>
@@ -634,7 +634,7 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
   _,                _                 = <span class='k'>false</span>;
 
 <span class='k'>reactive</span> <span class='m'>MineController</span> {
-  <span class='k'>input</span>:
+  input:
     lower_sensor_reading* : <span class='m'>Maybe</span>[<span class='m'>Bool</span>];
     upper_sensor_reading* : <span class='m'>Maybe</span>[<span class='m'>Bool</span>];
 
@@ -642,17 +642,17 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
     co_level      : <span class='m'>Int</span>;
     airflow_level : <span class='m'>Int</span>;
 
-  <span class='k'>output</span>:
+  output:
     pump_on           : <span class='m'>Bool</span>;
     evacuation_needed : <span class='m'>Bool</span>;
     error_detected    : <span class='m'>Bool</span>;
 
-  <span class='k'>static</span>:
+  static:
     max_methane_level : <span class='m'>Nat</span> = <span class='n'>10</span>;
     max_co_level      : <span class='m'>Nat</span> = <span class='n'>20</span>;
     min_airflow_level : <span class='m'>Nat</span> = <span class='n'>100</span>;
 
-  <span class='k'>rules</span>:
+  rules:
     <span class='c'>// Water level sensors</span>
     lower_sensor_state = <span class='m'>WaterSensor</span>(lower_sensor_reading);
     upper_sensor_state = <span class='m'>WaterSensor</span>(upper_sensor_reading);
@@ -705,21 +705,21 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>Base</span> {
-  <span class='k'>input</span>:
+  input:
     input_1 : <span class='m'>Int</span>;
     input_2 : <span class='m'>Int</span>;
 
-  <span class='k'>output</span>:
+  output:
     output_1 : <span class='m'>Int</span>;
     output_2 : <span class='m'>Int</span>;
 
-  <span class='k'>state</span>:
+  state:
     state_var_1 : <span class='m'>Int</span> = input_1 + input_2;
 
-  <span class='k'>static</span>:
+  static:
     const_1 : <span class='m'>Int</span> = <span class='n'>100</span>;
 
-  <span class='k'>rules</span>:
+  rules:
     state_var_1 = state_var_1 + input_1 + input_2 : input_1, input_2;
     state_var_1 = state_var_1 + input_1 : input_1, <span class='k'>not</span> input_2;
     state_var_1 = state_var_1 + input_2 : input_2, <span class='k'>not</span> input_1;
@@ -736,19 +736,19 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>Derived1</span> : <span class='m'>Base</span> {
-  <span class='k'>input</span>:
+  input:
     input_3* : <span class='m'>Int</span>;
 
-  <span class='k'>output</span>:
+  output:
     output_3 : <span class='m'>Int</span>;
 
-  <span class='k'>state</span>:
+  state:
     state_var_2 : <span class='m'>Int</span> = <span class='n'>0</span>;
 
-  <span class='k'>static</span>:
+  static:
     const_2 : <span class='m'>Int</span> = -<span class='n'>1</span>;
 
-  <span class='k'>rules</span>:
+  rules:
     state_var_2 = state_var_2 + input_3;
     output_3 = const_2 * state_var_2;
 }
@@ -761,7 +761,7 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>Derived2</span> : <span class='m'>Base</span> {
-  <span class='k'>rules</span>:
+  rules:
     input_2 = -input_1;
 }
 </section>
@@ -773,7 +773,7 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>Derived3</span> : <span class='m'>Base</span> {
-  <span class='k'>rules</span>:
+  rules:
     output_2 = input_1 - input_2;
 }
 </section>
@@ -785,7 +785,7 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>Derived4</span> : <span class='m'>Base</span> {
-  <span class='k'>static</span>:
+  static:
     const_1 : <span class='m'>Int</span> = <span class='n'>1000</span>;
 }
 </section>
@@ -797,10 +797,10 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>Derived5</span> : <span class='m'>Base</span> {
-  <span class='k'>state</span>:
+  state:
     state_var_1 : <span class='m'>Int</span> = input_1;
 
-  <span class='k'>rules</span>:
+  rules:
     state_var_1 = state_var_1 + input_1 : input_1;
 }
 </section>
@@ -894,9 +894,14 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

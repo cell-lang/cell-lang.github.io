@@ -137,13 +137,13 @@ usernames_copy = usernames;
 <figure class="highlight">
 <section>
 <pre><code><span class='c'>// Looking up a user's name given their numeric id</span>
-usernames(id, !!)
+usernames(id, !)
 
-<span class='c'>// Syntactic sugared version of usernames(id, !!)</span>
+<span class='c'>// Syntactic sugared version of usernames(id, !)</span>
 usernames(id)
 
 <span class='c'>// Looking up a user's numeric id give their name</span>
-usernames(!!, name)
+usernames(!, name)
 
 <span class='c'>// Returns true if there's a user whose numeric identifier</span>
 <span class='c'>// is &lt;id&gt; and whose username is &lt;name&gt;, false otherwise</span>
@@ -151,11 +151,11 @@ usernames(id, name)
 
 <span class='c'>// Returns true if there's a user whose</span>
 <span class='c'>// numeric id is &lt;id&gt;, false otherwise</span>
-usernames(id, *)
+usernames(id, _)
 
 <span class='c'>// Returns true if there's a user whose username</span>
 <span class='c'>// is &lt;name&gt;, false otherwise</span>
-usernames(*, name)
+usernames(_, name)
 
 <span class='c'>// Retrieving all groups a given user has joined</span>
 [g : g &lt;- memberships(id, ?)]
@@ -452,11 +452,6 @@ are_friends(_, u) -&gt; user(u);
 <p>The compiler expects the arguments of a symmetric binary relation to be of the same type. The same goes for the first two arguments of a partially symmetric ternary relation.</p>
 
 
-<h3>Performance</h3>
-
-<p>A naive implementation of this data model is, of course, not going to perform particularly well. Luckily, that's not the case for a more optimized one. Mutable binary relations can actually be implemented very efficiently, especially if they have a key, in terms of both speed and memory footprint. There are trade-offs to be made between access speed, update speed and memory consumption for mutable ternary relations, and their implementation is more complex, but they too can be made to perform just as well as informationally equivalent, hand-optimized data structures. And an efficient implementation of mutable unary relations/sets is of course trivial. This is made possible by (among other things) the strict separation that we have in Cell between the logical definition of a data structure and its physical, under-the-hood implementation. We won't go into detail yet, since the implementation of those low-level data structures is not complete yet (it will be completed with the next release of the compiler, 0.4), except to say that the final data structures will essentially be  a more general version of those used in the Entity/Component architecture adopted by many videogames.</p>
-
-
         </article>
       </div>
 
@@ -525,9 +520,14 @@ are_friends(_, u) -&gt; user(u);
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

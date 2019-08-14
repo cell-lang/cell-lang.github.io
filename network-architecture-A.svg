@@ -1,0 +1,338 @@
+<!-- transform", "scale(2.0)" -->
+
+<svg width="640" height="380"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:svg="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink">
+
+ <defs>
+
+  <marker
+    id="left-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="leftarrow" orient="auto" markerUnits="strokeWidth">
+   <path stroke-width="10" stroke="#59667f" fill="#59667f" d="m0,50l100,40l-30,-40l30,-40z"/>
+  </marker>
+
+  <marker
+    id="right-arrow-endpoint"
+    refY="50" refX="50"
+    markerHeight="5" markerWidth="5"
+    viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
+    <path stroke-width="10" stroke="#80a0a0" fill="#59667f" d="m100,50l-100,40l30,-40l-30,-40z"/>
+  </marker>
+
+ </defs>
+
+ <g transform="translate(100, -50)">
+   <g>
+    <title>Server</title>
+
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="18"
+        x="265" y="230"
+        fill="#304040">Server</text>
+      <rect
+        x="300" y="170" width="100" height="120"
+        ry="20" rx="20"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#304040"
+        fill-opacity="0"
+      />
+    </g>
+
+    <g transform="translate(150 160) scale(0.5)">
+      <rect
+        x="360" y="100" width="80" height="60"
+        ry="10" rx="10"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#304040"
+        fill-opacity="0"
+      />
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="400" y="144"
+        fill="#304040">S</text>
+
+
+  <!--     <rect
+        x="360" y="200" width="80" height="60"
+        ry="10" rx="10"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#304040"
+        fill-opacity="0"
+      />
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="400" y="244"
+        fill="#304040">S</text>
+   -->  </g>
+
+  <!--   <g id="server_QR" transform="translate(150 -40) scale(0.5)">
+      <circle cx="400" cy="330" r="30" stroke="black" stroke-dasharray="10, 5" stroke-width="2" fill-opacity="0"/>
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="400" y="342"
+        fill="#304040">Q<tspan font-size="20" baseline-shift="sub">0</tspan></text>
+
+      <circle cx="400" cy="430" r="30" stroke="black" stroke-dasharray="10, 5" stroke-width="2" fill-opacity="0"/>
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="400" y="442"
+        fill="#304040">R<tspan font-size="20" baseline-shift="sub">0</tspan></text>
+
+      <rect
+        x="360" y="290" width="80" height="180"
+        ry="10" rx="10"
+        stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="black"
+        fill-opacity="0"
+      />
+    </g>
+   -->
+
+  <!--   <g id="server_QR" transform="translate(150 160) scale(0.5)">
+      <circle cx="400" cy="330" r="30" stroke="black" stroke-dasharray="10, 5" stroke-width="2" fill-opacity="0"/>
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="400" y="342"
+        fill="#304040">Q<tspan font-size="20" baseline-shift="sub">1</tspan></text>
+
+      <circle cx="400" cy="430" r="30" stroke="black" stroke-dasharray="10, 5" stroke-width="2" fill-opacity="0"/>
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="400" y="442"
+        fill="#304040">R<tspan font-size="20" baseline-shift="sub">1</tspan></text>
+
+      <rect
+        x="360" y="290" width="80" height="180"
+        ry="10" rx="10"
+        stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="black"
+        fill-opacity="0"
+      />
+    </g>
+   -->
+    <!-- <use href="#server_QR" transform="translate(0, 200)" /> -->
+
+
+
+
+
+
+
+
+
+    <g id="client" transform="translate(80 -10) scale(0.5)">
+      <title>Client</title>
+
+      <rect
+        x="20" y="180" width="160" height="196"
+        ry="20" rx="20"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#304040"
+        fill-opacity="0"
+      />
+
+      <rect
+        x="60" y="250" width="80" height="60"
+        ry="10" rx="10"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#304040"
+        fill-opacity="0"
+      />
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="100" y="294"
+        fill="#304040">S</text>
+
+
+  <!--     <rect
+        x="60" y="200" width="80" height="60"
+        ry="10" rx="10"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#304040"
+        fill-opacity="0"
+      />
+       <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="100" y="244"
+        fill="#304040">L<tspan font-size="20" baseline-shift="sub">0</tspan></text>
+
+      <circle cx="100" cy="330" r="30" stroke="black" stroke-width="2" fill-opacity="0"/>
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="100" y="342"
+        fill="#304040">Q<tspan font-size="20" baseline-shift="sub">0</tspan></text>
+
+      <circle cx="100" cy="430" r="30" stroke="black" stroke-width="2" fill-opacity="0"/>
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="100" y="442"
+        fill="#304040">R&#770;<tspan font-size="20" baseline-shift="sub">0</tspan></text>
+   -->
+    </g>
+
+
+    <g id="client" transform="translate(80 230) scale(0.5)">
+      <title>Client</title>
+
+      <rect
+        x="20" y="180" width="160" height="196"
+        ry="20" rx="20"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#304040"
+        fill-opacity="0"
+      />
+
+      <rect
+        x="60" y="250" width="80" height="60"
+        ry="10" rx="10"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#304040"
+        fill-opacity="0"
+      />
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="100" y="294"
+        fill="#304040">S</text>
+
+
+  <!--     <rect
+        x="60" y="200" width="80" height="60"
+        ry="10" rx="10"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#304040"
+        fill-opacity="0"
+      />
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="100" y="244"
+        fill="#304040">L<tspan font-size="20" baseline-shift="sub">1</tspan></text>
+      <circle cx="100" cy="330" r="30" stroke="black" stroke-width="2" fill-opacity="0"/>
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="100" y="342"
+        fill="#304040">Q<tspan font-size="20" baseline-shift="sub">1</tspan></text>
+
+      <circle cx="100" cy="430" r="30" stroke="black" stroke-width="2" fill-opacity="0"/>
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="36"
+        x="100" y="442"
+        fill="#304040">R&#770;<tspan font-size="20" baseline-shift="sub">1</tspan></text>
+   -->
+    </g>
+
+    <!-- <use href="#client" x="0" y="240" /> -->
+
+
+
+
+    <text
+      xml:space="preserve"
+      text-anchor="middle"
+      font-family="sans-serif" font-size="18"
+      x="130" y="72"
+      fill="#304040">Client A</text>
+
+
+    <text
+      xml:space="preserve"
+      text-anchor="middle"
+      font-family="sans-serif" font-size="18"
+      x="130" y="312"
+      fill="#304040">Client B</text>
+
+
+    <path id="client-A-link"
+      marker-start="url(#left-arrow-endpoint)" marker-end="url(#right-arrow-endpoint)"
+      d="M 160 130 H 350 V 200"
+      stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#808080"
+      fill-opacity="0"/>
+
+    <path id="client-A-link"
+      marker-start="url(#left-arrow-endpoint)" marker-end="url(#right-arrow-endpoint)"
+      d="M 160 370 H 350 V 248"
+      stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#808080"
+      fill-opacity="0"/>
+
+    <!-- <use xlink:href="#client-A-link" x="0" y="200" /> -->
+
+
+    <g id="msg-client-A">
+      <path
+        marker-end="url(#right-arrow-endpoint)"
+        d="M 20 130 H 102"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#808080"
+        fill-opacity="0"/>
+
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="14"
+        x="52" y="124"
+        fill="#304040">Messages</text>
+
+    </g>
+
+    <use xlink:href="#msg-client-A" x="0" y="240" />
+
+    <g>
+      <path
+        marker-end="url(#right-arrow-endpoint)"
+        d="M 458 226 H 378"
+        stroke-linecap="null" stroke-linejoin="round" stroke-width="2" stroke="#808080"
+        fill-opacity="0"/>
+
+      <text
+        xml:space="preserve"
+        text-anchor="middle"
+        font-family="sans-serif" font-size="14"
+        x="435" y="220"
+        fill="#304040">Messages</text>
+
+    </g>
+
+  <!--   <g>
+      <title>Arrows</title>
+      <path
+        marker-end="url(#right-arrow-endpoint)"
+        d="M 132 330 H 364"
+        stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#808080"
+        fill-opacity="0"/>
+
+      <path
+        marker-end="url(#right-arrow-endpoint)"
+        d="M 368 430 H 136"
+        stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#808080"
+        fill-opacity="0"/>
+
+      <path
+        marker-start="url(#left-arrow-endpoint)" marker-end="url(#right-arrow-endpoint)"
+        d="M 146 130 H 354"
+        stroke-linecap="null" stroke-linejoin="round" stroke-dasharray="10, 5" stroke-width="2" stroke="#808080"
+        fill-opacity="0"/>
+   </g>
+ -->
+  </g>
+</svg>

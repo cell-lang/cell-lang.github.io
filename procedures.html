@@ -59,36 +59,13 @@ ch = <span class='m'>GetChar</span>();
 
 <p>Note that procedure calls are statements, not expressions, and therefore cannot be nested inside expressions. If a procedure returns a value, the compiler forces you to store it in a variable, you cannot just ignore it (you are free to ignore the content of that variable afterwords, of course). The other statements that can be used inside procedures but not functions are all related to automata, and we'll discuss them once we get there.</p>
 
-<p>Procedures cannot make use of type variables in their signature, cannot take closure arguments and cannot be used themselves as closures. They also cannot have explicitly declared local variables, but they can have local automaton variables (more on this later).</p>
+<p>Procedures cannot make use of type variables in their signature, cannot take closure arguments and cannot be used themselves as closures. They also cannot have explicitly declared local variables, but they can have local automaton variables (more on this in another chapter).</p>
 
-<p><code class='inline-code-box'><span class='inline-code'>Main</span></code> is where the execution of the program starts: you need to define one in your program in order to create a standalone application in Cell (as opposed to a bunch of C++ classes that are then imported into an existing code base). It works just like it does in any other language: it always takes a single parameter, the program's arguments, as a sequence of strings, and if it returns a value, which must be of type <code class='inline-code-box'><span class='inline-code'>Int</span></code>, that value becomes the exit status of the whole process. If no return value is provided, the exit status is 0.</p>
+<p><code class='inline-code-box'><span class='inline-code'>Main</span></code> is where the execution of the program starts: you need to define one in your program in order to create a standalone application in Cell (as opposed to a bunch of C++/Java/C# classes that are then imported into an existing code base). It works just like it does in any other language: it always takes a single parameter, the program's arguments, as a sequence of strings, and if it returns a value, which must be of type <code class='inline-code-box'><span class='inline-code'>Int</span></code>, that value becomes the exit status of the whole process. If no return value is provided, the exit status is 0.</p>
 
-<p>The only way to do any I/O is to use the procedures defined in the standard library. There's currently four of them, listed here with their signatures:</p>
+<p>The only way to do any I/O is to use one of the builtin procedures described <a href='standard-library.html'>here</a>. The I/O library will be expanded in the future, but it will always be very basic. Cell is designed to integrate with your primary programming language, not to write entire applications. Given that, it makes no sense whatsoever to try to reimplement in Cell the I/O capabilities of your programming language of choice. It's not just pointless, it would also be a huge drag on the development of the compiler. Procedures and some minimal I/O capabilities are there only because they are needed for testing, and when learning the language. They can of course also be used to write data-processing batch applications, like the Cell compiler itself, that read some input data from one or more files, process it and then write the results to another set of files, but nothing more than that.</p>
 
-<figure class="highlight">
-<section>
-<pre><code><span class='c'>// Reads the content of a given file, and returns it</span>
-<span class='c'>// wrapped in a Maybe type. Returns ":nothing" if the</span>
-<span class='c'>// file cannot be read, for whatever reason</span>
-<span class='m'>Maybe</span>[<span class='m'>Byte</span>*] <span class='m'>FileRead</span>(<span class='m'>String</span> filename)
-
-<span class='c'>// Write the given sequence of bytes to a file, overwriting the</span>
-<span class='c'>// existing content. Returns "true" on success, "false" on failure</span>
-<span class='m'>Bool</span> <span class='m'>FileWrite</span>(<span class='m'>String</span> filename, <span class='m'>Byte</span>* data)
-
-<span class='c'>// Prints the content of a given string to the standard output</span>
-<span class='m'>Print</span>(<span class='m'>String</span> output)
-
-<span class='c'>// Reads the next character from the standard input, and returns</span>
-<span class='c'>// it wrapped in a Maybe type. Returns ":nothing" on EOF</span>
-<span class='m'>Maybe</span>[<span class='m'>Nat</span>] <span class='m'>GetChar</span>()
-</section>
-</figure>
-</code></pre>
-
-<p>The I/O library will be expanded in the future, but it will always be very basic. Cell is designed to integrate with your primary programming language, not to write entire applications. Given that, it makes no sense whatsoever to try to reimplement in Cell the I/O capabilities of your programming language of choice. It's not just pointless, it would also be a huge drag on the development of the compiler. Procedures and some minimal I/O capabilities are there only because they are needed for testing, and when learning the language. They can of course also be used to write data-processing batch applications, like the Cell compiler itself, that read some input data from one or more files, process it and then write the results to another set of files, but nothing more than that.</p>
-
-<p>It may well be the case that a future version of the compiler will allow one to write some very specific types of applications entirely in Cell, but that will be done using a completely different programming model. Think something along the lines of <a href='https://guide.elm-lang.org/architecture/'> The Elm Architecture</a>, but for (possibly distributed) back-end applications, instead of front-end ones.</p>
+<p>Future versions of the language will allow one to write some very specific types of applications entirely in Cell, but that will be done using a completely different programming model. Think something along the lines of <a href='https://guide.elm-lang.org/architecture/'> The Elm Architecture</a>, but for (possibly distributed) back-end applications, instead of front-end ones. You can find more information in the <a href='network-architecture.html'>network architecture</a> overview.</p>
 
 
         </article>
@@ -159,9 +136,14 @@ ch = <span class='m'>GetChar</span>();
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

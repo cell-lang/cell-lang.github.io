@@ -33,20 +33,18 @@
         <article class="content">
 <h2>Current status</h2>
 
-<p>The latest version is 0.4.4, and we're still in beta.</p>
+<p>The latest version of the language is 0.5. It's still a beta, but in terms of functionalities and performance it's already complete, in the sense that everything that was planned for the 1.0 release has now been implemented. Basically, version 0.5 is version 1.0, only with more bugs.</p>
 
-<p>More in detail, the functional subset of the language seems now pretty solid. It has been used to write several non-trivial applications, the largest of which is the Cell compiler itself, and no major bugs have been found in almost two years now.</p>
+<p>More in detail, the functional subset of the language seems now pretty solid. It has been used to write several non-trivial applications, the largest of which is the Cell compiler itself, and no major bugs have been found in more than two years now.</p>
 
-<p>Relational automata are at this point almost complete, in the sense that all major features that are planned for version 1.0 have now been implemented, and performance is already pretty good. They still need more testing though: a lot of major features and under-the-hood improvements have been introduced with the last two releases, and extensive testing will have to wait until after version 0.5.</p>
+<p>Relational automata are feature-complete (again, only in the sense that all features planned for release 1.0 have already been implemented), and performance is already pretty good, but they still need more testing.</p>
 
 <p>Reactive automata are at this stage still experimental. Not only they haven't been tested anywhere enough but unlike their relational counterparts their design is still tentative and in a state of flux, and their implementation more complex. They're not expected to come out of beta until after version 1.0.</p>
-
-<p>The documentation on this website is another work in progress. It covers almost all the features of the language, but rational, design guidelines and examples are still incomplete at this stage. And there's no documentation for the standard library yet.</p>
 
 
 <h3>Road map</h3>
 
-<p>The next version of Cell, 0.5, will finish everything that is still left to do for 1.0, and will be the first release meant for actual use. Apart from a few minor syntactic changes, it will bring improvements to the interface of the generated code, a better support for debugging (right now when a message handler fails, it's hard to figure out exactly what went wrong) and a minimal standard library with documentation. It will also bring back the C++ and C# versions of the compiler (0.2, 0.3 and 0.4 have all been Java-only). Expect the Java code generator in October 2019 and the C# one shortly after that, while the C++ version will be released in the first half of the next year.</p>
+<p>In the coming month expect frequent minor releases (0.5.X) that will bring bug fixes, tweaks to the interface of the generated code, targeted performance improvements and an expanded standard library. Up-to-date versions of the C# and C++ code generators (which haven't been updated since 0.1) will also be released soon.</p>
 
 <p>Version 0.6 will be the released candidate for 1.0. It won't bring any new features, but it will focus exclusively on testing of relational automata (as explained before, the functional part of the language is already pretty solid, and reactive automata are expected to be still in beta for version 1.0). There's no release date yet.</p>
 
@@ -127,9 +125,14 @@
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

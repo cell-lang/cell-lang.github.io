@@ -121,9 +121,9 @@
   run : <span class='m'>StateM</span>, <span class='m'>Msg</span> -&gt; <span class='m'>StateM</span>;
 
 <span class='m'>StateM</span> run_all(<span class='m'>StateM</span> init_state, <span class='m'>Msg</span>* msgs) {
-  <span class='k'>state</span> = init_state;
+  state = init_state;
   <span class='k'>for</span> m &lt;- msgs
-    <span class='k'>state</span> = run(state, m);
+    state = run(state, m);
   <span class='k'>return</span> state;
 }
 
@@ -375,9 +375,14 @@
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

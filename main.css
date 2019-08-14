@@ -990,7 +990,7 @@ blockquote.posterous_long_quote {
 .highlight {
   border-radius: 10px;
   /*margin-left: 50px;*/
-  background: #eed;
+  background: #f8f8f2;
   /*font-size: 12;*/
 }
   .highlight section {
@@ -1049,6 +1049,10 @@ blockquote.posterous_long_quote {
   /* string */
   .highlight .s {
     color: #699;
+  }
+  /* literal */
+  .highlight .t {
+    color: #53A;
   }
   /* comment */
   .highlight .c {

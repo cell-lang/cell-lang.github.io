@@ -50,7 +50,7 @@
 <span class='k'>type</span> <span class='m'>SensorId</span> = sensor_id(<span class='m'>Nat</span>);
 
 <span class='k'>reactive</span> <span class='m'>ReadingErrors</span> {
-  <span class='k'>input</span>:
+  input:
     <span class='c'>// Whenever we have a batch of new sensor readings,</span>
     <span class='c'>// we feed it to <span class='inline-code'>ReadingErrors</span> as a map that associate</span>
     <span class='c'>// the sensor id with the result of the read operation.</span>
@@ -58,16 +58,16 @@
     <span class='c'>// the value <span class='inline-code'>x</span> while <span class='inline-code'>nothing</span> indicates a reading error</span>
     readings* : [<span class='m'>SensorId</span> -&gt; <span class='m'>Maybe</span>[<span class='m'>Float</span>]];
 
-  <span class='k'>output</span>:
+  output:
     error_counts : [<span class='m'>SensorId</span> -&gt; <span class='m'>NzNat</span>];
 
-  <span class='k'>state</span>:
+  state:
     <span class='c'>// Maps associating the id of every sensor with the total</span>
     <span class='c'>// number of its reading errors. Sensors that never</span>
     <span class='c'>// produced reading errors are not in the map</span>
     error_counts : [<span class='m'>SensorId</span> -&gt; <span class='m'>NzNat</span>] = [];
 
-  <span class='k'>rules</span>:
+  rules:
     <span class='c'>// Identifying the sensors that produced a reading error</span>
     error_sensors := [s : s, r &lt;- readings, r == nothing];
 
@@ -78,7 +78,7 @@
 
 [<span class='u'>T</span> -&gt; <span class='m'>NzNat</span>] increment_counters([<span class='u'>T</span> -&gt; <span class='m'>NzNat</span>] ctrs, [<span class='u'>T</span>] incr_keys) {
   incr_ctrs = [<span class='k'>if</span> incr_keys(k) <span class='k'>then</span> nz_nat(k+<span class='n'>1</span>) <span class='k'>else</span> k : k, n &lt;- ctrs];
-  new_ctrs = [k -&gt; <span class='n'>1</span> : k &lt;- incr_keys, <span class='k'>not</span> ctrs(k, *)];
+  new_ctrs = [k -&gt; <span class='n'>1</span> : k &lt;- incr_keys, <span class='k'>not</span> ctrs(k, _)];
   <span class='k'>return</span> incr_ctrs &amp; new_ctrs;
 }
 </section>
@@ -92,16 +92,16 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>ReadingErrors</span> {
-  <span class='k'>input</span>:
+  input:
     reading(<span class='m'>SensorId</span>)* : <span class='m'>Maybe</span>[<span class='m'>Float</span>];
 
-  <span class='k'>output</span>:
+  output:
     err_count(<span class='m'>SensorId</span>) : <span class='m'>Nat</span>;
 
-  <span class='k'>state</span>:
+  state:
     err_count(<span class='m'>SensorId</span>) : <span class='m'>Nat</span> = <span class='n'>0</span>;
 
-  <span class='k'>rules</span>:
+  rules:
     err_count(id) = err_count(id) + <span class='n'>1</span> <span class='k'>if</span> reading(id) == nothing;
 }
 </section>
@@ -119,13 +119,13 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>ReadingErrorsInLast10Minutes</span> {
-  <span class='k'>input</span>:
+  input:
     reading(<span class='m'>SensorId</span>)* : <span class='m'>Maybe</span>[<span class='m'>Float</span>];
 
-  <span class='k'>output</span>:
+  output:
     had_error(<span class='m'>SensorId</span>) : <span class='m'>Bool</span>;
 
-  <span class='k'>rules</span>:
+  rules:
     had_error(id) = <span class='k'>not</span> <span class='n'>600s</span> <span class='k'>since</span> reading(id) == nothing;
 }
 </section>
@@ -155,7 +155,7 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>MineController</span> {
-  <span class='k'>input</span>:
+  input:
     lower_sensor_submerged : <span class='m'>Bool</span>;
     upper_sensor_submerged : <span class='m'>Bool</span>;
 
@@ -165,7 +165,7 @@
 
     pump_is_working : <span class='m'>Bool</span>; <span class='c'>// New input</span>
 
-  <span class='k'>output</span>:
+  output:
     pump_on           : <span class='m'>Bool</span>;
     evacuation_needed : <span class='m'>Bool</span>;
     error_detected    : <span class='m'>Bool</span>;
@@ -183,10 +183,10 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>external</span> <span class='m'>Pump</span> {
-  <span class='k'>input</span>:
+  input:
     on : <span class='m'>Bool</span>;
 
-  <span class='k'>output</span>:
+  output:
     is_working : <span class='m'>Bool</span>;
 }
 </section>
@@ -198,7 +198,7 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>MineController</span> {
-  <span class='k'>input</span>:
+  input:
     lower_sensor_submerged : <span class='m'>Bool</span>;
     upper_sensor_submerged : <span class='m'>Bool</span>;
 
@@ -209,7 +209,7 @@
     <span class='c'>// Replaced by <span class='inline-code'>pump.is_working</span></span>
     <span class='c'>// pump_is_working : Bool;</span>
 
-  <span class='k'>output</span>:
+  output:
     evacuation_needed : <span class='m'>Bool</span>;
     error_detected    : <span class='m'>Bool</span>;
 
@@ -218,7 +218,7 @@
 
   ...
 
-  <span class='k'>rules</span>:
+  rules:
     <span class='c'>// All signals coming from and going to the pump are now</span>
     <span class='c'>// grouped inside <span class='inline-code'>pump</span>: <span class='inline-code'>pump.on</span>, <span class='inline-code'>pump.is_working</span></span>
     pump = <span class='m'>Pump</span>(
@@ -250,7 +250,7 @@ on = mine_controller_instance.pump.on;
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>MineController</span> {
-  <span class='k'>input</span>:
+  input:
     lower_sensor_submerged : <span class='m'>Bool</span>;
     upper_sensor_submerged : <span class='m'>Bool</span>;
 
@@ -261,7 +261,7 @@ on = mine_controller_instance.pump.on;
     <span class='c'>// Internally generated by the compiler during the rewrite step</span>
     pump.is_working : <span class='m'>Bool</span>;
 
-  <span class='k'>output</span>:
+  output:
     evacuation_needed : <span class='m'>Bool</span>;
     error_detected    : <span class='m'>Bool</span>;
 
@@ -270,7 +270,7 @@ on = mine_controller_instance.pump.on;
 
   ...
 
-  <span class='k'>rules</span>:
+  rules:
     <span class='c'>// Internally removed by the compiler during the rewrite step</span>
     <span class='c'>// pump = Pump;</span>
 
@@ -307,10 +307,10 @@ on = mine_controller_instance.pump.on;
 
 <figure class="highlight">
 <section>
-<pre><code><span class='k'>state</span>:
+<pre><code>state:
   needs_draining : <span class='m'>Bool</span> = upper_sensor_submerged;
 
-<span class='k'>rules</span>:
+rules:
   needs_draining = <span class='k'>true</span>  <span class='k'>when</span> upper_sensor_submerged;
   needs_draining = <span class='k'>false</span> <span class='k'>when</span> <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
                               <span class='k'>not</span> upper_sensor_submerged;
@@ -322,7 +322,7 @@ on = mine_controller_instance.pump.on;
 
 <figure class="highlight">
 <section>
-<pre><code><span class='k'>rules</span>:
+<pre><code>rules:
   draining_switch = <span class='m'>Switch</span>(
     switch_on  = upper_sensor_submerged,
     switch_off = <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
@@ -349,18 +349,18 @@ on = mine_controller_instance.pump.on;
 <figure class="highlight">
 <section>
 <pre><code><span class='k'>reactive</span> <span class='m'>RangeSwitch</span> {
-  <span class='k'>input</span>:
+  input:
     value : <span class='m'>Int</span>;
 
-  <span class='k'>output</span>:
+  output:
     on      : <span class='m'>Bool</span>;
     counter : <span class='m'>Int</span>;
 
-  <span class='k'>state</span>:
+  state:
     on      : <span class='m'>Bool</span> = value &gt; max_value;
     counter : <span class='m'>Int</span> = <span class='n'>0</span>;
 
-  <span class='k'>rules</span>:
+  rules:
     on = <span class='k'>true</span>  <span class='k'>when</span> value &gt; max_value;
     on = <span class='k'>false</span> <span class='k'>when</span> value &lt; min_value;
 
@@ -521,9 +521,14 @@ on = mine_controller_instance.pump.on;
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

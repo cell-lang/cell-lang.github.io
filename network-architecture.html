@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Network architecture</h2>
+
+<p>In this chapter we're going to provide a bird's eye view of a family of possible network architectures for Cell that are specifically designed to implement client/server systems. We'll start with a very simple and limited one, and gradually make it more complex and capable. None of this has been implemented yet, and in fact work on this part of the language will only start after version 0.6 has been released, so this is just a design document at present.</p>
+
+<p>The goal of this family of architectures is to automate much of the drudgery involved in implementing distributed software. With conventional languages and tools, creating client-server applications is significantly more challenging than implementing local ones with equivalent functionalities. It involves a lot of extra work to write code that is at the same time repetitive and error prone. But much of that extra effort is unnecessary, as it involves functionality (like for example transferring and synchronizing information between clients and servers, persistence, error handling and retry logic) that can be automated with a properly designed network architecture.</p>
+
+<p>Here the developer will be expected to implement the same functionality that would be required for a local, non-distributed application, plus another piece of code whose purpose is to synchronize concurrent changes to data that is replicated at different network nodes (we'll examine the details later, but for now think of it as a programmatic version of the <code class='inline-code-box'><span class='inline-code'>rebase</span></code> operation in a source control system like <code class='inline-code-box'><span class='inline-code'>git</span></code>), and everything else will be the responsibility of the compiler, which will generate the entire server code, and automatically implement all the communication between server and client. Code for client and server can be generated in different languages if need be, and it will be actually possible to generate code for the client in multiple languages, so as to target multiple client platforms.</p>
+
+
+<h3>The basic idea</h3>
+
+<p>Let's start with the simplest possible type of network application, one where the various users of the system do not interact with one another. An example could be the website of an online retailer, which allows users to browse the product catalog and to place orders and check their status, or single player online games that allow the same game to be played from multiple devices which must therefore be kept synchronized.</p>
+
+<p>One thing all these cases have in common is that there's a bunch of per-user data that needs to be persisted and shared between the server and one or more clients. In the case of the online retailer, for example, that may include a user's personal information, their shipping addresses, the contents of their shopping cart and the details of all their orders. For a single player online game on the other hand this per-user state will mostly consists of the persistent part of the game state. Applications like these may end up dealing with huge amounts of data if the system has a large number of users, but the amount of data that is specific to each user is often reasonably small.</p>
+
+<p>In Cell you would start by creating a relational automaton that contains the data that is specific to each particular user, with all the logic/code that is associated with it. Its instances will be mostly independent of one another, in the sense that most of the code we'll be writing will operate on a single instance at a time. Moreover, partitioning the data in per-user chunks of relatively small size will make it feasible to replicate each individual chunk across several network nodes. This is what such a system would look like in its simplest form, if we restrict our attention to a single user:</p>
+
+<p><div><img src='network-architecture-A.svg' style='width:100%'></div></p>
+
+<p>Here we have the server and two clients, A and B, that are being used by the same user to access the online application. The small boxes labeled <code class='inline-code-box'><span class='inline-code'>S</span></code> are the replicas of the relational automaton instance that contains the "private" data of the user, and the master copy is the one on the server. The server is charged with persisting the state of each automaton instance. In order to do so, it will rely on an external low-level key/value store, that is not shown in the picture. The clients will also locally persist their own copy of the data, but even if the latter is deleted or lost they will always be able to re-download it from the server. The server will manage the data of all users, and it can consist of a single machine or a cloud.</p>
+
+<p>The first time a client connects to the server it will download the serialized state of the automaton instance it's interested in. If that instance does not exist yet the server will automatically create it in its default state. Once the data has been downloaded a local replica of <code class='inline-code-box'><span class='inline-code'>S</span></code> can finally be instantiated.</p>
+
+<p>When the system is at rest, all replicas of <code class='inline-code-box'><span class='inline-code'>S</span></code> will be in exactly the same state, and the system will be idle, just waiting for the next message to come in. A message can be sent at any time to any of the replicas of <code class='inline-code-box'><span class='inline-code'>S</span></code>. If the subsequent update is successful, it will be automatically and transparently propagated across the whole system by transmitting a copy the message (which is just a value, that is, a piece of data) to each of the network nodes, where it will be processed by the local replica. If the update originates at one of the client, it will be transmitted to the server first, and from there to the other clients. Since updates in Cell are deterministic this is enough to keep the replicas synchronized, as long as there are no concurrency issue (we'll see how to deal with concurrency later).</p>
+
+<p>The server will be responsible for saving the state of the automaton instances when they're not being used, and for reloading them from persistent storage when they are needed again. The whole process will be transparent to the clients, and from the outside it will look like the instances are always in memory. The server will also keep a history of the messages received by each instance, which will remain always available to the clients that need to re-synchronize, so that if a client goes offline for some time it will always be able to bring the local replica up to date by downloading and processing locally the last messages, without having to re-download the entire state again.</p>
+
+
+<h3>Generalizing the architecture</h3>
+
+<p>In the previous paragraph we assumed that there's a one-to-one correspondence between automaton instances and user, with each instance being "private" to that particular user. There's of course no particular reason for those limitations.</p>
+
+<p>A user's data could be split into several different automata: in the case the online retailer, for example, we could have an automaton for things like name, shipping addresses and content of the shopping cart, one for open or recent orders, and another one that contains the entire order history. Splitting a user's data into smaller chunks would only make it easier to replicate the corresponding automata across the network.</p>
+
+<p>There's also no reason why an automaton instance cannot be accessed by multiple users simultaneously. Even in the online retailer example a user's data would have to be accessed inside the company by the shipping team, or the customer service team, possibly at the same time as the user. In a multiplayer game, a collaborative document editor or a chat app that will obviously be the norm rather then the exception.</p>
+
+<p>We'll also have to account for the fact that there might be automata that cannot be replicated and have to stay on the server, either because they contain a large amount of data that cannot be easily partitioned, or because we want to restrict access to the data they contain because of security reasons.</p>
+
+<p>We'll discuss all that (and more) in detail later. But first, let's talk about concurrency.</p>
+
+
+<h3>Concurrency</h3>
+
+<p>Everything we've seen so far can be provided automatically and transparently by the compiler: there's no need for the developer to implement the data exchange between client and server, the error handling logic or to manually take data out of a database and put it back in. Up to this point, the implementation of a client/server application does not require any extra work on the part of the developer compared to a local one.</p>
+
+<p>There's one issue though that cannot be hidden by a network architecture like the one we've been discussing and requires the intervention of the developer: concurrency. The problem arises when two clients receive a message at more or less the same time, that is, the second of the two messages is received before the update triggered by the first one has time to propagate through the system. Here's an example:</p>
+
+<p><div><img src='network-architecture-B.svg' style='width:100%'></div></p>
+
+<p>Here the two local replicas of <code class='inline-code-box'><span class='inline-code'>S</span></code> at clients A and B are initially synchronized (that is, they are in the same initial state S<sub>0</sub>) but they are sent different messages (M<sub>a</sub> and M<sub>b</sub> respectively) at more or less the same time, and both updates are successful. At this stage though neither of the two updates is committed yet, because the master replica of <code class='inline-code-box'><span class='inline-code'>S</span></code> is the one on the server: no update is final until it has been processed by the server.</p>
+
+<p>So the next step for both clients is to transmit their message to the server, so as to complete the (distributed) transaction. Let's say client A gets there first and M<sub>a</sub> is appended (and committed) to the server's message history. When client B tries to synchronize its own message history (which contains M<sub>b</sub>) with the server's one, the operation will fail because the two histories have now diverged.</p>
+
+<p>This is exactly the same thing that happens with a source control system like <code class='inline-code-box'><span class='inline-code'>git</span></code> when an attempt to push some local commits to the server fails because since the last pull someone else pushed their own commits, and now the local and remote branches have diverged.</p>
+
+<p>So the first thing for client B to do now is to roll back the update triggered by M<sub>b</sub> (which can be done efficiently in Cell), download M<sub>a</sub> from the server and send it to its local replica. Once that's done all the replicas will be again in the same state (let's call this new state S<sub>1</sub>).</p>
+
+<p>What should now client B do with M<sub>b</sub>? Just discarding it is unacceptable, for obvious reasons. But trying to re-send it wouldn't work either, at least not in general: if the updates triggered by M<sub>a</sub> and M<sub>b</sub> touch the same data that could lead to (among other things) race conditions and data losses.</p>
+
+<p>Since the system cannot provide a way to reconcile concurrent updates that is both general and sound, the only acceptable thing to do here is to have the developer specify explicitly how the conflict ought to be resolved.</p>
+
+<p>To that purpose, the developer will have to implement a function (conceptually, at least: the exact mechanism will be a bit different) that takes as input S<sub>0</sub>, M<sub>a</sub> and M<sub>b</sub> and returns a list of messages (let's call it M<sub>s</sub>) that are meant to replace M<sub>b</sub>. At this point M<sub>b</sub> will be discarded and the messages in M<sub>s</sub> will be sent to <code class='inline-code-box'><span class='inline-code'>S</span></code> (which is now in state S<sub>1</sub>).</p>
+
+<p>This way the developer will be able to produce any desired behavior. If for example they wanted to just discard M<sub>b</sub>, all they would have to do is to return an empty list, and if they instead wanted to just re-send it, which is an acceptable thing to do when M<sub>a</sub> and M<sub>b</sub> don't touch the same data, they would return a list whose only element is M<sub>b</sub>.</p>
+
+<p>The trickiest case to handle is when M<sub>a</sub> and M<sub>b</sub> try to update the same pieces of data, or, more generally, when they somehow interfere with each other. This is the case where the developer will have to implement some application-specific logic for combining the two updates. We'll see an example of that in the next paragraph.</p>
+
+
+<h3>Building an online spreadsheet</h3>
+
+<p>In order to illustrate how the proposed mechanism will work, we'll now walk through a simple example. Let's say we want to create an online spreadsheet, which will allow different users to simultaneously work on the same data. We'll start by creating a local, single-user version of (a small piece of) the application, and then turn it into a multi-user, distributed one that allows different users to concurrently edit the same sheets, and also to work offline. In super-simplified form, our data structures could like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Data cells may contain numbers, dates or strings</span>
+<span class='c'>// Calculated cells will contain a formula</span>
+<span class='k'>type</span> <span class='m'>Content</span> = <span class='m'>Int</span>, <span class='m'>Float</span>, <span class='m'>Date</span>, <span class='m'>String</span>, <span class='m'>Formula</span>;
+
+<span class='c'>// Every cell is identified by row and column</span>
+<span class='k'>type</span> <span class='m'>CellId</span> = (<span class='m'>Nat</span>, <span class='m'>Nat</span>);
+
+<span class='c'>// An individual sheet</span>
+<span class='k'>schema</span> <span class='m'>Sheet</span> {
+  <span class='c'>// The content of cell #1 is #2</span>
+  cell(<span class='m'>CellId</span>, <span class='m'>Content</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+}
+
+<span class='c'>// Updating the content of a cell</span>
+<span class='m'>Sheet</span>.set_cell_content(row: <span class='m'>Nat</span>, col: <span class='m'>Nat</span>, content: <span class='m'>Content</span>) {
+  id = (<span class='k'>this</span>.row, <span class='k'>this</span>.column);
+  <span class='k'>update</span> cell(id, <span class='k'>this</span>.content);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The <code class='inline-code-box'><span class='inline-code'>Sheet</span></code> automaton represents an individual sheet. Our system will contain any number of its instances, each of them identified by a key, which can be any arbitrary Cell value. Each entry in <code class='inline-code-box'><span class='inline-code'>Sheet</span></code>'s only relation variable <code class='inline-code-box'><span class='inline-code'>cell(..)</span></code>, stores the row, column and content of an individual Cell.</p>
+
+<p>How can we turn this local application into a distributed one? First of all, we need to decide what should happen when two different users try to edit the same cell of the same spreadsheet at the same time. Here there are at least two main use cases we need to deal with.</p>
+
+<p>The simplest one is when the users are collaboratively editing the sheet in real time. Imagine for example that (using the terminology of the previous paragraph) users A and B try to edit the same cell (let's say it's <code class='inline-code-box'><span class='inline-code'>(5, 2)</span></code>), whose initial content is the string <code class='inline-code-box'><span class='inline-code'>"abc"</span></code>. Furthermore, let's say user A types in a <code class='inline-code-box'><span class='inline-code'>'d'</span></code>, while user B types in an <code class='inline-code-box'><span class='inline-code'>'e'</span></code>. That would result in user A's replica of <code class='inline-code-box'><span class='inline-code'>S</span></code> being sent the message M<sub>a</sub> = <code class='inline-code-box-long'><span class='inline-code'>set_cell_content(row: 5, col: 2, content: "abcd")</span></code> and B's replica M<sub>b</sub> = <code class='inline-code-box-long'><span class='inline-code'>set_cell_content(row: 5, col: 2, content: "abce")</span></code>. As before we'll assume that A manages to commit the update, and that B has to resolve the editing conflict. In a case like this, it's acceptable to just discard M<sub>b</sub>: user B might loose the last few seconds of work, but that's not a big deal. So our rebase function would look more or less like this (note that this is just pseudocode: the actual syntax hasn't been finalized yet, but it will certainly be different):</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Rebasing <span class='inline-code'>msg_b</span> on top of <span class='inline-code'>msg_a</span></span>
+<span class='m'>Sheet</span> <span class='k'>rebase</span> msg_a msg_b {
+  <span class='c'>// If <span class='inline-code'>msg_a</span> and <span class='inline-code'>msg_b</span> affect the same cell,</span>
+  <span class='c'>// we just discard the latter.</span>
+  <span class='k'>if</span> msg_a.row == msg_b.row <span class='k'>and</span> msg_a.col == msg_b.col
+    <span class='k'>return</span> ();
+
+  <span class='c'>// If there's no conflict, we just send <span class='inline-code'>msg_b</span> unchanged</span>
+  <span class='k'>return</span> (msg_b);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>In order to make the application more user-friendly, we could decide to highlight the cells that have been recently changed by other users. To that purpose, we could store for every cell the list of clients who updated it, and the time of their last update. The UI would then use that information to somehow show the activity of the other concurrent users:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>Sheet</span> {
+  <span class='c'>// The content of cell #1 is #2</span>
+  cell(<span class='m'>CellId</span>, <span class='m'>Content</span>) [<span class='k'>key</span>: <span class='n'>0</span>];
+
+  <span class='c'>// The time of the last edit made by client #2 to cell #1 was #3</span>
+  last_edited(<span class='m'>CellId</span>, <span class='m'>ClientId</span>, <span class='m'>Time</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+
+  <span class='c'>// The time of the last discarded edit made by client #2 to cell #1 was #3</span>
+  last_discarded(<span class='m'>CellId</span>, <span class='m'>ClientId</span>, <span class='m'>Time</span>) [<span class='k'>key</span>: <span class='n'>0</span>:<span class='n'>1</span>];
+}
+
+<span class='c'>// Updating the content of a cell</span>
+<span class='m'>Sheet</span>.set_cell_content(row: <span class='m'>Nat</span>, col: <span class='m'>Nat</span>, content: <span class='m'>Content</span>, client: <span class='m'>ClientId</span>, time: <span class='m'>Time</span>) {
+  id = (<span class='k'>this</span>.row, <span class='k'>this</span>.col);
+  <span class='k'>update</span> cell(id, <span class='k'>this</span>.content), last_edited(id, <span class='k'>this</span>.client, <span class='k'>this</span>.time);
+}
+
+<span class='c'>// Recording the fact that an edit was discarded</span>
+<span class='m'>Sheet</span>.edit_was_discarded(row: <span class='m'>Nat</span>, col: <span class='m'>Nat</span>, client: <span class='m'>ClientId</span>, time: <span class='m'>Time</span>) {
+  id = (<span class='k'>this</span>.row, <span class='k'>this</span>.col);
+  <span class='k'>update</span> last_discarded(id, <span class='k'>this</span>.client, <span class='k'>this</span>.time);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>In the above code we're also keeping track of which cells lost data, so that the UI can somehow highlight those cells as well. Our rebase function would now look like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Sheet</span> <span class='k'>rebase</span> msg_a msg_b {
+  <span class='k'>if</span> msg_a.row == msg_b.row <span class='k'>and</span> msg_a.col == msg_b.col {
+    <span class='c'>// Keeping track of fact that we discarded an edit</span>
+    msg = edit_was_discarded(
+      row:    msg_b.row,
+      col:    msg_b.col,
+      client: msg_b.client,
+      time:   msg_b.time
+    )
+    <span class='k'>return</span> (msg);
+  }
+
+  <span class='k'>return</span> (msg_b);
+}
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Working offline</h3>
+
+<p>Dealing with concurrency becomes significantly more complex if we decide to support offline work. In this case, we cannot afford to just discard M<sub>b</sub> whenever a conflict arises: if a user spends a significant amount of time working offline, they wouldn't be too happy to loose all their work just because another user made a change to the same sheet in the meantime.</p>
+
+<p>One possible approach here is to discard M<sub>b</sub> only if it's a very recent change, that is, one made in the last few seconds. If it's not, we could just keep both versions of the content, and let users reconcile them as they see fit. In order to do so, we would have to add a new case to <code class='inline-code-box'><span class='inline-code'>Content</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>BasicContent</span>       = <span class='m'>Int</span>, <span class='m'>Float</span>, <span class='m'>Date</span>, <span class='m'>String</span>, <span class='m'>Formula</span>;
+<span class='k'>type</span> <span class='m'>UnresolvedContent</span>  = unresolved_content([+<span class='m'>ClientId</span> -&gt; <span class='m'>BasicContent</span>]);
+<span class='k'>type</span> <span class='m'>Content</span>            = <span class='m'>BasicContent</span>, <span class='m'>UnresolvedContent</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>A cell can now be flagged as "unresolved": that means that it was edited concurrently by different clients, and one of them is now expected to manually reconcile those conflicting changes. The UI would have to highlight any unresolved cell, and provide a mechanism for the user to visualize the "diverged" values and to somehow merge them. The rebase function would now look like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Sheet</span> <span class='k'>rebase</span> msg_a msg_b {
+  <span class='k'>if</span> msg_a.row == msg_b.row <span class='k'>and</span> msg_a.col == msg_b.col {
+    <span class='c'>// Retrieving the current time</span>
+    now = <span class='m'>Now</span>();
+
+    <span class='c'>// If the change is very recent we can afford to discard it</span>
+    <span class='k'>if</span> is_very_recent(msg_b.time, now) {
+      msg = edit_was_discarded(
+        row:    msg_b.row,
+        col:    msg_b.col,
+        client: msg_b.client,
+        time:   msg_b.time
+      )
+      <span class='k'>return</span> (msg);
+    }
+
+    <span class='c'>// Otherwise we flag the cell as unresolved,</span>
+    <span class='c'>// and we keep both versions of the content</span>
+    content = merge(
+      msg_a.content,
+      msg_a.client,
+      msg_b.content,
+      msg_b.client
+    );
+
+    msg = set_cell_content(
+      row:      msg_b.row,
+      col:      msg_b.col,
+      content:  content,
+      client:   msg_b.client,
+      time:     msg_b.time
+    );
+
+    <span class='k'>return</span> (msg);
+  }
+
+  <span class='k'>return</span> (msg_b);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>This is how the <code class='inline-code-box'><span class='inline-code'>merge(..)</span></code> function could be implemented:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Content</span> merge(<span class='m'>BasicContent</span> c1, <span class='m'>ClientId</span> id1, <span class='m'>BasicContent</span> c2, <span class='m'>ClientId</span> id2) =
+  unresolved_content([
+    id1 -&gt; c1 <span class='k'>if</span> id1 != id2,
+    id2 -&gt; c2
+  ]);
+
+<span class='m'>Content</span> merge(<span class='m'>UnresolvedContent</span> c1, <span class='m'>ClientId</span> id1, <span class='m'>BasicContent</span> c2, <span class='m'>ClientId</span> id2) =
+  unresolved_content(
+    [id -&gt; c : id c &lt;- untag(c1), id != id2] &amp; [id2 -&gt; c2]
+  );
+
+<span class='c'>// No need to handle the case where <span class='inline-code'>msg_b.content</span> is of type</span>
+<span class='c'>// <span class='inline-code'>UnresolvedContent</span>, as this is not supposed to happen: any</span>
+<span class='c'>// local edit would lead to the content being of type <span class='inline-code'>BasicContent</span></span>
+<span class='c'>// Only the rebase function can produce a value of type <span class='inline-code'>UnresolvedContent</span></span>
+<span class='m'>Content</span> merge(<span class='m'>Content</span> c1, <span class='m'>ClientId</span> id1, <span class='m'>UnresolvedContent</span> c2, <span class='m'>ClientId</span> id2) =
+  <span class='k'>undefined</span>;
+</section>
+</figure>
+</code></pre>
+
+<p>In this particular case, a proper rebasing was necessary only when working offline, but in general it will be required for online activity as well. An example of that is a chat app: users will be sending messages to the same chat group or forum at the same time, and the rebase function will have to ensure that no message is ever lost. A more complex example is a multiplayer game, which might require a sophisticated way of combining the concurrent actions of different players.</p>
+
+
+
+<h2>To be continued...</h2>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
+              </ul>
+            </li>
+            <li>Relational Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
+              </ul>
+            </li>
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

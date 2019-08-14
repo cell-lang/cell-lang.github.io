@@ -203,7 +203,7 @@
 (left: -<span class='n'>1.2</span>, right: <span class='n'>7.5</span>)
 
 <span class='c'>// Same as [:x -&gt; 15, :y -&gt; 4, :z -&gt; -7]</span>
-<span class='c'>// and [:x, 15; :y, 4; :z -&gt; -7]</span>
+<span class='c'>// and [:x, 15; :y, 4; :z, -7]</span>
 (x: <span class='n'>15</span>, y: <span class='n'>4</span>, z: -<span class='n'>7</span>)
 
 <span class='c'>// Same as [:ro -&gt; 2.0, :theta -&gt; 1.5708]</span>
@@ -313,16 +313,16 @@ string(<span class='n'>72</span>, <span class='n'>105</span>, <span class='n'>32
 
 <figure class="highlight">
 <section>
-<pre><code><span class='n'>`a`</span>  == <span class='n'>97</span>
-<span class='n'>`Z`</span>  == <span class='n'>90</span>
-<span class='n'>`4`</span>  == <span class='n'>52</span>
-<span class='n'>`\n`</span> == <span class='n'>10</span>
-<span class='n'>`\t`</span> == <span class='n'>9</span>
-<span class='n'>`\\`</span> == <span class='n'>92</span>
-<span class='n'>`\``</span> == <span class='n'>96</span>
-<span class='n'>`∞`</span>  == <span class='n'>8734</span>
-<span class='n'>`€`</span>  == <span class='n'>8364</span>
-<span class='n'>`海`</span> == <span class='n'>28023</span>
+<pre><code><span class='t'>`a`</span>  == <span class='n'>97</span>
+<span class='t'>`Z`</span>  == <span class='n'>90</span>
+<span class='t'>`4`</span>  == <span class='n'>52</span>
+<span class='t'>`\n`</span> == <span class='n'>10</span>
+<span class='t'>`\t`</span> == <span class='n'>9</span>
+<span class='t'>`\\`</span> == <span class='n'>92</span>
+<span class='t'>`\``</span> == <span class='n'>96</span>
+<span class='t'>`∞`</span>  == <span class='n'>8734</span>
+<span class='t'>`€`</span>  == <span class='n'>8364</span>
+<span class='t'>`海`</span> == <span class='n'>28023</span>
 </section>
 </figure>
 </code></pre>
@@ -331,7 +331,7 @@ string(<span class='n'>72</span>, <span class='n'>105</span>, <span class='n'>32
 
 <figure class="highlight">
 <section>
-<pre><code><span class='a'>:string</span>((<span class='n'>`H`</span>, <span class='n'>`i`</span>, <span class='n'>` `</span>, <span class='n'>`t`</span>, <span class='n'>`h`</span>, <span class='n'>`e`</span>, <span class='n'>`r`</span>, <span class='n'>`e`</span>, <span class='n'>`!`</span>, <span class='n'>`\n`</span>))
+<pre><code><span class='a'>:string</span>((<span class='t'>`H`</span>, <span class='t'>`i`</span>, <span class='t'>` `</span>, <span class='t'>`t`</span>, <span class='t'>`h`</span>, <span class='t'>`e`</span>, <span class='t'>`r`</span>, <span class='t'>`e`</span>, <span class='t'>`!`</span>, <span class='t'>`\n`</span>))
 </section>
 </figure>
 </code></pre>
@@ -343,21 +343,21 @@ string(<span class='n'>72</span>, <span class='n'>105</span>, <span class='n'>32
 
 <figure class="highlight">
 <section>
-<pre><code>`1970-01-01` == <span class='a'>:date</span>(<span class='n'>0</span>)
-`1970-01-02` == <span class='a'>:date</span>(<span class='n'>1</span>)
-`1969-12-31` == <span class='a'>:date</span>(-<span class='n'>1</span>)
-`1582-10-15` == <span class='a'>:date</span>(-<span class='n'>141427</span>) <span class='c'>// First day of the Gregorian calendar</span>
-`2000-01-01` == <span class='a'>:date</span>(<span class='n'>10957</span>)
+<pre><code><span class='t'>`1970-01-01`</span> == <span class='a'>:date</span>(<span class='n'>0</span>)
+<span class='t'>`1970-01-02`</span> == <span class='a'>:date</span>(<span class='n'>1</span>)
+<span class='t'>`1969-12-31`</span> == <span class='a'>:date</span>(-<span class='n'>1</span>)
+<span class='t'>`1582-10-15`</span> == <span class='a'>:date</span>(-<span class='n'>141427</span>) <span class='c'>// First day of the Gregorian calendar</span>
+<span class='t'>`2000-01-01`</span> == <span class='a'>:date</span>(<span class='n'>10957</span>)
 
-`1970-01-01 00:00:00` == <span class='a'>:time</span>(<span class='n'>0</span>)
-`1970-01-02 12:00:00` == <span class='a'>:time</span>(<span class='n'>129600000000000</span>)
-`1969-12-31 23:59:59` == <span class='a'>:time</span>(-<span class='n'>1000000000</span>)
-`1999-12-31 23:59:59` == <span class='a'>:time</span>(<span class='n'>946684799000000000</span>)
+<span class='t'>`1970-01-01 00:00:00`</span> == <span class='a'>:time</span>(<span class='n'>0</span>)
+<span class='t'>`1970-01-02 12:00:00`</span> == <span class='a'>:time</span>(<span class='n'>129600000000000</span>)
+<span class='t'>`1969-12-31 23:59:59`</span> == <span class='a'>:time</span>(-<span class='n'>1000000000</span>)
+<span class='t'>`1999-12-31 23:59:59`</span> == <span class='a'>:time</span>(<span class='n'>946684799000000000</span>)
 
-`1970-01-01 00:00:00.000000001` == <span class='a'>:time</span>(<span class='n'>1</span>) <span class='c'>// 1ns after the UNIX Epoc</span>
+<span class='t'>`1970-01-01 00:00:00.000000001`</span> == <span class='a'>:time</span>(<span class='n'>1</span>) <span class='c'>// 1ns after the UNIX Epoc</span>
 
-`1970-01-01 00:00:00.002` == <span class='a'>:time</span>(<span class='n'>2000000</span>) <span class='c'>// 2ms after the UNIX Epoc</span>
-`1969-12-31 23:59:59.995` == <span class='a'>:time</span>(-<span class='n'>5000000</span>) <span class='c'>// 5ms before the UNIX Epoc</span>
+<span class='t'>`1970-01-01 00:00:00.002`</span> == <span class='a'>:time</span>(<span class='n'>2000000</span>) <span class='c'>// 2ms after the UNIX Epoc</span>
+<span class='t'>`1969-12-31 23:59:59.995`</span> == <span class='a'>:time</span>(-<span class='n'>5000000</span>) <span class='c'>// 5ms before the UNIX Epoc</span>
 </section>
 </figure>
 </code></pre>
@@ -373,13 +373,13 @@ string(<span class='n'>72</span>, <span class='n'>105</span>, <span class='n'>32
 
 <p>Now, many of the design goals of Cell depend on it being a very data-oriented language, in the sense of having a simple, uniform, human-readable and ideally unique representation for (almost) any piece of information. And exposing all these implementation details (list vs rope vs array vs something else) obviously goes against those goals. So the task of choosing the actual implementation at any given time has to necessarily fall on the compiler and the language runtime, and the programmer can control it only indirectly by carefully choosing (if need be) which operations to use in his or her algorithms.</p>
 
-<p>Sequences, for instance, are currently implemented as arrays, and consequently support fast random access and (functional) insertion at the end. But in the future the runtime will make use of either arrays or ropes, and will be able to switch dynamically between these two forms, depending on how these data structures are used. For example, if you are creating a long sequence by recursively concatenating smaller ones, the runtime might choose to represent them as ropes, in order to make concatenation O(1). But the moment you start accessing its elements by index, it might rearrange the content of the sequence into an array, in order to support fast random access. If you wanted, for example, to induce the runtime to use only arrays (for whatever reason), one way to do so would be to build that long sequence by only appending new elements at the end, an operation that can be performed efficiently with arrays.</p>
+<p>Sequences, for instance, are currently implemented as arrays, and consequently support fast random access and (functional) insertion at the end. But in the future the runtime will make use of either arrays or ropes, and will be able to switch dynamically between these two forms, depending on how these data structures are used. For example, if you are creating a long sequence by recursively concatenating smaller ones, the runtime might choose to represent them as ropes, in order to make concatenation <strong>O(1)</strong>. But the moment you start accessing its elements by index, it might rearrange the content of the sequence into an array, in order to support fast random access. If you wanted, for example, to induce the runtime to use only arrays (for whatever reason), one way to do so would be to build that long sequence by only appending new elements at the end, an operation that can be performed efficiently with arrays.</p>
 
 <p>That doesn't mean of course that you cannot implement you own data structures on top of the existing ones, if the circumstances require it. You could, for example, define a your own set or map types using the language provided types as primitives, if the native versions don't meet your needs, and there are indeed times when you would actually have to do so. But in all other cases, letting the compiler/runtime do the low-level work will make your code simpler, and your data easier to inspect and manipulate.</p>
 
 <p>Another data structure (or, rather, set of data structures) that benefits greatly from a clear distinction between logical definition and physical implementation is records. Remember that records in Cell are just a special case of maps, which in turn are just a special case of binary relations. This provides the ability to treat records as generic maps and, for example, to merge them (in a type-safe way: more on this in another chapter) or to build them up dynamically. On the other hand, though, representing records as maps at the physical level is nowhere as efficient as using ad-hoc data structures. So the compiler creates (subject to a number of conditions that are discussed elsewhere) specific low-level data structures for all record types that are explicitly declared in your code, which are just as efficient as structs or classes in languages like C or Java, and transparently switches between the optimized and generic representations whenever needed.</p>
 
-<p>Similar considerations apply to all other collection types as well. Sets and maps can be implemented as sorted arrays, balanced binary trees or a combination of the two. Sorted arrays are used when creating a set or map in just one go, but when you try to insert or remove an element or a key/value pair in an existing set or map, an operation that cannot be supported efficiently with arrays, the language switches to a hybrid representation that combines arrays and binary trees, so that such operations can be performed efficiently in O(log(N)).</p>
+<p>Similar considerations apply to all other collection types as well. Sets and maps can be implemented as sorted arrays, balanced binary trees or a combination of the two. Sorted arrays are used when creating a set or map in just one go, but when you try to insert or remove an element or a key/value pair in an existing set or map, an operation that cannot be supported efficiently with arrays, the language switches to a hybrid representation that combines arrays and binary trees, so that such operations can be performed efficiently in <strong>O(log(N))</strong>.</p>
 
 <p>As we'll see in another chapter, relational automata can contain "mutable" relation variables. Those variables contain, conceptually speaking, ordinary relation values, but they are restricted in the way they can be used, so that they can be updated in place without compromising the functional nature of the language. In that case, the compiler uses a completely different implementation approach, in order to support both efficient insertion of new tuples and deletion of existing ones.</p>
 
@@ -479,9 +479,14 @@ string(<span class='n'>72</span>, <span class='n'>105</span>, <span class='n'>32
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

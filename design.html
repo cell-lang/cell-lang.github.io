@@ -104,7 +104,7 @@
 
 <p>The overarching goal of the above guidelines is to avoid inconsistencies in your dataset, which are dangerous because they almost invariably cause you code to misbehave.</p>
 
-<p>A piece of information that is duplicated, that is, stored in multiple locations, opens the door to inconsistencies: if when that particular value changes some but not all locations are updated, you'll end with an inconsistent dataset. Duplicating data is a common practice in low-level programming paradigms like OOP, and when it's done for a reason it's usually done for convenience: it may in many cases save you the trouble of traversing an object graph in search of the information you need, or even building the required access paths into it in the first place. In other cases it may be done for performance, as is for example the case with the practice of denormalizing data in relational databases in order to increase access speed. But I'm not aware of any reason to do that in Cell schemas: the data stored inside a relational automata is always easy to access as there's no object graph to traverse, there aren't artificial barriers like encapsulation either, and the particular data structures used to implement mutable relation variables don't require any denormalization to improve performance.</p>
+<p>A piece of information that is duplicated, that is, stored in multiple locations, opens the door to inconsistencies: if when that particular value changes some but not all locations are updated, you'll end with an inconsistent dataset. Duplicating data is a common practice in low-level programming paradigms like OOP, and when it's done for a reason it's usually done for convenience: it may in many cases save you the trouble of traversing an object graph in search of the information you need, or even building the required access paths into it in the first place. In other cases it may be done for performance, as is for example the case with the practice of denormalizing data in relational databases in order to increase access speed. But I'm not aware of any reason to do that in Cell schemas: the data stored inside a relational automata is always easy to access as there's no object graph to traverse, there aren't artificial barriers like encapsulation either, and the data structures used to implement mutable relation variables don't require any denormalization to improve performance.</p>
 
 <p>Derived information poses similar problems: core and derived data can get out of sync during a buggy update. In this case though the performance issues are unfortunately all too real, and that makes it difficult to avoid storing derived data entirely. But how much of it and what pieces of it exactly you decide to store can actually make a lot of difference. Every extra piece of derived data in your schemas is a trap that you set for yourself, which you have to be careful to avoid during updates. The fewer traps you set the better, so try to reduce the amount of such data to a minimum, and choose it carefully in order to maximize the performance gains and minimize the downsides. The language is meant to eventually provide several forms of memoization that should obviate the need to store derived data in the vast majority of cases, but their implementation is not trivial and it will take some time to get there.</p>
 
@@ -185,9 +185,14 @@
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

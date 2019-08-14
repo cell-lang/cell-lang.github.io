@@ -64,7 +64,7 @@
   }
 
   <span class='c'>// Setting the initial state of the automaton</span>
-  ok = <span class='k'>write</span> instance &lt;- init_state;
+  ok = write instance &lt;- init_state;
   <span class='k'>if</span> <span class='k'>not</span> ok {
     <span class='m'>Print</span>(<span class='s'>"Invalid initial state\n"</span>);
     <span class='k'>return</span> <span class='n'>1</span>;
@@ -82,12 +82,15 @@
   <span class='c'>// Sending all messages in the list</span>
   <span class='k'>for</span> msg @ i &lt;- msg_list {
     ok = instance &lt;- msg;
-    <span class='k'>if</span> <span class='k'>not</span> ok
+    <span class='k'>if</span> <span class='k'>not</span> ok {
       <span class='m'>Print</span>(<span class='s'>"Message number "</span> &amp; _print_(i) &amp; <span class='s'>" failed\n"</span>);
+      err_msg = <span class='m'>Error</span>(instance);
+      <span class='m'>Print</span>(err_msg &amp; <span class='s'>"\n"</span>);
+    }
   }
 
   <span class='c'>// Saving the final state</span>
-  final_state = <span class='k'>read</span> instance;
+  final_state = read instance;
   ok = <span class='m'>FileWrite</span>(final_state_fname, untag(_print_(final_state)));
   <span class='k'>if</span> <span class='k'>not</span> ok {
     <span class='m'>Print</span>(<span class='s'>"Could not write to file "</span> &amp; final_state_fname &amp; <span class='s'>"\n"</span>);
@@ -122,7 +125,7 @@
 
 <figure class="highlight">
 <section>
-<pre><code>ok = <span class='k'>write</span> instance &lt;- init_state;
+<pre><code>ok = write instance &lt;- init_state;
 </section>
 </figure>
 </code></pre>
@@ -140,11 +143,22 @@
 
 <p>Here too the variable <code class='inline-code-box'><span class='inline-code'>ok</span></code> indicates whether the message was processed successfully. Also note the <code class='inline-code-box'><span class='inline-code'>msg_list :: CounterMsg*</span></code> check, which is required to verify that whatever data was loaded from the input file was indeed a valid sequence of messages for <code class='inline-code-box'><span class='inline-code'>Counter</span></code>.</p>
 
+<p>When a message handler fails, you may need to figure out what went wrong. That's what the <code class='inline-code-box'><span class='inline-code'>Error(..)</span></code> builtin procedure is for:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>err_msg = <span class='m'>Error</span>(instance);
+</section>
+</figure>
+</code></pre>
+
+<p><code class='inline-code-box'><span class='inline-code'>Error</span></code> takes as argument an automaton instance, and returns a string explaining why the last update failed (if the last message was handled successfully, it just returns the empty string). An update can fail either because the corresponding message handler threw an exception during its execution, or because it violated an integrity constraint (a key or foreign key). In the first case the string returned by <code class='inline-code-box'><span class='inline-code'>Error(..)</span></code> will simply contain the stack trace at the time the exception was thrown, but in the second one it will show which key or foreign key was violated, and the tuples that violated it. Be warned though that at the moment this feature is a bit buggy: the argument of the tuples may be in the wrong order, and their values may be incomplete. For example, in some cases a tuple of the form <code class='inline-code-box'><span class='inline-code'>user_id(3012), "ed86"</span></code> may be printed out as <code class='inline-code-box'><span class='inline-code'>"ed86", 3102</span></code>. That's still good enough for debugging purposes though, as long as you're aware of the problem.</p>
+
 <p>The last instruction we have to manipulate relational automata is used to take a snapshot of the state of an automaton instance:</p>
 
 <figure class="highlight">
 <section>
-<pre><code>final_state = <span class='k'>read</span> instance;
+<pre><code>final_state = read instance;
 </section>
 </figure>
 </code></pre>
@@ -237,9 +251,14 @@
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>

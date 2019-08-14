@@ -132,7 +132,7 @@ joined_on(<span class='m'>UserId</span>, <span class='m'>ChatGroupId</span>, <sp
 
 <p>If you're not convinced, just try to write the equivalent data structures using objects for one of the above facts (let's say it's the first one), remembering that you'll need to be able to, among other things:</p>
 
-<ul><li>Given a supplier <code class='inline-code-box'><span class='inline-code'>s</span></code> and a part <code class='inline-code-box'><span class='inline-code'>p</span></code> to check if the supplier sells a given part, and if so to retrieve its price (<code class='inline-code-box'><span class='inline-code'>sells_for(s, p, *)</span></code> and <code class='inline-code-box'><span class='inline-code'>sells_for(s, p)</span></code> in Cell, respectively)</li><li>Given a supplier <code class='inline-code-box'><span class='inline-code'>s</span></code>, to retrieve all the parts it sells, and their prices (<code class='inline-code-box'><span class='inline-code'>sells_for(p, ?, ?)</span></code> in Cell)</li><li>Given a part <code class='inline-code-box'><span class='inline-code'>p</span></code>, to retrieve all the suppliers that sell it, and the price they charge (<code class='inline-code-box'><span class='inline-code'>sells_for(?, p, ?)</span></code> in Cell)</li><li>To make sure that there cannot be duplicate entries for the same supplier/part combination (that's what the <code class='inline-code-box'><span class='inline-code'>[key: 0:1]</span></code> is for)</li></ul>
+<ul><li>Given a supplier <code class='inline-code-box'><span class='inline-code'>s</span></code> and a part <code class='inline-code-box'><span class='inline-code'>p</span></code> to check if the supplier sells a given part, and if so to retrieve its price (<code class='inline-code-box'><span class='inline-code'>sells_for(s, p, _)</span></code> and <code class='inline-code-box'><span class='inline-code'>sells_for(s, p)</span></code> in Cell, respectively)</li><li>Given a supplier <code class='inline-code-box'><span class='inline-code'>s</span></code>, to retrieve all the parts it sells, and their prices (<code class='inline-code-box'><span class='inline-code'>sells_for(p, ?, ?)</span></code> in Cell)</li><li>Given a part <code class='inline-code-box'><span class='inline-code'>p</span></code>, to retrieve all the suppliers that sell it, and the price they charge (<code class='inline-code-box'><span class='inline-code'>sells_for(?, p, ?)</span></code> in Cell)</li><li>To make sure that there cannot be duplicate entries for the same supplier/part combination (that's what the <code class='inline-code-box'><span class='inline-code'>[key: 0:1]</span></code> is for)</li></ul>
 
 <p>Of course you'll need to do all those things efficiently, since you might have a lot of parts and suppliers, so linear searches are out of the question. In the best-case scenario, you'll end up building an <a href='https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule'>ad-hoc, informally-specified, bug-ridden, slow implementation</a> of a relation.</p>
 
@@ -272,9 +272,14 @@ joined_on(<span class='m'>UserId</span>, <span class='m'>ChatGroupId</span>, <sp
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
             </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview - <strong>NEW</strong></a></li>
+              </ul>
             <li>Miscellanea
               <ul class="toc">
                 <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
                 <li><a href='status-roadmap.html'>Status and roadmap</a></li>
                 <!-- <li><a href='community.html'>Community and contacts</a></li> -->
               </ul>
