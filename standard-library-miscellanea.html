@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta name="description" content="The Cell Programming Language">
+
+  <title>The Cell Programming Language</title>
+
+  <link href="./fonts.css" rel="stylesheet" type="text/css" media="screen">
+  <link href="./main.css" rel="stylesheet">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113669835-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-113669835-1');
+  </script>
+
+</head>
+
+<body>
+  <div id="container">
+
+    <header id="topbar">
+    </header>
+
+    <div id="main-container">
+      <div id="main">
+        <article class="content">
+<h2>Date and time functions</h2>
+
+<p>Date and time functions are in the <a href='https://github.com/cell-lang/compiler/blob/master/src/stdlib/time.cell'>time.cell</a> file, which defines one type:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Weekday</span> = monday,
+               tuesday,
+               wednesday,
+               thursday,
+               friday,
+               saturday,
+               sunday;
+</section>
+</figure>
+</code></pre>
+
+<p>and the following functions:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Builds a <span class='inline-code'>Date</span> value corresponding to the given day, month and year</span>
+<span class='c'>// and returns it wrapped in a <span class='inline-code'>Maybe</span>. Returns <span class='inline-code'>nothing</span> if the</span>
+<span class='c'>// given day/month/year combination is not valid</span>
+<span class='c'>// date(2019, 5, 30) <span class='inline-code'>-&gt;</span> just(`2016-05-30`)</span>
+<span class='c'>// date(2019, 2, 29) <span class='inline-code'>-&gt;</span> nothing</span>
+<span class='m'>Maybe</span>[<span class='m'>Date</span>] date(<span class='m'>Int</span> year, <span class='m'>Int</span> month, <span class='m'>Int</span> day)
+
+<span class='c'>// Returns year, month and day corresponding to a given <span class='inline-code'>Date</span></span>
+<span class='c'>// year_month_day(`2016-05-30`) <span class='inline-code'>-&gt;</span> (2016, 5, 30)</span>
+(<span class='m'>Int</span>, <span class='m'>Int</span>, <span class='m'>Int</span>) year_month_day(<span class='m'>Date</span>)
+
+<span class='c'>// Returns whether the given year is a leap year</span>
+<span class='c'>// is_leap_year(2000) <span class='inline-code'>-&gt;</span> true</span>
+<span class='c'>// is_leap_year(2019) <span class='inline-code'>-&gt;</span> false</span>
+<span class='m'>Bool</span> is_leap_year(<span class='m'>Int</span> year)
+
+<span class='c'>// Returns the day of the week corresponding to a given <span class='inline-code'>Date</span></span>
+<span class='c'>// weekday(`2019-05-30`) <span class='inline-code'>-&gt;</span> thursday</span>
+<span class='m'>Weekday</span> weekday(<span class='m'>Date</span>)
+
+<span class='c'>// Builds a <span class='inline-code'>Time</span> value corresponding to a given date and</span>
+<span class='c'>// time of the day. Returns <span class='inline-code'>nothing</span> if the time of the</span>
+<span class='c'>// day is not valid</span>
+<span class='c'>// time(`1970-01-01`, 12, 30, 15, 500000000) == `1970-01-01 12:30:15.5`</span>
+<span class='m'>Maybe</span>[<span class='m'>Time</span>] time(
+  <span class='m'>Date</span> date,
+  <span class='m'>Int</span>  hours,
+  <span class='m'>Int</span>  minutes,
+  <span class='m'>Int</span>  seconds,
+  <span class='m'>Int</span>  nanoseconds
+)
+
+<span class='c'>// Accessors for the component of a <span class='inline-code'>Time</span> value</span>
+
+<span class='c'>// day(`1970-01-01 12:30:15.5`) == `1970-01-01`</span>
+<span class='m'>Date</span> day(<span class='m'>Time</span>)
+
+<span class='c'>// hour(`1970-01-01 12:30:15.5`) == 12</span>
+&lt;<span class='n'>0</span>..<span class='n'>23</span>&gt; hour(<span class='m'>Time</span>)
+
+<span class='c'>// minute(`1970-01-01 12:30:15.5`) == 30</span>
+&lt;<span class='n'>0</span>..<span class='n'>59</span>&gt; minute(<span class='m'>Time</span>)
+
+<span class='c'>// second(`1970-01-01 12:30:15.5`) == 15</span>
+&lt;<span class='n'>0</span>..<span class='n'>59</span>&gt; second(<span class='m'>Time</span>)
+
+<span class='c'>// nanosec(`1970-01-01 12:30:15.5`) == 500000000</span>
+&lt;<span class='n'>0</span>..<span class='n'>999999999</span>&gt; nanosec(<span class='m'>Time</span>)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>Sorting</h3>
+
+<p>Sorting functions are in the <a href='https://github.com/cell-lang/compiler/blob/master/src/stdlib/sorting.cell'>sorting.cell</a> file:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Sorts a sequence in ascending order. The type of the</span>
+<span class='c'>// elements of the sequence must implement the <span class='inline-code'>Ord</span> protocol</span>
+<span class='m'>Ord</span>* sort(<span class='m'>Ord</span>*)
+
+<span class='c'>// Sorts a sequence in ascending order, according to the</span>
+<span class='c'>// comparison function provided as second argument</span>
+<span class='u'>T</span>* sort(<span class='u'>T</span>*, (<span class='u'>T</span> <span class='u'>T</span> -&gt; <span class='m'>Bool</span>))
+
+<span class='c'>// Faster version of sort(..) for sequences of integers</span>
+<span class='m'>Int</span>* sorti(<span class='m'>Int</span>*)
+
+<span class='c'>// Faster version of sort(..) for sequences of floating point numbers</span>
+<span class='m'>Float</span>* sortf(<span class='m'>Float</span>*)
+</section>
+</figure>
+</code></pre>
+
+
+<h3>UTF-8</h3>
+
+<p>UTF-8 functions are in the <a href='https://github.com/cell-lang/compiler/blob/master/src/stdlib/utf-8.cell'>utf-8.cell</a> file:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Encodes a sequence of unicode characters in UTF-8 format.</span>
+<span class='c'>// Returns <span class='inline-code'>nothing</span> if any number in the sequence is not a valid</span>
+<span class='c'>// unicode code point, that is, if it's not in range [0, 1114111]</span>
+<span class='c'>// utf8_encode(untag("测试")) <span class='inline-code'>-&gt;</span> just((230, 181, 139, 232, 175, 149))</span>
+<span class='c'>// utf8_encode((27979, 35797)) <span class='inline-code'>-&gt;</span> just((230, 181, 139, 232, 175, 149))</span>
+<span class='m'>Maybe</span>[<span class='m'>Byte</span>*] utf8_encode(<span class='m'>Nat</span>*)
+
+<span class='c'>// Decodes a sequence of unicode characters encoded in UTF-8 format</span>
+<span class='c'>// If the sequence of bytes in not a valid UTF-8 encoding of a</span>
+<span class='c'>// sequence of unicode code points, returns the index of the first</span>
+<span class='c'>// invalid byte in the input</span>
+<span class='c'>// utf8_decode((230, 181, 139, 232, 175, 149)) <span class='inline-code'>-&gt;</span> success((27979, 35797))</span>
+<span class='c'>// utf8_decode((230, 181, 139, 175, 149)) <span class='inline-code'>-&gt;</span> failure(3)</span>
+<span class='m'>Result</span>[<span class='m'>Nat</span>*, <span class='m'>Nat</span>] utf8_decode(<span class='m'>Byte</span>*)
+</section>
+</figure>
+</code></pre>
+
+
+        </article>
+      </div>
+
+      <aside id="sidebar">
+        <div id='pages'>
+          <ul class='toc'>
+            <li>Start Here
+              <ul class="toc">
+                <li><a href='index.html'>Home</a></li>
+                <li><a href='overview.html'>Overview</a></li>
+                <li><a href='faq.html'>FAQ</a></li>
+                <!-- <li><a href='quick.html'>Quick overview</a></li> -->
+                <li><a href='example.html'>Introductory example</a></li>
+                <li><a href='comparison.html'>A comparison with OOP</a></li>
+              </ul>
+            </li>
+            <li>Rationale
+              <ul class="toc">
+                <li><a href='relations.html'>Why relations are better than objects</a>
+                <!-- <li><a href='state.html'>State</a></li> -->
+                <!-- <li><a href='functional.html'>Functional programming</a></li> -->
+                <!-- <li><a href='integrity.html'>Encapsulation, equality and data integrity</a></li> -->
+              </ul>
+            </li>
+            <li>Values and Types
+              <ul class="toc">
+                <li><a href='data.html'>Data</a></li>
+                <li><a href='types.html'>Types</a></li>
+              </ul>
+            </li>
+            <li>The Functional Language
+              <ul class="toc">
+                <li><a href='functions.html'>Functions</a></li>
+                <li><a href='imperative.html'>Imperative code</a></li>
+                <li><a href='procedures.html'>Procedures</a></li>
+                <li><a href='typechecking.html'>Type checking</a></li>
+                <li><a href='miscellanea.html'>Protocols, implicit arguments and memoization</a></li>
+                <li><a href='benchmarks-functional.html'>Benchmarks</a></li>
+              </ul>
+            </li>
+            <li>Relational Automata
+              <ul class="toc">
+                <li><a href='relational.html'>Schemas</a></li>
+                <li><a href='data-modeling.html'>Data modeling</a></li>
+                <li><a href='methods.html'>Methods</a></li>
+                <li><a href='aggregate-functions.html'>Aggregate functions</a></li>
+                <li><a href='inheritance.html'>Inheritance and polymorphism</a></li>
+                <li><a href='wiring.html'>Wiring automata together</a></li>
+                <li><a href='design.html'>Design Process</a></li>
+                <li><a href='updates.html'>State updates</a></li>
+                <li><a href='using-relational.html'>Using relational automata</a></li>
+                <li><a href='benchmarks-relational.html'>Benchmarks</a></li>
+              </ul>
+            </li>
+            <li>Reactive Automata
+              <ul class="toc">
+                <li><a href='reactive.html'>Reactive automata</a></li>
+                <li><a href='using-reactive.html'>Using reactive automata</a></li>
+                <li><a href='reactive-future-work.html'>Future work</a></li>
+              </ul>
+            </li>
+            <li>Interfacing with...
+              <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
+                <li><a href='interface-java.html'>Java</a></li>
+                <li><a href='interface-cs.html'>C#</a></li>
+              </ul>
+            </li>
+            <li>Network architecture
+              <ul class="toc">
+                <li><a href='network-architecture.html'>Overview</a></li>
+              </ul>
+            <li>Miscellanea
+              <ul class="toc">
+                <li><a href='getting-started.html'>Getting started</a></li>
+                <li><a href='standard-library.html'>Standard library</a></li>
+                <li><a href='status-roadmap.html'>Status and roadmap</a></li>
+                <!-- <li><a href='community.html'>Community and contacts</a></li> -->
+              </ul>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>
