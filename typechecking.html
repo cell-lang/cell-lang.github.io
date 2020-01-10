@@ -246,7 +246,7 @@
 
 <figure class="highlight">
 <section>
-<pre><code><span class='m'>Bool</span> in(<span class='u'>T</span> elt, [<span class='u'>T</span>] set) = set(elt);
+<pre><code><span class='m'>Bool</span> in(<span class='u'>T</span> elt, [<span class='u'>T</span>] <span class='k'>set</span>) = <span class='k'>set</span>(elt);
 </section>
 </figure>
 </code></pre>
@@ -257,8 +257,8 @@
 <section>
 <pre><code><span class='k'>type</span> <span class='m'>Neg</span> = &lt;*..-<span class='n'>1</span>&gt;;
 
-<span class='m'>Bool</span> contains_bad_example_1([<span class='m'>Int</span>] set, <span class='m'>Id</span>  elt) = in(elt, set);
-<span class='m'>Bool</span> contains_bad_example_2([<span class='m'>Nat</span>] set, <span class='m'>Neg</span> elt) = in(elt, set);
+<span class='m'>Bool</span> contains_bad_example_1([<span class='m'>Int</span>] <span class='k'>set</span>, <span class='m'>Id</span>  elt) = in(elt, <span class='k'>set</span>);
+<span class='m'>Bool</span> contains_bad_example_2([<span class='m'>Nat</span>] <span class='k'>set</span>, <span class='m'>Neg</span> elt) = in(elt, <span class='k'>set</span>);
 </section>
 </figure>
 </code></pre>
@@ -850,7 +850,6 @@ x = _print_(x);
             </li>
             <li>Interfacing with...
               <ul class="toc">
-                <li><a href='interface-cpp.html'>C++</a></li>
                 <li><a href='interface-java.html'>Java</a></li>
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>

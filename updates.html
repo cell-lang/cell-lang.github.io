@@ -45,23 +45,23 @@
 <span class='c'>// type CounterMsg = incr, decr, reset, reset(Int);</span>
 
 <span class='m'>Counter</span>.incr {
-  set value = value + <span class='n'>1</span>;
-  set updates = updates + <span class='n'>1</span>;
+  <span class='k'>set</span> value = value + <span class='n'>1</span>;
+  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 
 <span class='m'>Counter</span>.decr {
-  set value = value - <span class='n'>1</span>;
-  set updates = updates + <span class='n'>1</span>;
+  <span class='k'>set</span> value = value - <span class='n'>1</span>;
+  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 
 <span class='m'>Counter</span>.reset {
-  set value = <span class='n'>0</span>;
-  set updates = updates + <span class='n'>1</span>;
+  <span class='k'>set</span> value = <span class='n'>0</span>;
+  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 
 <span class='m'>Counter</span>.reset(<span class='m'>Int</span>) {
-  set value = untag(<span class='k'>this</span>);
-  set updates = updates + <span class='n'>1</span>;
+  <span class='k'>set</span> value = untag(<span class='k'>this</span>);
+  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 </section>
 </figure>
@@ -85,8 +85,8 @@
 <pre><code><span class='k'>type</span> <span class='m'>IncrCounterMsg</span> = incr;
 
 <span class='m'>Counter</span>.<span class='m'>IncrCounterMsg</span> {
-  set value = value + <span class='n'>1</span>;
-  set updates = updates + <span class='n'>1</span>;
+  <span class='k'>set</span> value = value + <span class='n'>1</span>;
+  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 </section>
 </figure>
@@ -97,8 +97,8 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>Counter</span>.&lt;incr&gt; {
-  set value = value + <span class='n'>1</span>;
-  set updates = updates + <span class='n'>1</span>;
+  <span class='k'>set</span> value = value + <span class='n'>1</span>;
+  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 </section>
 </figure>
@@ -118,8 +118,8 @@
     decr      = value - <span class='n'>1</span>,
     reset     = <span class='n'>0</span>,
     reset(n?) = n;
-  set value = new_value;
-  set updates = updates + <span class='n'>1</span>;
+  <span class='k'>set</span> value = new_value;
+  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 </section>
 </figure>
@@ -130,8 +130,8 @@
 <figure class="highlight">
 <section>
 <pre><code><span class='m'>Counter</span>.<span class='m'>CounterMsg</span> {
-  set value = new_value(<span class='k'>this</span>);
-  set updates = updates + <span class='n'>1</span>;
+  <span class='k'>set</span> value = new_value(<span class='k'>this</span>);
+  <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 
 <span class='k'>using</span> <span class='m'>Counter</span> {
@@ -462,8 +462,8 @@
 
 <span class='k'>using</span> <span class='m'>Counter</span> {
   update_value(<span class='m'>Int</span> new_value) {
-    set value = new_value;
-    set updates = updates + <span class='n'>1</span>;
+    <span class='k'>set</span> value = new_value;
+    <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
   }
 }
 </section>
@@ -540,7 +540,7 @@
 <span class='k'>using</span> <span class='m'>Game</span> {
   increment_experience(<span class='m'>Int</span> amount) {
     new_experience = experience + amount;
-    set experience = new_experience;
+    <span class='k'>set</span> experience = new_experience;
     <span class='k'>if</span> new_experience &gt; next_level_experience(level) {
       level_up();
       top_up_health();
@@ -548,11 +548,11 @@
   }
 
   level_up() {
-    set level = level + <span class='n'>1</span>;
+    <span class='k'>set</span> level = level + <span class='n'>1</span>;
   }
 
   top_up_health() {
-    set health = max_health(level);
+    <span class='k'>set</span> health = max_health(level);
   }
 }
 </section>
@@ -635,7 +635,6 @@
             </li>
             <li>Interfacing with...
               <ul class="toc">
-                <li><a href='interface-cpp.html'>C++</a></li>
                 <li><a href='interface-java.html'>Java</a></li>
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>

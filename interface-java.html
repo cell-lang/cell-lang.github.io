@@ -35,7 +35,7 @@
 
 <p>When you compile a Cell program, the compiler does not generate a binary executable. Instead, it generates a number of text files containing code in the chosen output language. We'll examine the Java code generator here. If you define a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure in you Cell code, the generated code can then be handed over to a Java compiler to generate a jar file (or just a set of class files). That's how for instance the Cell compiler itself is built, and also the simplest way to build a program that tests your automata. But if you don't define a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure, the compiler will just generate a set of classes, one for each type of automaton in your Cell code, that can be used to instantiate and manipulate the corresponding automata from your Java code. The compiler will also generate a text file named <code class='inline-code-box'><span class='inline-code'>interfaces.txt</span></code> which documents the interfaces of the generated classes in pseudo-Java code. In this chapter we'll go through the interface of the generated classes and explain how to use them, and what each of their methods is for.</p>
 
-<p>It's often a good idea not to use the classes that are generated for each Cell automaton directly, but to derive your own classes from them, and add new methods (and/or member or class variables, if needed) there. Among other things, if a method of the generated classes requires some sort of manual data conversion, you really don't want to repeatedly perform those conversions all over your codebase: it's much better to have all of them in just one place. The best thing to do is probably to define an overloaded version of the same method, or a similar one, in the derived class, and have it take care of all data conversions before and/or after invoking the generated one.</p>
+<p>It's often a good idea not to use the classes that are generated for each Cell automaton directly, but to derive your own classes from them, and add new methods (and/or member or class variables, if needed) there. Another slightly more laborious alternative is to write a wrapper class for them. Among other things, if a method of the generated classes requires some sort of manual data conversion, you really don't want to repeatedly perform those conversions all over your codebase: it's much better to have all of them in just one place. The best thing to do is probably to define an overloaded version of the same method, or a similar one, in the derived class, and have it take care of all data conversions before and/or after invoking the generated one.</p>
 
 
 <h3>Data conversion</h3>
@@ -315,8 +315,8 @@ counter.reset(-<span class='n'>1</span>); <span class='c'>// Same as counter.exe
   <span class='b'>long</span> availability(<span class='b'>long</span>, <span class='b'>long</span>);
   <span class='b'>long</span> unitPrice(<span class='b'>long</span>, <span class='b'>long</span>);
 
-  <span class='c'>// Check whether a given element or tuple belongs</span>  
-  <span class='c'>// to the corresponding mutable relation variable</span>  
+  <span class='c'>// Check whether a given element or tuple belongs</span>
+  <span class='c'>// to the corresponding mutable relation variable</span>
   <span class='b'>boolean</span> part(<span class='b'>long</span>);
   <span class='b'>boolean</span> supplier(<span class='b'>long</span>);
   <span class='b'>boolean</span> code(<span class='b'>long</span>, <span class='b'>String</span>);
@@ -628,7 +628,6 @@ waterSensor.setElapsedMillisecs(<span class='n'>100</span>);
             </li>
             <li>Interfacing with...
               <ul class="toc">
-                <li><a href='interface-cpp.html'>C++</a></li>
                 <li><a href='interface-java.html'>Java</a></li>
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>

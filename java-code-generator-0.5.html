@@ -175,19 +175,19 @@
 }
 
 <span class='m'>Counter</span>.increment {
-  set value = value + <span class='n'>1</span>;
+  <span class='k'>set</span> value = value + <span class='n'>1</span>;
 }
 
 <span class='m'>Counter</span>.decrement {
-  set value = value - <span class='n'>1</span>;
+  <span class='k'>set</span> value = value - <span class='n'>1</span>;
 }
 
 <span class='m'>Counter</span>.reset {
-  set value = <span class='n'>0</span>;
+  <span class='k'>set</span> value = <span class='n'>0</span>;
 }
 
-<span class='m'>Counter</span>.set(value: <span class='m'>Int</span>) {
-  set value = <span class='k'>this</span>.value;
+<span class='m'>Counter</span>.<span class='k'>set</span>(value: <span class='m'>Int</span>) {
+  <span class='k'>set</span> value = <span class='k'>this</span>.value;
 }
 </section>
 </figure>
@@ -217,7 +217,7 @@
 <figure class="highlight">
 <section>
 <pre><code>counter.increment();  <span class='c'>// Same as counter.execute("increment");</span>
-counter.set(-<span class='n'>1</span>);      <span class='c'>// Same as counter.execute("set(-1)");</span>
+counter.<span class='k'>set</span>(-<span class='n'>1</span>);      <span class='c'>// Same as counter.execute("set(-1)");</span>
 </section>
 </figure>
 </code></pre>
@@ -323,7 +323,6 @@ ok = automaton &lt;- message;
             </li>
             <li>Interfacing with...
               <ul class="toc">
-                <li><a href='interface-cpp.html'>C++</a></li>
                 <li><a href='interface-java.html'>Java</a></li>
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>

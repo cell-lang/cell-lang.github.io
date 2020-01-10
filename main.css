@@ -862,11 +862,18 @@ blockquote.posterous_long_quote {
   border: 1px solid #ccc;
   text-align: left;
   padding: 8px;
+  white-space: nowrap;
 }
 
 .types-table .number {
   text-align: right;
   font-family: "Lucida Console", Monaco, monospace;
+}
+
+.types-table .highlighted-number {
+  text-align: right;
+  font-family: "Lucida Console", Monaco, monospace;
+  color: #C44
 }
 
 .types-table .number-header {

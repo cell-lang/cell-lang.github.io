@@ -339,7 +339,7 @@ string(<span class='n'>72</span>, <span class='n'>105</span>, <span class='n'>32
 
 <h3>Dates and time</h3>
 
-<p>Time in Cell is represented by integers tagged with the symbol <code class='inline-code-box'><span class='inline-code'>:time</span></code>. The integer is the UNIX Epoc time in nanoseconds, that is, the number of nanoseconds that have elapsed sinced 00:00:00 Thursday, 1 January 1970 (the UNIX Epoc), not counting leap seconds. Dates too are represented as tagged integers: the tag is the symbol <code class='inline-code-box'><span class='inline-code'>:date</span></code> and the integer is the number of days that have passed since 1 Jan 1970. In their syntactically sugared form they are enclosed in backquotes and use the <code class='inline-code-box'><span class='inline-code'>`YYYY-MM-DD HH.MM.SS`</span></code> format for time or <code class='inline-code-box'><span class='inline-code'>`YYYY-MM-DD`</span></code> for dates. Time literals can also specify the number of nanoseconds: <code class='inline-code-box'><span class='inline-code'>`YYYY-MM-DD HH-MM-SS.NNNNNNNNN`</span></code>. The following expressions all evaluate to <code class='inline-code-box'><span class='inline-code'>true</span></code>:</p>
+<p>Time in Cell is represented by integers tagged with the symbol <code class='inline-code-box'><span class='inline-code'>:time</span></code>. The integer is the UNIX Epoch time in nanoseconds, that is, the number of nanoseconds that have elapsed sinced 00:00:00 Thursday, 1 January 1970 (the UNIX Epoch), not counting leap seconds. Dates too are represented as tagged integers: the tag is the symbol <code class='inline-code-box'><span class='inline-code'>:date</span></code> and the integer is the number of days that have passed since 1 Jan 1970. In their syntactically sugared form they are enclosed in backquotes and use the <code class='inline-code-box'><span class='inline-code'>`YYYY-MM-DD HH.MM.SS`</span></code> format for time or <code class='inline-code-box'><span class='inline-code'>`YYYY-MM-DD`</span></code> for dates. Time literals can also specify the number of nanoseconds: <code class='inline-code-box'><span class='inline-code'>`YYYY-MM-DD HH-MM-SS.NNNNNNNNN`</span></code>. The following expressions all evaluate to <code class='inline-code-box'><span class='inline-code'>true</span></code>:</p>
 
 <figure class="highlight">
 <section>
@@ -354,10 +354,10 @@ string(<span class='n'>72</span>, <span class='n'>105</span>, <span class='n'>32
 <span class='t'>`1969-12-31 23:59:59`</span> == <span class='a'>:time</span>(-<span class='n'>1000000000</span>)
 <span class='t'>`1999-12-31 23:59:59`</span> == <span class='a'>:time</span>(<span class='n'>946684799000000000</span>)
 
-<span class='t'>`1970-01-01 00:00:00.000000001`</span> == <span class='a'>:time</span>(<span class='n'>1</span>) <span class='c'>// 1ns after the UNIX Epoc</span>
+<span class='t'>`1970-01-01 00:00:00.000000001`</span> == <span class='a'>:time</span>(<span class='n'>1</span>) <span class='c'>// 1ns after the UNIX Epoch</span>
 
-<span class='t'>`1970-01-01 00:00:00.002`</span> == <span class='a'>:time</span>(<span class='n'>2000000</span>) <span class='c'>// 2ms after the UNIX Epoc</span>
-<span class='t'>`1969-12-31 23:59:59.995`</span> == <span class='a'>:time</span>(-<span class='n'>5000000</span>) <span class='c'>// 5ms before the UNIX Epoc</span>
+<span class='t'>`1970-01-01 00:00:00.002`</span> == <span class='a'>:time</span>(<span class='n'>2000000</span>) <span class='c'>// 2ms after the UNIX Epoch</span>
+<span class='t'>`1969-12-31 23:59:59.995`</span> == <span class='a'>:time</span>(-<span class='n'>5000000</span>) <span class='c'>// 5ms before the UNIX Epoch</span>
 </section>
 </figure>
 </code></pre>
@@ -474,7 +474,6 @@ string(<span class='n'>72</span>, <span class='n'>105</span>, <span class='n'>32
             </li>
             <li>Interfacing with...
               <ul class="toc">
-                <li><a href='interface-cpp.html'>C++</a></li>
                 <li><a href='interface-java.html'>Java</a></li>
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
