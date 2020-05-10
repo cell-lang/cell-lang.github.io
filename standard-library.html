@@ -433,9 +433,9 @@
 
 <figure class="highlight">
 <section>
-<pre><code><span class='m'>Any</span> <span class='m'>ReadValueFromFile</span>(<span class='m'>String</span> filename, <span class='m'>Any</span> default) {
+<pre><code><span class='m'>Any</span> ReadValueFromFile(<span class='m'>String</span> filename, <span class='m'>Any</span> default) {
   <span class='c'>// The return type of <span class='inline-code'>FileRead(..)</span> is <span class='inline-code'>Maybe[Byte*]</span></span>
-  res = <span class='m'>FileRead</span>(filename);
+  res = FileRead(filename);
 
   <span class='c'>// If the file could not be read, we just return the default value</span>
   <span class='c'>// The <span class='inline-code'>res == nothing</span> comparison in the condition of an <span class='inline-code'>if</span></span>
@@ -465,7 +465,7 @@
     <span class='c'>// Here the typechecker has narrowed down the type of <span class='inline-code'>res</span> to</span>
     <span class='c'>// <span class='inline-code'>Failure[(Nat, Nat)]</span>, so it now accepts the call <span class='inline-code'>error(res)</span></span>
     row, col = error(res);
-    <span class='m'>Print</span>(<span class='s'>"Parsing error: row "</span> &amp; _print_(row) &amp; <span class='s'>", column "</span> &amp; _print_(col) &amp; <span class='s'>"\n"</span>);
+    Print(<span class='s'>"Parsing error: row "</span> &amp; _print_(row) &amp; <span class='s'>", column "</span> &amp; _print_(col) &amp; <span class='s'>"\n"</span>);
     <span class='k'>return</span> default;
   }
 }
@@ -499,39 +499,73 @@
 <pre><code><span class='c'>// Reads the content of a given file, and returns it</span>
 <span class='c'>// wrapped in a Maybe type. Returns <span class='inline-code'>nothing</span> if the</span>
 <span class='c'>// file cannot be read, for whatever reason</span>
-<span class='m'>Maybe</span>[<span class='m'>Byte</span>*] <span class='m'>FileRead</span>(<span class='m'>String</span> filename)
+<span class='m'>Maybe</span>[<span class='m'>Byte</span>*] FileRead(<span class='m'>String</span> filename)
 
 <span class='c'>// Write the given sequence of bytes to a file, overwriting the</span>
 <span class='c'>// existing content. Returns <span class='inline-code'>true</span> on success, <span class='inline-code'>false</span> on failure</span>
-<span class='m'>Bool</span> <span class='m'>FileWrite</span>(<span class='m'>String</span> filename, <span class='m'>Byte</span>* data)
+<span class='m'>Bool</span> FileWrite(<span class='m'>String</span> filename, <span class='m'>Byte</span>* data)
 
 <span class='c'>// Just like <span class='inline-code'>FileWrite(..)</span>, but if the file already exists it</span>
 <span class='c'>// appends to the existing content instead of overwriting it.</span>
 <span class='c'>// Returns <span class='inline-code'>true</span> on success, <span class='inline-code'>false</span> on failure</span>
-<span class='m'>Bool</span> <span class='m'>FileAppend</span>(<span class='m'>String</span> filename, <span class='m'>Byte</span>* data)
+<span class='m'>Bool</span> FileAppend(<span class='m'>String</span> filename, <span class='m'>Byte</span>* data)
 
 <span class='c'>// Prints the content of a given string to the standard output</span>
-<span class='m'>Print</span>(<span class='m'>String</span> output)
+Print(<span class='m'>String</span> output)
 
 <span class='c'>// Reads the next character from the standard input, and returns</span>
 <span class='c'>// it wrapped in a Maybe type. Returns <span class='inline-code'>nothing</span> on EOF</span>
-<span class='m'>Maybe</span>[<span class='m'>Nat</span>] <span class='m'>GetChar</span>()
+<span class='m'>Maybe</span>[<span class='m'>Nat</span>] GetChar()
 
 <span class='c'>// Exits the application with the given error code</span>
-<span class='m'>Exit</span>(<span class='m'>Nat</span>)
+Exit(<span class='m'>Nat</span>)
 
 <span class='c'>// Returns the current UTC time</span>
-<span class='m'>Time</span> <span class='m'>Now</span>()
+<span class='m'>Time</span> Now()
 
 <span class='c'>// The first call to <span class='inline-code'>Ticks()</span> returns <span class='inline-code'>0</span>. Every subsequent call</span>
 <span class='c'>// returns the number of milliseconds elapsed since the first call</span>
-<span class='m'>Nat</span> <span class='m'>Ticks</span>()
+<span class='m'>Nat</span> Ticks()
+
+<span class='c'>// Sends a message to a relational automaton. The first</span>
+<span class='c'>// argument is the automaton instance/variable, the second</span>
+<span class='c'>// one the message. Returns <span class='inline-code'>true</span> if the message is</span>
+<span class='c'>// processed successfully, <span class='inline-code'>false</span> otherwise.</span>
+<span class='m'>Bool</span> Send(&lt;automaton instance&gt;, &lt;message&gt;)
+
+<span class='c'>// Tries to load the state of the automaton from a file</span>
+<span class='c'>// Returns <span class='inline-code'>true</span> if the operation succeeds, <span class='inline-code'>false</span></span>
+<span class='c'>// otherwise. The operation fails if the file cannot be</span>
+<span class='c'>// read, or if it does not contain a valid state for the</span>
+<span class='c'>// automaton in question</span>
+<span class='m'>Bool</span> Load(&lt;automaton instance&gt;, <span class='m'>String</span> filename)
+
+<span class='c'>// Save the state of the automaton to a file, using the</span>
+<span class='c'>// standard textual representation for all Cell data.</span>
+<span class='c'>// Returns <span class='inline-code'>true</span> on success, <span class='inline-code'>false</span> on failure.</span>
+<span class='c'>// A state saved using <span class='inline-code'>Save(..)</span> can be loaded back</span>
+<span class='c'>// using <span class='inline-code'>Load(..)</span></span>
+<span class='m'>Bool</span> Save(&lt;automaton instance&gt;, <span class='m'>String</span> filename)
+
+<span class='c'>// Sets the state of a relational automaton. Similar to</span>
+<span class='c'>// <span class='inline-code'>Load(..)</span>, but the state is passed directly as an</span>
+<span class='c'>// argument instead of being loaded from a file</span>
+<span class='c'>// Fails if the provided state is not a valid internal</span>
+<span class='c'>// state for the automaton in question. Returns <span class='inline-code'>true</span></span>
+<span class='c'>// on success, <span class='inline-code'>false</span> otherwise</span>
+<span class='m'>Bool</span> Set(&lt;automaton instance&gt;, &lt;new state&gt;)
+
+<span class='c'>// Returns an (immutable) copy of the state of the</span>
+<span class='c'>// automaton. The value returned can be used with <span class='inline-code'>Set(..)</span></span>
+<span class='c'>// to restore the state of any automaton instance of the</span>
+<span class='c'>// same type.</span>
+<span class='m'>Any</span> Copy(&lt;automaton instance&gt;)
 
 <span class='c'>// Takes as argument any relational automaton instance</span>
-<span class='c'>// Returns an error message if the last message sent</span>
-<span class='c'>// to the instance failed, or just the empty string if</span>
-<span class='c'>// it succeeded.</span>
-<span class='m'>String</span> <span class='m'>Error</span>(..)
+<span class='c'>// Returns an error message if the last call to</span>
+<span class='c'>// <span class='inline-code'>Send(..)</span>, <span class='inline-code'>Load(..)</span>, <span class='inline-code'>Save(..)</span> or <span class='inline-code'>Set(..)</span> failed,</span>
+<span class='c'>// the empty string otherwise</span>
+<span class='m'>String</span> Error(..)
 </section>
 </figure>
 </code></pre>

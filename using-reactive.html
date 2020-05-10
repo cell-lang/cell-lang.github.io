@@ -55,7 +55,7 @@
   (<span class='k'>false</span>,  <span class='k'>false</span>,  just(<span class='k'>false</span>))
 );
 
-<span class='m'>Main</span>(<span class='m'>String</span>* args) {
+Main(<span class='m'>String</span>* args) {
   switch : <span class='m'>Switch</span>;
 
   <span class='k'>for</span> switch_on, switch_off, exp_is_on &lt;- switch_test_data {
@@ -74,24 +74,24 @@
     <span class='k'>if</span> exp_is_on == nothing {
       <span class='c'>// Here we expect <span class='inline-code'>is_on</span> to be undefined</span>
       <span class='k'>if</span> switch.is_on?? {
-        <span class='m'>Print</span>(<span class='s'>"Error: output was supposed to be undefined\n"</span>);
+        Print(<span class='s'>"Error: output was supposed to be undefined\n"</span>);
         <span class='k'>return</span>;
       }
     }
     <span class='k'>else</span> {
       <span class='c'>// First we check <span class='inline-code'>is_on</span> is defined</span>
       <span class='k'>if</span> <span class='k'>not</span> switch.is_on?? {
-        <span class='m'>Print</span>(<span class='s'>"Error: output was supposed to be defined\n"</span>);
+        Print(<span class='s'>"Error: output was supposed to be defined\n"</span>);
         <span class='k'>return</span>;
       }
       <span class='c'>// Now we check that it has the expected value</span>
       <span class='k'>if</span> value(exp_is_on) != switch.is_on {
-        <span class='m'>Print</span>(<span class='s'>"Error: unexpected output value\n"</span>);
+        Print(<span class='s'>"Error: unexpected output value\n"</span>);
         <span class='k'>return</span>;
       }
     }
 
-    <span class='m'>Print</span>(<span class='s'>"OK\n"</span>);
+    Print(<span class='s'>"OK\n"</span>);
   }
 }
 </section>
@@ -112,7 +112,7 @@
 
 <figure class="highlight">
 <section>
-<pre><code><span class='m'>Main</span>(<span class='m'>String</span>* args) {
+<pre><code>Main(<span class='m'>String</span>* args) {
   lines : <span class='m'>Lines</span>;
 
   <span class='c'>// Initializing the automaton variable <span class='inline-code'>lines</span></span>
@@ -127,7 +127,7 @@
     done = apply lines;
     <span class='c'>// If the output <span class='inline-code'>line</span> is active, we just print it</span>
     <span class='k'>if</span> lines.line?
-      <span class='m'>Print</span>(lines.line &amp; <span class='s'>"\n"</span>);
+      Print(lines.line &amp; <span class='s'>"\n"</span>);
   }
 }
 </section>
@@ -157,7 +157,7 @@
   (just(<span class='k'>false</span>), <span class='n'>50000</span>, (<span class='a'>:unknown</span>, <span class='a'>:submerged</span>(<span class='k'>false</span>)))
 );
 
-<span class='m'>Main</span>(<span class='m'>String</span>* args) {
+Main(<span class='m'>String</span>* args) {
   water_sensor : <span class='m'>WaterSensor</span>;
 
   <span class='c'>// Initialization</span>
@@ -182,11 +182,11 @@
     <span class='c'>// Checking that the states of the sensor are</span>
     <span class='c'>// the expected ones</span>
     <span class='k'>if</span> states != exp_states {
-      <span class='m'>Print</span>(<span class='s'>"Error\n"</span>);
+      Print(<span class='s'>"Error\n"</span>);
       <span class='k'>return</span>;
     }
     <span class='k'>else</span>
-      <span class='m'>Print</span>(<span class='s'>"OK\n"</span>);
+      Print(<span class='s'>"OK\n"</span>);
   }
 }
 </section>

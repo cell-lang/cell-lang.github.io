@@ -224,7 +224,7 @@
 <pre><code><span class='m'>Sheet</span> <span class='k'>rebase</span> msg_a msg_b {
   <span class='k'>if</span> msg_a.row == msg_b.row <span class='k'>and</span> msg_a.col == msg_b.col {
     <span class='c'>// Retrieving the current time</span>
-    now = <span class='m'>Now</span>();
+    now = Now();
 
     <span class='c'>// If the change is very recent we can afford to discard it</span>
     <span class='k'>if</span> is_very_recent(msg_b.time, now) {

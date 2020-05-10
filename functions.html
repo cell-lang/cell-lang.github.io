@@ -542,28 +542,28 @@ a_tern_rel(arg0, arg1, !)
 
 <figure class="highlight">
 <section>
-<pre><code><span class='c'>// [y : x, y &lt;- bin_rel, x == x0]</span>
+<pre><code><span class='c'>// [y : x y &lt;- bin_rel, x == x0]</span>
 [y : y &lt;- bin_rel(x0, ?)]
 
-<span class='c'>// [x : x, y &lt;- bin_rel, y == y0]</span>
+<span class='c'>// [x : x y &lt;- bin_rel, y == y0]</span>
 [x : x &lt;- bin_rel(?, y0)]
 
-<span class='c'>// [y, z : x, y, z &lt;- tern_rel, x == x0]</span>
-[y, z : y, z &lt;- tern_rel(x0, ?, ?)]
+<span class='c'>// [y, z : x y z &lt;- tern_rel, x == x0]</span>
+[y, z : y z &lt;- tern_rel(x0, ?, ?)]
 
-<span class='c'>// [x, z : x, y, z &lt;- tern_rel, y == y0]</span>
-[x, y : x, z &lt;- tern_rel(?, y0, ?)]
+<span class='c'>// [x, z : x y z &lt;- tern_rel, y == y0]</span>
+[x, y : x z &lt;- tern_rel(?, y0, ?)]
 
-<span class='c'>// [x, y : x, y, z &lt;- tern_rel, z == z0]</span>
-[x, y : x, y &lt;- tern_rel(?, ?, z0)]
+<span class='c'>// [x, y : x y z &lt;- tern_rel, z == z0]</span>
+[x, y : x y &lt;- tern_rel(?, ?, z0)]
 
-<span class='c'>// [x : x, y, z &lt;- tern_rel, y == y0, z == z0]</span>
+<span class='c'>// [x : x y z &lt;- tern_rel, y == y0, z == z0]</span>
 [x : x &lt;- tern_rel(?, y0, z0)]
 
-<span class='c'>// [y : x, y, z &lt;- tern_rel, x == x0, z == z0]</span>
+<span class='c'>// [y : x y z &lt;- tern_rel, x == x0, z == z0]</span>
 [y : y &lt;- tern_rel(x0, ?, z0)]
 
-<span class='c'>// [z : x, y, z &lt;- tern_rel, x == x0, y == x0]</span>
+<span class='c'>// [z : x y z &lt;- tern_rel, x == x0, y == x0]</span>
 [z : z &lt;- tern_rel(x0, y0, ?)]
 </section>
 </figure>

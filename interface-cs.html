@@ -33,9 +33,9 @@
         <article class="content">
 <h2>Interfacing with C#</h2>
 
-<p>When you compile a Cell program, the compiler does not generate a binary executable. Instead, it generates a number of text files containing code in the chosen output language. We'll examine the C# code generator here. If you define a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure in you Cell code, the generated code can then be handed over to a C# compiler to generate an executable file. That's how for instance the Cell compiler itself is built, and also the simplest way to build a program that tests your automata. But if you don't define a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure, the compiler will just generate a set of classes, one for each type of automaton in your Cell code, that can be used to instantiate and manipulate the corresponding automata from your C# code. The compiler will produce three files, <code class='inline-code-box'><span class='inline-code'>runtime.cs</span></code>, <code class='inline-code-box'><span class='inline-code'>generated.cs</span></code> and <code class='inline-code-box'><span class='inline-code'>facades.cs</span></code>. The first one contains the runtime library, the second one the core generated code and the last one (which is created only when you don't define a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure in the Cell code) the definition of the facade classes you'll be interacting with from your own C# code. The interface of those classes is documented in pseudo-C# code in another generated file, <code class='inline-code-box'><span class='inline-code'>facades.txt</span></code>. In this chapter we'll go through the interface of the generated classes and explain how to use them, and what each of their methods is for.</p>
+<p>When you compile a Cell program, the compiler does not generate a binary executable. Instead, it generates a number of text files containing code in the chosen output language. We'll examine the C# code generator here. If you define a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure in you Cell code, the generated code can then be handed over to a C# compiler to generate an executable file. That's how for instance the Cell compiler itself is built, and also the simplest way to build a program that tests your automata. But if you don't define a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure, the compiler will just generate a set of classes, one for each type of automaton in your Cell code, that can be used to instantiate and manipulate the corresponding automata from your C# code. The compiler will produce four files, <code class='inline-code-box'><span class='inline-code'>runtime.cs</span></code>, <code class='inline-code-box'><span class='inline-code'>generated.cs</span></code>, <code class='inline-code-box'><span class='inline-code'>automata.cs</span></code> and <code class='inline-code-box'><span class='inline-code'>typedefs.cs</span></code>. The first one contains the runtime library and the second one the core generated code. The last two files are created only when you don't define a <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> procedure in the Cell code, and they contain the definition of the classes you'll be working with in your own C# code. <code class='inline-code-box'><span class='inline-code'>automata.cs</span></code> contains the definition of the classes that correspond to the automata defined in your Cell code. The interface of those classes is documented in pseudo-C# in another generated file, <code class='inline-code-box'><span class='inline-code'>automata.txt</span></code>. The purpose of the last file, <code class='inline-code-box'><span class='inline-code'>typedefs.cs</span></code>, will be discussed later.</p>
 
-<p>It's often a good idea not to use the generated classes directly, but to derive your own classes from them, and add new methods (and/or member or class variables, if needed) there. Another slightly more laborious alternative is to write a wrapper class for them. Among other things, if a method of the generated classes requires some sort of manual data conversion, you really don't want to repeatedly perform those conversions all over your codebase: it's much better to have all of them in just one place. The best thing to do is probably to define an overloaded version of the same method, or a similar one, in the derived class, and have it take care of all data conversions before and/or after invoking the generated one.</p>
+<p>It's often a good idea not to use the classes in <code class='inline-code-box'><span class='inline-code'>automata.cs</span></code> directly, but to derive your own classes from them, and add new methods (and/or member or class variables, if needed) there. Another slightly more laborious alternative is to write a wrapper class for them. Among other things, if a method of the generated classes requires some sort of manual data conversion, you really don't want to repeatedly perform those conversions all over your codebase: it's much better to have all of them in just one place. The best thing to do is probably to define an overloaded version of the same method, or a similar one, in the derived class, and have it take care of all data conversions before and/or after invoking the generated one.</p>
 
 
 <h3>Data conversion</h3>
@@ -72,6 +72,10 @@
     <td>DateTime</td>
   </tr>
   <tr>
+    <td>Symbol</td>
+    <td>string</td>
+  </tr>
+  <tr>
     <td>T*</td>
     <td>T[]</td>
   </tr>
@@ -80,16 +84,24 @@
     <td>T[]</td>
   </tr>
   <tr>
+    <td>[K -> V]</td>
+    <td>(K, V)[]</td>
+  </tr>
+  <tr>
+    <td>[T1, T2]</td>
+    <td>(T1, T2)[]</td>
+  </tr>
+  <tr>
+    <td>[T1, T2, T3]</td>
+    <td>(T1, T2, T3)[]</td>
+  </tr>
+  <tr>
     <td>(T1, T2, ..)</td>
     <td>(T1, T2, ..)</td>
   </tr>
   <tr>
     <td>(field1: T1, field2: T2, ...)</td>
     <td>(T1 field1, T2 field2, ...)</td>
-  </tr>
-  <tr>
-    <td>[K -> V]</td>
-    <td>Dictionary&lt;K, V&gt;</td>
   </tr>
   <tr>
     <td>any_tag(T)</td>
@@ -102,95 +114,11 @@
 </table>
 </p>
 
-<p>The first six entries in the above table are self-explanatory. The mapping for Cell sequences and sets is also straightforward, as both are mapped to C# arrays. For example, the Cell type <code class='inline-code-box'><span class='inline-code'>Int*</span></code> is mapped to <code class='inline-code-box'><span class='inline-code'>long[]</span></code> in C#, and <code class='inline-code-box'><span class='inline-code'>[Date]</span></code> is mapped to <code class='inline-code-box'><span class='inline-code'>DateTime[]</span></code>. Similarly, Cell tuples are mapped to tuples in C#, and Cell records to named tuples. The last three entries require a bit of an explanation.</p>
+<p>The first six entries in the above table are self-explanatory. The mapping for Cell sequences and sets is also straightforward, as both are mapped to C# arrays. For example, the Cell type <code class='inline-code-box'><span class='inline-code'>Int*</span></code> is mapped to <code class='inline-code-box'><span class='inline-code'>long[]</span></code> in C#, and <code class='inline-code-box'><span class='inline-code'>[Date]</span></code> is mapped to <code class='inline-code-box'><span class='inline-code'>DateTime[]</span></code>. Similarly, maps and binary relations are mapped to arrays of 2-tuples, and ternary relations to arrays of 3-tuples. Cell tuples are mapped to tuples in C#, and Cell records to named tuples. The last two entries require a bit of an explanation.</p>
 
-<ul><li>Cell maps become instances of <code class='inline-code-box-long'><span class='inline-code'>System.Collections.Generic.Dictionary</span></code> in C#, and the mapping is applied recursively to its parameters, just like with sequences or sets. For instance, <code class='inline-code-box'><span class='inline-code'>[String -&gt; Float*]</span></code> is mapped to <code class='inline-code-box'><span class='inline-code'>Dictionary&lt;String, double[]&gt;</span></code>. You need to be careful here though as <code class='inline-code-box'><span class='inline-code'>Dictionary</span></code> works as intended only if the type of the key has a meaningful notion of equality and a <code class='inline-code-box'><span class='inline-code'>GetHashCode()</span></code> method that is consistent with it. The Cell type <code class='inline-code-box'><span class='inline-code'>[Int* -&gt; String]</span></code>, for example, will be mapped to <code class='inline-code-box'><span class='inline-code'>Dictionary&lt;int[], String&gt;</span></code>, which is problematic since in C# two different arrays that happen to have the same content will generally have different hashcodes. Lookups will not work, and you might inadvertently insert duplicate keys in a <code class='inline-code-box'><span class='inline-code'>Dictionary</span></code> instance.</li><li>Tagged types can be mapped directly to a C# type only if the tag is a known symbol. In this case, the tag is simply ignored and the mapping of the  untagged value is used. A type like <code class='inline-code-box'><span class='inline-code'>&lt;user_id(Int)&gt;</span></code>, for example, will be mapped to a <code class='inline-code-box'><span class='inline-code'>long</span></code> in C#, and the generated code will take care of adding or removing the <code class='inline-code-box'><span class='inline-code'>user_id</span></code> tag as needed.</li><li>The <code class='inline-code-box'><span class='inline-code'>Maybe[T]</span></code> type is mapped directly to the type of its parameter, and the value <code class='inline-code-box'><span class='inline-code'>:nothing</span></code> is mapped to <code class='inline-code-box'><span class='inline-code'>null</span></code>. <code class='inline-code-box'><span class='inline-code'>Maybe[String]</span></code>, for example, is mapped to <code class='inline-code-box'><span class='inline-code'>String</span></code>, and the value <code class='inline-code-box'><span class='inline-code'>:just("Hello!")</span></code> is returned as the C# string <code class='inline-code-box'><span class='inline-code'>"Hello!"</span></code>. Primitive types like <code class='inline-code-box'><span class='inline-code'>long</span></code> or <code class='inline-code-box'><span class='inline-code'>double</span></code> are replaced with the corresponding nullable types: <code class='inline-code-box'><span class='inline-code'>Maybe[Int]</span></code> for example, is mapped to <code class='inline-code-box'><span class='inline-code'>int?</span></code>, and <code class='inline-code-box'><span class='inline-code'>Maybe[Float]</span></code> to <code class='inline-code-box'><span class='inline-code'>double?</span></code>.</li></ul>
+<ul><li>Tagged types can be mapped directly to a C# type only if the tag is a known symbol. In this case, the tag is simply ignored and the mapping of the untagged value is used. A type like <code class='inline-code-box'><span class='inline-code'>&lt;user_id(Int)&gt;</span></code>, for example, will be mapped to a <code class='inline-code-box'><span class='inline-code'>long</span></code> in C#, and the generated code will take care of adding or removing the <code class='inline-code-box'><span class='inline-code'>user_id</span></code> tag as needed.</li><li>The <code class='inline-code-box'><span class='inline-code'>Maybe[T]</span></code> type is mapped directly to the type of its parameter, and the value <code class='inline-code-box'><span class='inline-code'>:nothing</span></code> is mapped to <code class='inline-code-box'><span class='inline-code'>null</span></code>. <code class='inline-code-box'><span class='inline-code'>Maybe[String]</span></code>, for example, is mapped to <code class='inline-code-box'><span class='inline-code'>String</span></code>, and the value <code class='inline-code-box'><span class='inline-code'>:just("Hello!")</span></code> is returned as the C# string <code class='inline-code-box'><span class='inline-code'>"Hello!"</span></code>. Primitive types like <code class='inline-code-box'><span class='inline-code'>long</span></code> or <code class='inline-code-box'><span class='inline-code'>double</span></code> are replaced with the corresponding nullable types: <code class='inline-code-box'><span class='inline-code'>Maybe[Int]</span></code> for example, is mapped to <code class='inline-code-box'><span class='inline-code'>int?</span></code>, and <code class='inline-code-box'><span class='inline-code'>Maybe[Float]</span></code> to <code class='inline-code-box'><span class='inline-code'>double?</span></code>.</li></ul>
 
-<p>When the types involved are too complex for above mapping the compiler tries to generate a C# class for them. It generally needs to do so when dealing with union types. All the generated types are documented in the <code class='inline-code-box'><span class='inline-code'>facades.txt</span></code> file. As an example, given the following Cell code:</p>
-
-<figure class="highlight">
-<section>
-<pre><code><span class='k'>type</span> <span class='m'>Point</span> = point(x: <span class='m'>Int</span>, x: <span class='m'>Int</span>);
-
-<span class='k'>type</span> <span class='m'>Shape</span> = square(left: <span class='m'>Int</span>, bottom: <span class='m'>Int</span>, side: <span class='m'>Nat</span>),
-             rectangle(left: <span class='m'>Int</span>, bottom: <span class='m'>Int</span>, width: <span class='m'>Nat</span>, height: <span class='m'>Nat</span>),
-             circle(center: <span class='m'>Point</span>, radius: <span class='m'>Float</span>);
-
-<span class='k'>type</span> <span class='m'>List</span>[<span class='u'>T</span>] = empty_list, list(<span class='u'>T</span>, <span class='m'>List</span>[<span class='u'>T</span>]);
-
-<span class='k'>schema</span> <span class='m'>RelAuto</span> {
-  ...
-}
-
-<span class='k'>using</span> <span class='m'>RelAuto</span> {
-  <span class='m'>List</span>[<span class='m'>Shape</span>] shapes_at(<span class='m'>Point</span> p) = ...
-}
-</section>
-</figure>
-</code></pre>
-
-<p>this is what the compiler will generate, in the pseudo-C# code used in <code class='inline-code-box'><span class='inline-code'>facades.txt</span></code>:</p>
-
-<p><figure class="highlight"><section><pre><code><span class='k'>namespace</span> Cell.Facades {
-  <span class='c'>// Point type</span>
-  <span class='k'>class</span> <span class='m'>Point</span> {
-    <span class='b'>long</span> x;
-    <span class='b'>long</span> y;
-  }
-
-  <span class='c'>// Shape type and its subtypes</span>
-  <span class='k'>interface</span> <span class='m'>Shape</span> {
-
-  }
-
-  <span class='k'>class</span> <span class='m'>Square</span> <span class='k'>:</span> <span class='m'>Shape</span> {
-    <span class='b'>long</span> left;
-    <span class='b'>long</span> bottom;
-    <span class='b'>long</span> side;
-  }
-
-  <span class='k'>class</span> <span class='m'>Rectangle</span> <span class='k'>:</span> <span class='m'>Shape</span> {
-    <span class='b'>long</span> left;
-    <span class='b'>long</span> bottom;
-    <span class='b'>long</span> height;
-    <span class='b'>long</span> width;
-  }
-
-  <span class='k'>class</span> <span class='m'>Circle</span> <span class='k'>:</span> <span class='m'>Shape</span> {
-    <span class='m'>Point</span>  center;
-    <span class='b'>double</span> radius;
-  }
-
-  <span class='c'>// List[Shape] and its subtypes</span>
-  <span class='k'>interface</span> <span class='m'>List_Shape</span> {
-
-  }
-
-  <span class='k'>class</span> <span class='m'>EmptyList</span> <span class='k'>:</span> List_Shape {
-    <span class='k'>static</span> <span class='k'>readonly</span> EmptyList singleton;
-  }
-
-  <span class='k'>class</span> <span class='m'>List</span> <span class='k'>:</span> List_Shape {
-    (<span class='m'>Shape</span>, <span class='m'>List_Shape</span>) value;
-  }
-}
-</code></pre></section></figure>
-</p>
-
-<p>The first Cell type, <code class='inline-code-box'><span class='inline-code'>Point</span></code>, is mapped to a C# class by the same name. For a union type like <code class='inline-code-box'><span class='inline-code'>Shape</span></code> an empty interface is created, and each of the alternatives in the union is mapped to its own type, which implements the interface. The mapping for records and tagged records like <code class='inline-code-box'><span class='inline-code'>Square</span></code> or <code class='inline-code-box'><span class='inline-code'>Circle</span></code> is obvious. Symbols like <code class='inline-code-box'><span class='inline-code'>empty_list</span></code> are mapped to their own singleton class, <code class='inline-code-box'><span class='inline-code'>EmptyList</span></code> in this case. Such classes have a private constructor, and their only instance can be accessed through the <code class='inline-code-box'><span class='inline-code'>singleton</span></code> class variable. Generic types like <code class='inline-code-box'><span class='inline-code'>List[T]</span></code> are never mapped directly to C# types, only their instances are. In this specific case <code class='inline-code-box'><span class='inline-code'>List[Shape]</span></code> is mapped to <code class='inline-code-box'><span class='inline-code'>List_Shape</span></code>. All generated classes and their member or class variables are public, and they're defined in the <code class='inline-code-box'><span class='inline-code'>Cell.Facades</span></code> namespace. They also overload the <code class='inline-code-box'><span class='inline-code'>ToString()</span></code> method so that it returns the standard textual representation for the corresponding Cell value. <code class='inline-code-box'><span class='inline-code'>Point.ToString()</span></code>, for example, will returns strings like <code class='inline-code-box'><span class='inline-code'>"point(12, -5)"</span></code>.</p>
-
-<p>The exact rules that are used to map a Cell type to a corresponding C# type are rather complex, and not yet final, so they won't be described here, but the final result is generally just what you would expect. The mapping has some limitations though: union types are mapped to a generated native type only if they only contain symbols or tagged values. The compiler for example will not generated a C# equivalent for the following type:</p>
-
-<figure class="highlight">
-<section>
-<pre><code><span class='k'>type</span> <span class='m'>Point</span> = (x: <span class='m'>Int</span>, y: <span class='m'>Int</span>), point(x: <span class='m'>Int</span>, y: <span class='m'>Int</span>);
-</section>
-</figure>
-</code></pre>
-
-<p>Finally, when any type of naming conflict arises, the compiler fixes it by adding underscores and/or a unique number at the end of the type name, so don't be surprised if you find generated types with names like <code class='inline-code-box'><span class='inline-code'>MyType_</span></code> or <code class='inline-code-box'><span class='inline-code'>MyType_2</span></code>.</p>
-
-<p>When everything else fails, values are passed back and forth as strings containing their standard textual representation. That's neither elegant nor particularly efficient, but when passing data from C# to Cell it's at least simple and straightforward, since generating those strings is usually trivial. In the other direction things are a bit more complicated, as you may have to parse those strings, and parsing is a lot more complex than printing. A C# library that will assist with that task will be provided soon, but remember that exchanging data in textual form is just a last resort, and in practice it's very easy to avoid.</p>
+<p>Not all types can be handled using the above mapping and that includes important practical cases like polymorphic and recursive types. We'll see how to deal with those more complex types later.</p>
 
 
 <h3>Relational automata</h3>
@@ -220,13 +148,20 @@
 }
 
 <span class='m'>Counter</span>.reset(<span class='m'>Int</span>) {
-  <span class='k'>set</span> value = _untag_(<span class='k'>this</span>);
+  <span class='k'>set</span> value = untag(<span class='k'>this</span>);
   <span class='k'>set</span> updates = updates + <span class='n'>1</span>;
 }
 
 <span class='k'>using</span> <span class='m'>Counter</span> {
   <span class='m'>Int</span> value   = value;
   <span class='m'>Int</span> updates = updates;
+
+  <span class='m'>Bool</span> is_greater_than(<span class='m'>Int</span> a_value) = value &gt; a_value;
+
+  (value: <span class='m'>Int</span>, updates: <span class='m'>Int</span>) copy_state = (
+    value:   value,
+    updates: updates
+  );
 }
 </section>
 </figure>
@@ -234,7 +169,7 @@
 
 <p>This is the interface of the corresponding C# class generated by the Cell compiler:</p>
 
-<p><figure class="highlight"><section><pre><code><span class='k'>namespace</span> <span class='m'>Cell</span>.<span class='m'>Facades</span> {
+<p><figure class="highlight"><section><pre><code><span class='k'>namespace</span> <span class='m'>Cell</span>.<span class='m'>Automata</span> {
   <span class='k'>class</span> <span class='m'>Counter</span> {
     Counter();
 
@@ -255,25 +190,27 @@
     <span class='c'>// User-defined methods</span>
     <span class='b'>long</span> Value();
     <span class='b'>long</span> Updates();
+    <span class='b'>bool</span> IsGreaterThan(<span class='b'>long</span>);
+    (<span class='b'>long</span> value, <span class='b'>long</span> updates) CopyState();
   }
 }
 </code></pre></section></figure>
 </p>
 
-<p>As you can see, the generated C# class has the same name of the Cell automaton it derives from, and is declared in the <code class='inline-code-box'><span class='inline-code'>Cell.Facades</span></code> namespace. The first three methods, <code class='inline-code-box'><span class='inline-code'>Load()</span></code>, <code class='inline-code-box'><span class='inline-code'>Save(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>Execute(..)</span></code>, and the two delegate fields, <code class='inline-code-box'><span class='inline-code'>OnSuccess</span></code> and <code class='inline-code-box'><span class='inline-code'>OnFailure</span></code>, are the same for all relational automata. All other methods are different for each automaton, and are used to send specific types of messages to it or to invoke its (read-only) methods.</p>
+<p>As you can see, the generated C# class has the same name of the Cell automaton it derives from, and is declared in the <code class='inline-code-box'><span class='inline-code'>Cell.Automata</span></code> namespace. The first three methods, <code class='inline-code-box'><span class='inline-code'>Load()</span></code>, <code class='inline-code-box'><span class='inline-code'>Save(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>Execute(..)</span></code>, and the two delegate fields, <code class='inline-code-box'><span class='inline-code'>OnSuccess</span></code> and <code class='inline-code-box'><span class='inline-code'>OnFailure</span></code>, are the same for all relational automata. All other methods are different for each automaton, and are used to send specific types of messages to it or to invoke its (read-only) methods.</p>
 
-<p>The <code class='inline-code-box'><span class='inline-code'>Save(..)</span></code> method is the equivalent of the <code class='inline-code-box'><span class='inline-code'>read</span></code> instruction in Cell, in that it takes a snapshot of the state of the automaton, which is written to the provided <code class='inline-code-box'><span class='inline-code'>System.IO.Stream</span></code>. The state is saved in the standard text format used for all Cell values.</p>
+<p>The <code class='inline-code-box'><span class='inline-code'>Save(..)</span></code> method is the equivalent of the <code class='inline-code-box'><span class='inline-code'>Save(..)</span></code> procedure in Cell, in that it takes a snapshot of the state of the automaton, which is written to the provided <code class='inline-code-box'><span class='inline-code'>System.IO.Stream</span></code>. The state is saved in the standard text format used for all Cell values.</p>
 
-<p><code class='inline-code-box'><span class='inline-code'>Load(..)</span></code> is used to set the state of an automaton instance, which is read from a <code class='inline-code-box'><span class='inline-code'>System.IO.Stream</span></code>, and is the equivalent of the <code class='inline-code-box'><span class='inline-code'>write</span></code> instruction in Cell. It can be used at any time in the life of the automaton instance, any number of times. The new state has to be provided in the standard text format. If the provided state is not a valid one, <code class='inline-code-box'><span class='inline-code'>Load(..)</span></code> will throw an exception. In that case, the automaton instance will just retain the state it had before, and will still be perfectly functional.</p>
+<p><code class='inline-code-box'><span class='inline-code'>Load(..)</span></code> is used to set the state of an automaton instance, which is read from a <code class='inline-code-box'><span class='inline-code'>System.IO.Stream</span></code>, and is the equivalent of the <code class='inline-code-box'><span class='inline-code'>Load(..)</span></code> procedure in Cell. It can be used at any time in the life of the automaton instance, any number of times. The new state has to be provided in the standard text format. If the provided state is not a valid one, <code class='inline-code-box'><span class='inline-code'>Load(..)</span></code> will throw an exception. In that case, the automaton instance will just retain the state it had before, and will still be perfectly functional.</p>
 
 <p><code class='inline-code-box'><span class='inline-code'>Execute(..)</span></code> is used to send the automaton a message, which has to be passed in text form. A few examples:</p>
 
 <figure class="highlight">
 <section>
-<pre><code>counter.<span class='m'>Execute</span>(<span class='s'>"incr"</span>);
-counter.<span class='m'>Execute</span>(<span class='s'>"decr"</span>);
-counter.<span class='m'>Execute</span>(<span class='s'>"reset"</span>);
-counter.<span class='m'>Execute</span>(<span class='s'>"reset(-1)"</span>);
+<pre><code>counter.Execute(<span class='s'>"incr"</span>);
+counter.Execute(<span class='s'>"decr"</span>);
+counter.Execute(<span class='s'>"reset"</span>);
+counter.Execute(<span class='s'>"reset(-1)"</span>);
 </section>
 </figure>
 </code></pre>
@@ -284,8 +221,8 @@ counter.<span class='m'>Execute</span>(<span class='s'>"reset(-1)"</span>);
 
 <figure class="highlight">
 <section>
-<pre><code>counter.<span class='m'>Incr</span>();    <span class='c'>// Same as counter.execute("incr");</span>
-counter.<span class='m'>Reset</span>(-<span class='n'>1</span>); <span class='c'>// Same as counter.execute("reset(-1)");</span>
+<pre><code>counter.Incr();    <span class='c'>// Same as counter.Execute("incr");</span>
+counter.Reset(-<span class='n'>1</span>); <span class='c'>// Same as counter.Execute("reset(-1)");</span>
 </section>
 </figure>
 </code></pre>
@@ -296,7 +233,197 @@ counter.<span class='m'>Reset</span>(-<span class='n'>1</span>); <span class='c'
 
 <p>The <code class='inline-code-box'><span class='inline-code'>OnSuccess</span></code> delegate field is meant to help with that. If it's not <code class='inline-code-box'><span class='inline-code'>null</span></code> (which is the initial value) the delegate it points to is called every time a message is processed successfully, and the message itself is passed to it in textual form. The other delegate, <code class='inline-code-box'><span class='inline-code'>OnFailure</span></code>, on the other hand is invoked whenever a message handler fails. Saving those failed messages is not necessary for persistence, but it's typically useful for debugging.</p>
 
-<p>The two methods <code class='inline-code-box'><span class='inline-code'>Value()</span></code> and <code class='inline-code-box'><span class='inline-code'>Updates()</span></code> are just wrappers for the corresponding (read-only) methods of <code class='inline-code-box'><span class='inline-code'>Counter</span></code>. Note that the types of such variables is just <code class='inline-code-box'><span class='inline-code'>Int</span></code>, which can be mapped directly to <code class='inline-code-box'><span class='inline-code'>long</span></code> in C#.</p>
+<p>The last four methods, <code class='inline-code-box'><span class='inline-code'>Value()</span></code>, <code class='inline-code-box'><span class='inline-code'>Updates()</span></code>, <code class='inline-code-box'><span class='inline-code'>IsGreaterThan(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>CopyState(..)</span></code>, are just wrappers for the corresponding (read-only) methods of <code class='inline-code-box'><span class='inline-code'>Counter</span></code>.</p>
+
+<p>You can see how in the signatures of the methods of the generated class the types of both arguments and return values are derived using the rules described in the previous paragraph. For example, <code class='inline-code-box'><span class='inline-code'>is_greater_than(..)</span></code> takes an argument of type <code class='inline-code-box'><span class='inline-code'>Int</span></code> and returns a value of type <code class='inline-code-box'><span class='inline-code'>Bool</span></code>, which become <code class='inline-code-box'><span class='inline-code'>long</span></code> and <code class='inline-code-box'><span class='inline-code'>bool</span></code> respectively in C#. Similarly, <code class='inline-code-box'><span class='inline-code'>copy_state</span></code> returns a record in Cell, which is mapped to a named tuple with the same fields in C#, and the types of those fields are in turn mapped from <code class='inline-code-box'><span class='inline-code'>Int</span></code> to <code class='inline-code-box'><span class='inline-code'>long</span></code>.</p>
+
+
+<h3>More on data conversions</h3>
+
+<p>What happens when the type of an argument or the return value of a method (or message handler) is too complex to be dealt with using the mapping described earlier? Here the default behavior of the compiler is to use the standard textual representation of Cell values as the data exchange format. Let's illustrate this with an example:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Point</span> = point(x: <span class='m'>Int</span>, y: <span class='m'>Int</span>);
+
+<span class='k'>type</span> <span class='m'>Shape</span> = square(left: <span class='m'>Int</span>, bottom: <span class='m'>Int</span>, side: <span class='m'>Nat</span>),
+             rectangle(left: <span class='m'>Int</span>, bottom: <span class='m'>Int</span>, width: <span class='m'>Nat</span>, height: <span class='m'>Nat</span>),
+             circle(center: <span class='m'>Point</span>, radius: <span class='m'>Int</span>);
+
+<span class='k'>schema</span> <span class='m'>Canvas</span> {
+  ...
+}
+
+<span class='k'>using</span> <span class='m'>Canvas</span> {
+  <span class='m'>Shape</span>* shapes_at(<span class='m'>Point</span> p) = ...
+}
+</section>
+</figure>
+</code></pre>
+
+<p>In this example, <code class='inline-code-box'><span class='inline-code'>shapes_at(..)</span></code> return a sequence of values of type <code class='inline-code-box'><span class='inline-code'>Shape</span></code>, which is a polymorphic type. By default the generated <code class='inline-code-box'><span class='inline-code'>Canvas</span></code> class will look like this:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>namespace</span> Cell.Automata {
+  <span class='k'>class</span> <span class='m'>Canvas</span> {
+    Canvas();
+
+    <span class='k'>void</span> Load(<span class='m'>Stream</span>);
+    <span class='k'>void</span> Save(<span class='m'>Stream</span>);
+
+    <span class='k'>string</span>[] ShapesAt((<span class='k'>long</span> x, <span class='k'>long</span> y) p);
+  }
+}
+</code></pre></section></figure>
+</p>
+
+<p>As you can see, the return type of <code class='inline-code-box'><span class='inline-code'>ShapesAt(..)</span></code> is <code class='inline-code-box'><span class='inline-code'>string[]</span></code>. Each string in the array is the textual representation of the corresponding Cell value. That is, if <code class='inline-code-box'><span class='inline-code'>shapes_at(..)</span></code> returns the following Cell value:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>( square(left: <span class='n'>0</span>, bottom: <span class='n'>0</span>, side: <span class='n'>10</span>),
+  circle(center: point(x: <span class='n'>8</span>, y: <span class='n'>3</span>), radius: <span class='n'>5</span>),
+  rectangle(left: -<span class='n'>25</span>, bottom: <span class='n'>14</span>, width: <span class='n'>4</span>, height: <span class='n'>2</span>)
+)
+</section>
+</figure>
+</code></pre>
+
+<p>then the caller of <code class='inline-code-box'><span class='inline-code'>ShapesAt(..)</span></code> on the C# side will get back the following C# object:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>string[] {
+  <span class='s'>"square(left: 0, bottom: 0, side: 10)"</span>,
+  <span class='s'>"circle(center: point(x: 8, y: 3), radius: 5)"</span>,
+  <span class='s'>"rectangle(left: -25, bottom: 14, width: 4, height: 2)"</span>
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Exchanging data in text form is not particularly elegant nor efficient, but it's at least simple and straightforward, and in some cases it works just fine. It tends to work better when passing data from C# to Cell than in the other direction, since strings are easy to generate but difficult to parse.</p>
+
+<p>As an alternative, you can ask the compiler to generate an equivalent C# class for some of the types defined in your Cell code base. What you need to do is create a text file (let's call it types.txt) containing the list of types you want to generate (one type per line). Let's say for instance that you want to generate C# classes for the <code class='inline-code-box'><span class='inline-code'>Point</span></code> and <code class='inline-code-box'><span class='inline-code'>Shape</span></code> types above. The content of types.txt would then look like this:</p>
+
+<p><pre>  Point<br/>  Shape</pre></p>
+
+<p>When you compile your code, you'll have to point the compiler to that file using the <code class='inline-code-box'><span class='inline-code'>-g</span></code> flag:</p>
+
+<p><pre>  cellc-cs -g types.txt &lt;project file&gt;</pre></p>
+
+<p>The interface of the generated <code class='inline-code-box'><span class='inline-code'>Canvas</span></code> class will now look like this:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>namespace</span> Cell.Automata {
+  <span class='k'>class</span> <span class='m'>Canvas</span> {
+    Canvas();
+
+    <span class='k'>void</span> Load(<span class='m'>Stream</span>);
+    <span class='k'>void</span> Save(<span class='m'>Stream</span>);
+
+    <span class='m'>Shape</span>[] ShapesAt((<span class='k'>long</span> x, <span class='k'>long</span> y) p);
+  }
+}
+</code></pre></section></figure>
+</p>
+
+<p>As you can see, the return type of <code class='inline-code-box'><span class='inline-code'>ShapesAt(..)</span></code> has now become <code class='inline-code-box'><span class='inline-code'>Shape[]</span></code>. You'll find the definition of <code class='inline-code-box'><span class='inline-code'>Shape</span></code> in the generated <code class='inline-code-box'><span class='inline-code'>typedefs.cs</span></code> file:</p>
+
+<p><figure class="highlight"><section><pre><code><span class='k'>namespace</span> <span class='m'>Cell</span>.<span class='m'>Typedefs</span> {
+  <span class='k'>public</span> <span class='k'>partial</span> <span class='k'>class</span> <span class='m'>Point</span> {
+    <span class='k'>public</span> <span class='b'>long</span> x;
+    <span class='k'>public</span> <span class='b'>long</span> y;
+
+    <span class='k'>public</span> Point(<span class='b'>long</span> x, <span class='b'>long</span> y) {
+      this.x = x;
+      this.y = y;
+    }
+  }
+
+  <span class='k'>public</span> <span class='k'>interface</span> <span class='m'>Shape</span> {
+
+  }
+
+  <span class='k'>public</span> <span class='k'>partial</span> <span class='k'>class</span> <span class='m'>Rectangle</span> : <span class='m'>Shape</span> {
+    <span class='k'>public</span> <span class='b'>long</span> left;
+    <span class='k'>public</span> <span class='b'>long</span> width;
+    <span class='k'>public</span> <span class='b'>long</span> bottom;
+    <span class='k'>public</span> <span class='b'>long</span> height;
+
+    <span class='k'>public</span> Rectangle(<span class='b'>long</span> left, <span class='b'>long</span> width, <span class='b'>long</span> bottom, <span class='b'>long</span> height) {
+      this.left = left;
+      this.width = width;
+      this.bottom = bottom;
+      this.height = height;
+    }
+  }
+
+  <span class='k'>public</span> <span class='k'>partial</span> <span class='k'>class</span> <span class='m'>Circle</span> : <span class='m'>Shape</span> {
+    <span class='k'>public</span> <span class='m'>Point</span> center;
+    <span class='k'>public</span> <span class='b'>long</span>  radius;
+
+    <span class='k'>public</span> Circle(<span class='m'>Point</span> center, <span class='b'>long</span> radius) {
+      this.center = center;
+      this.radius = radius;
+    }
+  }
+
+  <span class='k'>public</span> <span class='k'>partial</span> <span class='k'>class</span> <span class='m'>Square</span> : <span class='m'>Shape</span> {
+    <span class='k'>public</span> <span class='b'>long</span> left;
+    <span class='k'>public</span> <span class='b'>long</span> side;
+    <span class='k'>public</span> <span class='b'>long</span> bottom;
+
+    <span class='k'>public</span> Square(<span class='b'>long</span> left, <span class='b'>long</span> side, <span class='b'>long</span> bottom) {
+      this.left = left;
+      this.side = side;
+      this.bottom = bottom;
+    }
+  }
+}
+</code></pre></section></figure>
+</p>
+
+<p>The definition of the <code class='inline-code-box'><span class='inline-code'>Point</span></code> class at the top is straightforward: the type <code class='inline-code-box'><span class='inline-code'>Point</span></code>, which in the Cell codebase is defined as a tagged record with two fields, <code class='inline-code-box'><span class='inline-code'>x</span></code> and <code class='inline-code-box'><span class='inline-code'>y</span></code>, of type <code class='inline-code-box'><span class='inline-code'>Int</span></code>, is mapped to a C# class by the same name with two member variables <code class='inline-code-box'><span class='inline-code'>x</span></code> and <code class='inline-code-box'><span class='inline-code'>y</span></code> of type <code class='inline-code-box'><span class='inline-code'>long</span></code>.</p>
+
+<p>The mapping for <code class='inline-code-box'><span class='inline-code'>Shape</span></code> is a bit more complicated, since that's a polymorphic type. The compiler here has created three classes, <code class='inline-code-box'><span class='inline-code'>Square</span></code>, <code class='inline-code-box'><span class='inline-code'>Rectangle</span></code> and <code class='inline-code-box'><span class='inline-code'>Circle</span></code> each of which corresponds to one of the three alternatives in the <code class='inline-code-box'><span class='inline-code'>Shape</span></code> type definition. <code class='inline-code-box'><span class='inline-code'>Shape</span></code> in C# is defined as an empty interface, which is then implemented by the three concrete classes, so that they can be manipulated polymorphically.</p>
+
+<p>All the classes in <code class='inline-code-box'><span class='inline-code'>typedefs.cs</span></code> are defined as <code class='inline-code-box'><span class='inline-code'>partial</span></code>, which means that you're free to add new methods or member variables to them if need be. You can also directly edit the generated class definitions, as long as you don't change the signature of the generated constructor, and of course the name, namespace and inheritance hierarchy of the generated classes.</p>
+
+<p>Note that at the moment these generated classes are used only when moving data from Cell to C#, but not in the other direction (that is, they're used in the return types of the generated methods, but not in the types of their arguments). For example, the argument of <code class='inline-code-box'><span class='inline-code'>shapes_at(..)</span></code> is of type <code class='inline-code-box'><span class='inline-code'>Point</span></code> in Cell, but its type in the generated <code class='inline-code-box'><span class='inline-code'>ShapesAt(..)</span></code> is <code class='inline-code-box'><span class='inline-code'>(long x, long y)</span></code> rather than <code class='inline-code-box'><span class='inline-code'>Point</span></code>.</p>
+
+<p>In order for the compiler to be able to generate a corresponding C# class for it, a Cell type definition has to obey a number of restrictions. Non-polymorphic types have to be defined as (possibly tagged) records with no optional fields or (possibly tagged) tuples. Any of the following definitions for <code class='inline-code-box'><span class='inline-code'>Point</span></code>, for example, would allow the generation of a corresponding C# class:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Point</span> = (x: <span class='m'>Int</span>, y: <span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>Point</span> = point(x: <span class='m'>Int</span>, y: <span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>Point</span> = (<span class='m'>Int</span>, <span class='m'>Int</span>);
+<span class='k'>type</span> <span class='m'>Point</span> = point(<span class='m'>Int</span>, <span class='m'>Int</span>);
+</section>
+</figure>
+</code></pre>
+
+<p>but the following ones would not:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Point</span> = (x: <span class='m'>Int</span>, y: <span class='m'>Int</span>, z: <span class='m'>Int</span>?);
+<span class='k'>type</span> <span class='m'>Point</span> = point(x: <span class='m'>Int</span>, y: <span class='m'>Int</span>, z: <span class='m'>Int</span>?);
+</section>
+</figure>
+</code></pre>
+
+<p>since the field <code class='inline-code-box'><span class='inline-code'>z</span></code> is optional (in this case though you can achieve the same result by making <code class='inline-code-box'><span class='inline-code'>z</span></code> mandatory and changing its type to <code class='inline-code-box'><span class='inline-code'>Maybe[Int]</span></code>). The rules are even more restrictive for polymorphic types: each alternative in a type union must be a tagged record or tuple, and the tags have to be different. You're free to define each alternative as a separate type though. <code class='inline-code-box'><span class='inline-code'>Shape</span></code> for example could have been defined as follow, without affecting the ability of the compiler to generated a corresponding C# class for it:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>type</span> <span class='m'>Square</span> = square(left: <span class='m'>Int</span>, bottom: <span class='m'>Int</span>, side: <span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>Rect</span>   = rectangle(left: <span class='m'>Int</span>, bottom: <span class='m'>Int</span>, width: <span class='m'>Nat</span>, height: <span class='m'>Nat</span>);
+<span class='k'>type</span> <span class='m'>Circle</span> = circle(center: <span class='m'>Point</span>, radius: <span class='m'>Int</span>);
+
+<span class='k'>type</span> <span class='m'>Shape</span> = <span class='m'>Square</span>, <span class='m'>Rect</span>, <span class='m'>Circle</span>;
+</section>
+</figure>
+</code></pre>
 
 
 <h3>Reactive automata</h3>

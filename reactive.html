@@ -386,7 +386,7 @@ rules:
 <figure class="highlight">
 <section>
 <pre><code>rules:
-  draining_switch = <span class='m'>Switch</span>(
+  draining_switch = Switch(
     switch_on  = upper_sensor_submerged,
     switch_off = <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
                  <span class='k'>not</span> upper_sensor_submerged
@@ -413,7 +413,7 @@ rules:
 
 <figure class="highlight">
 <section>
-<pre><code>needs_draining = <span class='m'>Switch</span>(
+<pre><code>needs_draining = Switch(
   upper_sensor_submerged,
   <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span> <span class='k'>not</span> upper_sensor_submerged
 );
@@ -459,7 +459,7 @@ rules:
 
 <figure class="highlight">
 <section>
-<pre><code>my_auto = <span class='m'>MyAuto</span>(expr_1, expr_2, input_3=expr_3, input_4=expr_4);
+<pre><code>my_auto = MyAuto(expr_1, expr_2, input_3=expr_3, input_4=expr_4);
 </section>
 </figure>
 </code></pre>
@@ -654,15 +654,15 @@ bool_signal_5 = <span class='n'>1s</span> <span class='k'>and</span> <span class
 
   rules:
     <span class='c'>// Water level sensors</span>
-    lower_sensor_state = <span class='m'>WaterSensor</span>(lower_sensor_reading);
-    upper_sensor_state = <span class='m'>WaterSensor</span>(upper_sensor_reading);
+    lower_sensor_state = WaterSensor(lower_sensor_reading);
+    upper_sensor_state = WaterSensor(upper_sensor_reading);
 
     <span class='c'>// Water level controller</span>
     water_level_critical = is_critical(lower_sensor_state, upper_sensor_state);
     water_level_low = is_low(lower_sensor_state, upper_sensor_state);
 
     <span class='c'>// Draining switch</span>
-    needs_draining = <span class='m'>Switch</span>(water_level_critical, water_level_low);
+    needs_draining = Switch(water_level_critical, water_level_low);
 
     <span class='c'>// Checking whether methane, carbon monoxide</span>
     <span class='c'>// and airflow levels are critical</span>

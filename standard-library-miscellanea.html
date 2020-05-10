@@ -55,7 +55,7 @@
 <pre><code><span class='c'>// Builds a <span class='inline-code'>Date</span> value corresponding to the given day, month and year</span>
 <span class='c'>// and returns it wrapped in a <span class='inline-code'>Maybe</span>. Returns <span class='inline-code'>nothing</span> if the</span>
 <span class='c'>// given day/month/year combination is not valid</span>
-<span class='c'>// date(2019, 5, 30) <span class='inline-code'>-&gt;</span> just(`2016-05-30`)</span>
+<span class='c'>// date(2019, 5, 30) <span class='inline-code'>-&gt;</span> just(`2019-05-30`)</span>
 <span class='c'>// date(2019, 2, 29) <span class='inline-code'>-&gt;</span> nothing</span>
 <span class='m'>Maybe</span>[<span class='m'>Date</span>] date(<span class='m'>Int</span> year, <span class='m'>Int</span> month, <span class='m'>Int</span> day)
 
@@ -124,6 +124,59 @@
 
 <span class='c'>// Faster version of sort(..) for sequences of floating point numbers</span>
 <span class='m'>Float</span>* sortf(<span class='m'>Float</span>*)
+</section>
+</figure>
+</code></pre>
+
+<p>Sorting a sequence by key:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// The relative order of two elements <span class='inline-code'>x</span> and <span class='inline-code'>y</span> of <span class='inline-code'>seq</span> is</span>
+<span class='c'>// determined by comparing their keys: <span class='inline-code'>key(x) &lt; key(y)</span></span>
+<span class='u'>T</span>* sort_by(<span class='u'>T</span>* seq, (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>) <span class='k'>key</span>)
+
+<span class='c'>// The relative order of <span class='inline-code'>x</span> and <span class='inline-code'>y</span> is determined like this:</span>
+<span class='c'>//   <span class='inline-code'>major_key(x) &lt; major_key(y)</span> if <span class='inline-code'>major_key(x) != major_key(y)</span></span>
+<span class='c'>//   <span class='inline-code'>minor_key(x) &lt; minor_key(y)</span> otherwise</span>
+<span class='u'>T</span>* sort_by(<span class='u'>T</span>* seq, (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>) major_key, (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>) minor_key)
+
+<span class='c'>// Same as above, but with three and four keys respectively</span>
+<span class='u'>T</span>* sort_by(<span class='u'>T</span>*, (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>))
+<span class='u'>T</span>* sort_by(<span class='u'>T</span>*, (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>))
+</section>
+</figure>
+</code></pre>
+
+<p>Each of the <code class='inline-code-box'><span class='inline-code'>sort(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>sort_by(..)</span></code> functions described above has a corresponding version that operates on sets instead of sequences:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='m'>Ord</span>* sort([<span class='m'>Ord</span>])
+
+<span class='u'>T</span>* sort([<span class='u'>T</span>], (<span class='u'>T</span> <span class='u'>T</span> -&gt; <span class='m'>Bool</span>))
+
+<span class='u'>T</span>* sort_by([<span class='u'>T</span>], (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>))
+<span class='u'>T</span>* sort_by([<span class='u'>T</span>], (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>))
+<span class='u'>T</span>* sort_by([<span class='u'>T</span>], (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>))
+<span class='u'>T</span>* sort_by([<span class='u'>T</span>], (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>T</span> -&gt; <span class='m'>Ord</span>))
+</section>
+</figure>
+</code></pre>
+
+<p>You can also sort key/value pairs in maps by key:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// sort([1 -&gt; "C", 2 -&gt; "B", 3 -&gt; "A"]) == ((1, "C"), (2, "B"), (3, "A"))</span>
+(<span class='m'>Ord</span>, <span class='u'>V</span>)* sort([+<span class='m'>Ord</span> -&gt; <span class='u'>V</span>])
+
+(<span class='u'>K</span>, <span class='u'>V</span>)* sort([<span class='u'>K</span> -&gt; <span class='u'>V</span>], (<span class='u'>K</span> <span class='u'>K</span> -&gt; <span class='m'>Bool</span>))
+
+(<span class='u'>K</span>, <span class='u'>V</span>)* sort_by([<span class='u'>K</span> -&gt; <span class='u'>V</span>], (<span class='u'>K</span> -&gt; <span class='m'>Ord</span>))
+(<span class='u'>K</span>, <span class='u'>V</span>)* sort_by([<span class='u'>K</span> -&gt; <span class='u'>V</span>], (<span class='u'>K</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>K</span> -&gt; <span class='m'>Ord</span>))
+(<span class='u'>K</span>, <span class='u'>V</span>)* sort_by([<span class='u'>K</span> -&gt; <span class='u'>V</span>], (<span class='u'>K</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>K</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>K</span> -&gt; <span class='m'>Ord</span>))
+(<span class='u'>K</span>, <span class='u'>V</span>)* sort_by([<span class='u'>K</span> -&gt; <span class='u'>V</span>], (<span class='u'>K</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>K</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>K</span> -&gt; <span class='m'>Ord</span>), (<span class='u'>K</span> -&gt; <span class='m'>Ord</span>))
 </section>
 </figure>
 </code></pre>

@@ -41,75 +41,70 @@
 
 <figure class="highlight">
 <section>
-<pre><code><span class='m'>Int</span> <span class='m'>Main</span>(<span class='m'>String</span>* args) {
+<pre><code><span class='m'>Int</span> Main(<span class='m'>String</span>* args) {
   instance : <span class='m'>Counter</span>;
 
   <span class='c'>// Checking the argument list</span>
   <span class='k'>if</span> |args| != <span class='n'>3</span> {
-    <span class='m'>Print</span>(<span class='s'>"Invalid arguments\n"</span>);
+    Print(<span class='s'>"Invalid arguments\n"</span>);
     <span class='k'>return</span> <span class='n'>1</span>;
   }
   init_state_fname, msg_list_fname, final_state_fname = args;
 
-  <span class='c'>// Reading and checking the initial state</span>
-  res = <span class='m'>ReadValueFromFile</span>(init_state_fname);
-  <span class='k'>return</span> <span class='n'>1</span> <span class='k'>if</span> res == nothing;
-  init_state = value(res);
-
-  <span class='c'>// Making sure the value is a record</span>
-  <span class='c'>// Without this check the code won't compile</span>
-  <span class='k'>if</span> <span class='k'>not</span> init_state :: [<span class='m'>Symbol</span> -&gt; <span class='m'>Any</span>] {
-    <span class='m'>Print</span>(<span class='s'>"Invalid initial state\n"</span>);
-    <span class='k'>return</span> <span class='n'>1</span>;
-  }
-
-  <span class='c'>// Setting the initial state of the automaton</span>
-  ok = write instance &lt;- init_state;
+  <span class='c'>// Loading the initial state</span>
+  ok = Load(instance, init_state_fname);
   <span class='k'>if</span> <span class='k'>not</span> ok {
-    <span class='m'>Print</span>(<span class='s'>"Invalid initial state\n"</span>);
+    err = Error(instance);
+    Print(<span class='s'>"Attempt to load the initial state of the automaton failed\n"</span>);
+    <span class='k'>if</span> err != <span class='s'>""</span>
+      Print(err &amp; <span class='s'>"\n"</span>);
     <span class='k'>return</span> <span class='n'>1</span>;
   }
 
   <span class='c'>// Reading and checking the message list</span>
-  res = <span class='m'>ReadValueFromFile</span>(msg_list_fname);
+  res = ReadValueFromFile(msg_list_fname);
   <span class='k'>return</span> <span class='n'>1</span> <span class='k'>if</span> res == nothing;
   msg_list = value(res);
   <span class='k'>if</span> <span class='k'>not</span> msg_list :: <span class='m'>CounterMsg</span>* {
-    <span class='m'>Print</span>(<span class='s'>"Invalid message list\n"</span>);
+    Print(<span class='s'>"Invalid message list\n"</span>);
     <span class='k'>return</span> <span class='n'>1</span>;
   }
 
   <span class='c'>// Sending all messages in the list</span>
   <span class='k'>for</span> msg @ i &lt;- msg_list {
-    ok = instance &lt;- msg;
+    ok = Send(instance, msg);
     <span class='k'>if</span> <span class='k'>not</span> ok {
-      <span class='m'>Print</span>(<span class='s'>"Message number "</span> &amp; _print_(i) &amp; <span class='s'>" failed\n"</span>);
-      err_msg = <span class='m'>Error</span>(instance);
-      <span class='m'>Print</span>(err_msg &amp; <span class='s'>"\n"</span>);
+      err = Error(instance);
+      Print(<span class='s'>"Processing of message number "</span> &amp; _print_(i) &amp; <span class='s'>" failed\n"</span>);
+      <span class='k'>if</span> err != <span class='s'>""</span>
+        Print(err &amp; <span class='s'>"\n"</span>);
+      <span class='k'>return</span> <span class='n'>1</span>;
     }
   }
 
   <span class='c'>// Saving the final state</span>
-  final_state = read instance;
-  ok = <span class='m'>FileWrite</span>(final_state_fname, untag(_print_(final_state)));
+  ok = Save(instance, final_state_fname);
   <span class='k'>if</span> <span class='k'>not</span> ok {
-    <span class='m'>Print</span>(<span class='s'>"Could not write to file "</span> &amp; final_state_fname &amp; <span class='s'>"\n"</span>);
+    err = Error(instance);
+    Print(<span class='s'>"Could not write to file "</span> &amp; final_state_fname &amp; <span class='s'>"\n"</span>);
+    <span class='k'>if</span> err != <span class='s'>""</span>
+      Print(err &amp; <span class='s'>"\n"</span>);
     <span class='k'>return</span> <span class='n'>1</span>;
   }
 
   <span class='k'>return</span> <span class='n'>0</span>;
 }
 
-<span class='m'>Maybe</span>[<span class='m'>Any</span>] <span class='m'>ReadValueFromFile</span>(<span class='m'>String</span> fname) {
-  res = <span class='m'>FileRead</span>(fname);
+<span class='m'>Maybe</span>[<span class='m'>Any</span>] ReadValueFromFile(<span class='m'>String</span> fname) {
+  res = FileRead(fname);
   <span class='k'>if</span> res == nothing {
-    <span class='m'>Print</span>(<span class='s'>"Cannot read file "</span> &amp; fname &amp; <span class='s'>"\n"</span>);
+    Print(<span class='s'>"Cannot read file "</span> &amp; fname &amp; <span class='s'>"\n"</span>);
     <span class='k'>return</span> nothing;
   }
 
   res = _parse_(string(value(res)));
   <span class='k'>if</span> failed(res) {
-    <span class='m'>Print</span>(<span class='s'>"File "</span> &amp; fname &amp; <span class='s'>" does not contain a valid Cell value\n"</span>);
+    Print(<span class='s'>"File "</span> &amp; fname &amp; <span class='s'>" does not contain a valid Cell value\n"</span>);
     <span class='k'>return</span> nothing;
   }
 
@@ -121,49 +116,87 @@
 
 <p>The first line in the body of <code class='inline-code-box'><span class='inline-code'>Main(..)</span></code> is the declaration of the automaton variable <code class='inline-code-box'><span class='inline-code'>instance</span></code>, which looks like an ordinary variable declaration. Automaton variables are instantiated and initialized as soon as the procedure that hosts them is called, and their initial state is the one that is provided with the schema declaration, which in the case of <code class='inline-code-box'><span class='inline-code'>Counter</span></code> is just <code class='inline-code-box'><span class='inline-code'>(value: 0, updates: 0)</span></code>.</p>
 
-<p>The first step is to load the initial state for <code class='inline-code-box'><span class='inline-code'>counter</span></code> from the given file, check that it's a valid record using the runtime type check <code class='inline-code-box'><span class='inline-code'>init_state :: [Symbol -&gt; Any]</span></code> and set the state of <code class='inline-code-box'><span class='inline-code'>instance</span></code> with the command:</p>
+<p>The first step is to load an arbitrary initial state for <code class='inline-code-box'><span class='inline-code'>counter</span></code> from the given file, using the built-in procedure <code class='inline-code-box'><span class='inline-code'>Load(..)</span></code>:</p>
 
 <figure class="highlight">
 <section>
-<pre><code>ok = write instance &lt;- init_state;
+<pre><code>ok = Load(instance, init_state_fname);
 </section>
 </figure>
 </code></pre>
 
-<p><code class='inline-code-box'><span class='inline-code'>ok</span></code> is a boolean variable that indicates whether the operation succeeded. It will fail if the provided value (<code class='inline-code-box'><span class='inline-code'>init_state</span></code>, in this case) is not a valid state for the target automaton. That cannot be checked at compile time, for two different reasons. First of all, a schema definition includes integrity constraints (keys and foreign keys) that would be hard to check at compile time. The other reason is related to persistence, and will be discussed in detail in the next paragraph.</p>
+<p><code class='inline-code-box'><span class='inline-code'>Load(..)</span></code> takes two arguments, an automaton variable and the name of the file to load the new state from. The file has to contain a valid state for the automaton in question in the standard text format that is used to represent any type of value in Cell. It returns a boolean value indicating whether it was successful or not. It can fail for a variety of reasons, such as the failure to open or read the content of the file, the fact that its content is not a valid (textual representation of a) Cell value or the fact that such a value is not a valid state for the automaton in question.</p>
 
-<p>The state of any automaton can be set at any time, any number of times. It's just like setting the value of a variable of an atomic type (like booleans, integers or floating point numbers) in any other language. The next step is to load the list of messages and send them in the given order to <code class='inline-code-box'><span class='inline-code'>instance</span></code> with the instruction:</p>
+<p>If loading the new state fails, the automaton retains whatever state it had before, and remains fully functional. Also note that <code class='inline-code-box'><span class='inline-code'>Load(..)</span></code> can be called at any time (and any number of times) during the lifespan of the automaton instance.</p>
+
+<p>The next step is to load the list of messages from another file and send them in the given order to <code class='inline-code-box'><span class='inline-code'>instance</span></code> using a third built-in procedure, <code class='inline-code-box'><span class='inline-code'>Send(..)</span></code>:</p>
 
 <figure class="highlight">
 <section>
-<pre><code>ok = instance &lt;- msg;
+<pre><code>ok = Send(instance, msg);
 </section>
 </figure>
 </code></pre>
 
-<p>Here too the variable <code class='inline-code-box'><span class='inline-code'>ok</span></code> indicates whether the message was processed successfully. Also note the <code class='inline-code-box'><span class='inline-code'>msg_list :: CounterMsg*</span></code> check, which is required to verify that whatever data was loaded from the input file was indeed a valid sequence of messages for <code class='inline-code-box'><span class='inline-code'>Counter</span></code>.</p>
+<p>Just as before, the return value of <code class='inline-code-box'><span class='inline-code'>Send(..)</span></code> indicates whether the message was processed successfully. Also note the <code class='inline-code-box'><span class='inline-code'>msg_list :: CounterMsg*</span></code> check, which is required to verify that whatever data was loaded from the input file was indeed a valid sequence of messages for <code class='inline-code-box'><span class='inline-code'>Counter</span></code>.</p>
 
-<p>When a message handler fails, you may need to figure out what went wrong. That's what the <code class='inline-code-box'><span class='inline-code'>Error(..)</span></code> builtin procedure is for:</p>
+<p>When either <code class='inline-code-box'><span class='inline-code'>Load(..)</span></code> or <code class='inline-code-box'><span class='inline-code'>Send(..)</span></code> fails, you may need to figure out what went wrong. That's what the <code class='inline-code-box'><span class='inline-code'>Error(..)</span></code> builtin procedure is for:</p>
 
 <figure class="highlight">
 <section>
-<pre><code>err_msg = <span class='m'>Error</span>(instance);
+<pre><code>err_msg = Error(instance);
 </section>
 </figure>
 </code></pre>
 
-<p><code class='inline-code-box'><span class='inline-code'>Error</span></code> takes as argument an automaton instance, and returns a string explaining why the last update failed (if the last message was handled successfully, it just returns the empty string). An update can fail either because the corresponding message handler threw an exception during its execution, or because it violated an integrity constraint (a key or foreign key). In the first case the string returned by <code class='inline-code-box'><span class='inline-code'>Error(..)</span></code> will simply contain the stack trace at the time the exception was thrown, but in the second one it will show which key or foreign key was violated, and the tuples that violated it. Be warned though that at the moment this feature is a bit buggy: the argument of the tuples may be in the wrong order, and their values may be incomplete. For example, in some cases a tuple of the form <code class='inline-code-box'><span class='inline-code'>user_id(3012), "ed86"</span></code> may be printed out as <code class='inline-code-box'><span class='inline-code'>"ed86", 3102</span></code>. That's still good enough for debugging purposes though, as long as you're aware of the problem.</p>
+<p><code class='inline-code-box'><span class='inline-code'>Error</span></code> takes as argument an automaton instance, and returns a string explaining why the last operation performed on it failed (if the last operation was successful, it just returns the empty string).</p>
 
-<p>The last instruction we have to manipulate relational automata is used to take a snapshot of the state of an automaton instance:</p>
+<p>Once all messages have been processed, the final state of the automaton is saved to a third file using another built-in procedure, <code class='inline-code-box'><span class='inline-code'>Save(..)</span></code> which is the opposite of <code class='inline-code-box'><span class='inline-code'>Load(..)</span></code>:</p>
 
 <figure class="highlight">
 <section>
-<pre><code>final_state = read instance;
+<pre><code>ok = Save(instance, final_state_fname);
 </section>
 </figure>
 </code></pre>
 
-<p>As already explained in the previous chapters the state of an automaton cannot be aliased in any way, so making a copy of it requires making a physical copy of at least some of the underlying data structures that are used to store it. How much data exactly has to be copied depends on the implementation and the target language, but it generally is a rather expensive operation, especially if the automaton contains mutable relation variables. In the worst case, the entirety of the data structures that encode its state will have to be physically copied.</p>
+<p>Sometimes you need to take a snapshot of the state of an automaton, but you want to have it returned as an ordinary value, instead of saving it to a file. That's what <code class='inline-code-box'><span class='inline-code'>Copy(..)</span></code> is for:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>state_copy = Copy(instance);
+</section>
+</figure>
+</code></pre>
+
+<p>Similarly, you may want to set the state of an automaton by directly providing the new state, instead of loading it to a file, which can be done using another builtin procedure, <code class='inline-code-box'><span class='inline-code'>Set(..)</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code>ok = Set(instance, new_state);
+</section>
+</figure>
+</code></pre>
+
+<p>If <code class='inline-code-box'><span class='inline-code'>new_state</span></code> is not a valid state for the automaton in question, <code class='inline-code-box'><span class='inline-code'>instance</span></code> will be left untouched and the return value will be <code class='inline-code-box'><span class='inline-code'>false</span></code>, just like with <code class='inline-code-box'><span class='inline-code'>Load(..)</span></code>.</p>
+
+<p>Note that both <code class='inline-code-box'><span class='inline-code'>Copy(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>Set(..)</span></code> are expensive operations, as they need to make a physical copy of most of the data structures involved, as opposed to (in the case of <code class='inline-code-box'><span class='inline-code'>Copy(..)</span></code>) just returning a reference to them.</p>
+
+<p>If you're not concerned about efficiency, the following snippet of code can be used to check if sending a particular message will succeeds without permanently altering the state of the automaton instance it is sent to:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='c'>// Saving the initial state of the automaton</span>
+state_copy = Copy(instance);
+
+<span class='c'>// Sending the message to see if it succeeds or fails</span>
+succeeded = Send(instance, msg);
+
+<span class='c'>// Restoring the initial state. This call always succeeds</span>
+ok = Set(instance, state_copy);
+</section>
+</figure>
+</code></pre>
 
 
 <h3>Persistence and schema changes</h3>

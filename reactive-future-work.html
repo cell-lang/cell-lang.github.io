@@ -136,7 +136,7 @@
 
 <figure class="highlight">
 <section>
-<pre><code>nested_auto(id) = <span class='m'>NestedAuto</span>(input1=signal1(id), input2=signal2);
+<pre><code>nested_auto(id) = NestedAuto(input1=signal1(id), input2=signal2);
 </section>
 </figure>
 </code></pre>
@@ -221,7 +221,7 @@
   rules:
     <span class='c'>// All signals coming from and going to the pump are now</span>
     <span class='c'>// grouped inside <span class='inline-code'>pump</span>: <span class='inline-code'>pump.on</span>, <span class='inline-code'>pump.is_working</span></span>
-    pump = <span class='m'>Pump</span>(
+    pump = Pump(
       <span class='c'>// Directly "setting" the pump input</span>
       on = needs_draining <span class='k'>and</span> <span class='k'>not</span> methane_level_critical
     );
@@ -323,7 +323,7 @@ rules:
 <figure class="highlight">
 <section>
 <pre><code>rules:
-  draining_switch = <span class='m'>Switch</span>(
+  draining_switch = Switch(
     switch_on  = upper_sensor_submerged,
     switch_off = <span class='k'>not</span> lower_sensor_submerged <span class='k'>and</span>
                  <span class='k'>not</span> upper_sensor_submerged

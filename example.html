@@ -505,7 +505,7 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
 
 <h3>Interfacing with Java</h3>
 
-<p>While it is possible to build a complete application with it, Cell is designed to be a domain-specific language, used to generate code for a number of different target languages. The ones that are already supported are C++, Java and C#. We'll make use of the Java code generator here, since it's the one that is in the most advanced stage of development at the moment. When compiling the code that we've seen in this chapter, the code generator will produce an <code class='inline-code-box'><span class='inline-code'>OnlineForum</span></code> class that can be used from your native Java code to instantiate, control and read the state of the instances of the automaton defined in the Cell codebase. Here's the interface of the generated Java class, in pseudo-Java code:</p>
+<p>While it is possible to build a complete application with it, Cell is designed to be a domain-specific language, used to generate code for a number of different target languages. The ones that are already supported are Java and C#. We'll be using the Java code generator here, but the differences between the two are minimal anyway. When compiling the code that we've seen in this chapter, the code generator will produce an <code class='inline-code-box'><span class='inline-code'>OnlineForum</span></code> class that can be used from your native Java code to instantiate, control and read the state of the instances of the automaton defined in the Cell codebase. Here's the interface of the generated Java class, in pseudo-Java code:</p>
 
 <p><figure class="highlight"><section><pre><code><span class='k'>package</span> net.cell_lang;
 
@@ -517,8 +517,14 @@ since(<span class='m'>UserId</span> | <span class='m'>UserId</span>, <span class
 
   <span class='b'>void</span> execute(<span class='m'>String</span>);
 
-  <span class='b'>void</span> addUser(<span class='b'>long</span> id, <span class='m'>String</span> username, <span class='m'>LocalDate</span> signupDate, <span class='m'>String</span> firstName, <span class='m'>String</span> lastName);
-  <span class='b'>void</span> addUser(<span class='b'>long</span> id, <span class='m'>String</span> username, <span class='m'>LocalDate</span> signupDate, <span class='m'>String</span> firstName, <span class='m'>String</span> lastName, <span class='m'>LocalDate</span> dateOfBirth);
+  <span class='b'>void</span> addUser(
+    <span class='b'>long</span>      id,
+    <span class='m'>String</span>    username,
+    <span class='m'>LocalDate</span> signupDate,
+    <span class='m'>String</span>    firstName,
+    <span class='m'>String</span>    lastName,
+    <span class='m'>LocalDate</span> dateOfBirth
+  );
   <span class='b'>void</span> deleteUser(<span class='b'>long</span> id);
 
   <span class='m'>String</span> fullName(<span class='b'>long</span> u);
@@ -562,13 +568,6 @@ onlineForum.execute(<span class='s'>&quot;delete_user(id: user_id(5))&quot;</spa
 <p>All the remaining methods are specific to each type of automaton, and they're used to invoke its message handlers and methods. In this specific case, <code class='inline-code-box'><span class='inline-code'>void addUser(..)</span></code> and <code class='inline-code-box'><span class='inline-code'>void deleteUser(long)</span></code> can be used to send the corresponding messages, and in many cases they should be preferred to <code class='inline-code-box'><span class='inline-code'>execute(..)</span></code> since they're much faster, while <code class='inline-code-box'><span class='inline-code'>string fullName(long)</span></code> and <code class='inline-code-box'><span class='inline-code'>long usersWhoSignedUpOn(Date)</span></code> invoke the corresponding (read-only) methods.</p>
 
 <p>The only thing left to mention is the fact that, in order for the generated code to interface smoothly with hand-written Java code, the Cell compiler tries to map each Cell type that appears in the interface of an automaton to a standard Java type or to generate a corresponding Java class for it: in the rare cases in which that fails, the corresponding piece of data is returned or has to be passed in as a string containing the textual representation of the Cell value. The details of the mapping are described in another chapter.</p>
-
-
-<h3>Auto-generated methods and message handlers</h3>
-
-<p>The Cell compiler can also, if you want it to, automatically generate a number of accessor methods that give you direct access to the data stored inside your automata. It generates methods to read the value of member variables, or the entire content of a relation; to check if a relation contains a given tuple (or element, for unary relations); and finally, in the case of binary relations, to lookup the value of an attribute of a specific entity given its id.</p>
-
-<p>For each automaton there's also a number of message handlers (mainly those that are used to insert data into it, like <code class='inline-code-box'><span class='inline-code'>AddUser</span></code> we saw before) that are almost invariably needed, but whose structure is so predictable that the compiler can generate them automatically. That way, we can avoid polluting the codebase with boring boilerplate code, and leave the developer free to concentrate on the interesting part of the application's logic. Automatic generation of messages and message handlers will be implemented in one of the next versions of the compiler.</p>
 
 
 <h3>Inheritance hierarchies and polymorphism</h3>

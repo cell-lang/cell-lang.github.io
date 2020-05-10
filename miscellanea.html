@@ -173,10 +173,10 @@
   }
 }
 
-<span class='m'>PrintRecords</span>(<span class='m'>PersonData</span>* ps) {
+PrintRecords(<span class='m'>PersonData</span>* ps) {
   <span class='k'>for</span> p &lt;- ps {
     str = format_person_data(p, locale=<span class='a'>:en_us</span>);
-    <span class='m'>Print</span>(str &amp; <span class='s'>"\n"</span>);
+    Print(str &amp; <span class='s'>"\n"</span>);
   }
 }
 </section>
@@ -225,11 +225,11 @@
 
 <figure class="highlight">
 <section>
-<pre><code><span class='m'>PrintRecords</span>(<span class='m'>PersonData</span>* ps) {
+<pre><code>PrintRecords(<span class='m'>PersonData</span>* ps) {
   <span class='k'>let</span> locale = <span class='a'>:en_us</span> {
     <span class='k'>for</span> p &lt;- ps {
       str = format_person_data(p);
-      <span class='m'>Print</span>(str &amp; <span class='s'>"\n"</span>);
+      Print(str &amp; <span class='s'>"\n"</span>);
     }
   }
 }
