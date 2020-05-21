@@ -38,13 +38,6 @@
 <p>In what follows, we'll be talking specifically about the particular flavor of the relational model that is used in Cell (which is very different from the one used in relational databases) and we'll assume the reader has a basic familiarity with it, so you'll need to read the introductory <a href='example.html'>example</a> first. It would also be useful, but not strictly necessary, to take a look at the chapter on <a href='relational.html'>relational automata</a>.</p>
 
 
-<h3>Values vs objects</h3>
-
-<p>Some of the benefits conferred by the relational model are just a consequence of the fact that the relational model is value-based, that is, it has no notion of pointers. For a good overview of why it's better to avoid pointers in a high-level language, I recommend that you watch, if you haven't already, this talk by Rich Hickey (the creator of Clojure and Datomic): <a href='https://www.youtube.com/watch?v=-6BsiVyC1kM'>The Value of Values</a>. He explains it much better than I ever could. We'll take all that for granted, and we'll be focusing here instead on several aspects that are either not discussed in that talk, or that are specific to the relational model.</p>
-
-<p>Of course, just removing pointers from your data model is going to cripple its expressiveness. As an example, try to implement in a value-only language (like, for example, Haskell) a set of data structures that are more or less equivalent to the <code class='inline-code-box'><span class='inline-code'>OnlineForum</span></code> automaton shown in the introductory <a href='example.html'>example</a>. There's several ways to do it, but in all cases the resulting data structures will be, compared to their OOP equivalents, both more difficult to navigate and less reliable, since they will contain more redundancy. So you need to replace pointers with some other type of construct that provides the same functionalities, but without the disadvantages. The most obvious candidate for that role is of course relations.</p>
-
-
 <h3>Redundancy</h3>
 
 <p>In the database community it has been conventional wisdom for nearly half a century now (basically since the invention of the relational model) that in designing your database schema you should be careful to avoid any kind of redundancy. That's what database normalization theory is all about. For some unfathomable reason, the same kind of thinking is never (or almost never) applied to software construction, even though it would be as beneficial (possibly even more so) as it is for databases. So, before we start our discussion, it's a good idea to talk a bit about redundancy, and to explain what's so harmful about it.</p>
@@ -144,23 +137,6 @@ joined_on(<span class='m'>UserId</span>, <span class='m'>ChatGroupId</span>, <sp
 <p>With object you've don't have such a simple, declarative and reliable way to enforce the consistency of your data, which deprives you of a powerful mechanism to avoid and to defend yourself against programming errors.</p>
 
 
-<h3>Declarative query languages</h3>
-
-<p>With relations you can have declarative query languages (think Datalog, not SQL). I've never seen anything similar for any other data model. A language like Datalog is not Turing complete, of course, but for the kind of computation it allows, its simplicity and expressiveness are simply unrivaled.</p>
-
-<p>I can't quite put my finger on why there's nothing remotely equivalent for any other data model, but I think that the fact that relations can be easily searched, and that their tuples/entries are not ordered (unlike what happens, for example, with sequences, where some of the information is conveyed by the order in which elements are arranged, not just by the elements themselves) are both crucial to that.</p>
-
-<p>The availability of a declarative query language is not important only because it simplifies some types of computation. Another reason is that the result of certain classes of declarative expressions can be recalculated incrementally and automatically whenever the input data changes. That's especially important in a programming language, as opposed to a database system.</p>
-
-<p>Let's illustrate this with an (admittedly contrived) example. Let's say you're building a massively multiplayer online game, where each player gets to build their own base/town, and where they need to extract resources of some sort (oil/timber/ore/...) to do so, and to build their armies. Let's also say that players can sign bilateral trade agreements, that allow them to buy the resources they need and sell those they have an excess of. Trade can be done through intermediaries: if Alice has a trade agreement with Bob, and Bob has one with Charlie, then Alice and Charlie can trade even if they don't have a direct trade agreement, although in this case Bob will be charging a fee for his services. For simplicity, every trade will be allowed to go through only one or maybe two intermediaries at most (things would get a lot more complicated if we allowed intermediary chains of arbitrary length).</p>
-
-<p>In the game, we want every player to be able to see in real time if any given resource can be purchased, what's the best price for it, what's the second best one and so on, and how much of it can be bought at each price.</p>
-
-<p>Expressing this logic in a Datalog-like language is straightforward: it's almost as easy as stating it in natural language. Computing the same information from scratch in either an imperative or functional language is significantly more complex that that, although still not excessively so.</p>
-
-<p>But what we would probably want to do in a case like this is not to recompute everything from scratch every time something in the (massively multiplayer) game changes, but to update the results incrementally as the game progresses. In a declarative query language, all the queries involved in this particular case can be updated incrementally and automatically by a reasonably sophisticated query engine (or by code generated under the hood by a reasonably sophisticated compiler) without any extra effort on the part of the developer. But in an imperative (or functional) one, incrementally recomputing the output map is significantly more complex than computing it from scratch, and a lot more error-prone. That's because there's a lot of factors than can change the results, all of which have to be accounted for. The stocks of resources for sale can be replenished, or they can decrease and run out. Prices can change. So can the fees that players charge for acting as intermediaries in a trade. New trade agreements can be signed, and existing ones can expire or be canceled. All of these changes have to propagated to all pieces of information that depend on them, and the exact propagation paths are different in each case.</p>
-
-
 <h3>Attributes can be modeled in a uniform way independently of their cardinality</h3>
 
 <p>Let's say in your data model you want to store the telephone numbers of your users. If you want to allow multiple phone numbers for each user, you can declare a binary relation like the following one:</p>
@@ -186,6 +162,30 @@ joined_on(<span class='m'>UserId</span>, <span class='m'>ChatGroupId</span>, <sp
 <p>There's at least a couple of benefits in having such a uniform representation for attributes or relationships with different cardinalities. The first one is that code written in a declarative language like Datalog will keep working without changes even as those integrity constraints change over time. The second one is that this uniformity will make it easier for new code to work with old data: if an attribute that used to have only one value becomes multivalued, you'll be able to reuse the old data without having to do any sort of conversion (of course that's not going to work in the opposite direction, since the data model in that case becomes more restrictive). The same happens when a mandatory attribute suddenly becomes optional.</p>
 
 <p>This is, by the way, one of the reasons why in Cell every attribute or relationship is stored in a separate relation. In SQL databases, all single-valued attributes are stored in the same table, while multivalued ones require a separate table, and optional attributes require the use of a problematic feature like NULLs.</p>
+
+
+<h3>Declarative query languages</h3>
+
+<p>With relations you can have declarative query languages (think Datalog, not SQL). I've never seen anything similar for any other data model. A language like Datalog is not Turing complete, of course, but for the kind of computation it allows, its simplicity and expressiveness are simply unrivaled.</p>
+
+<p>I can't quite put my finger on why there's nothing remotely equivalent for any other data model, but I think that the fact that relations can be easily searched, and that their tuples/entries are not ordered (unlike what happens, for example, with sequences, where some of the information is conveyed by the order in which elements are arranged, not just by the elements themselves) are both crucial to that.</p>
+
+<p>The availability of a declarative query language is not important only because it simplifies some types of computation. Another reason is that the result of certain classes of declarative expressions can be recalculated incrementally and automatically whenever the input data changes. That's especially important in a programming language, as opposed to a database system.</p>
+
+<p>Let's illustrate this with an (admittedly contrived) example. Let's say you're building a massively multiplayer online game, where each player gets to build their own base/town, and where they need to extract resources of some sort (oil/timber/ore/...) to do so, and to build their armies. Let's also say that players can sign bilateral trade agreements, that allow them to buy the resources they need and sell those they have an excess of. Trade can be done through intermediaries: if Alice has a trade agreement with Bob, and Bob has one with Charlie, then Alice and Charlie can trade even if they don't have a direct trade agreement, although in this case Bob will be charging a fee for his services. For simplicity, every trade will be allowed to go through only one or maybe two intermediaries at most (things would get a lot more complicated if we allowed intermediary chains of arbitrary length).</p>
+
+<p>In the game, we want every player to be able to see in real time if any given resource can be purchased, what's the best price for it, what's the second best one and so on, and how much of it can be bought at each price.</p>
+
+<p>Expressing this logic in a Datalog-like language is straightforward: it's almost as easy as stating it in natural language. Computing the same information from scratch in either an imperative or functional language is significantly more complex that that, although still not excessively so.</p>
+
+<p>But what we would probably want to do in a case like this is not to recompute everything from scratch every time something in the (massively multiplayer) game changes, but to update the results incrementally as the game progresses. In a declarative query language, all the queries involved in this particular case can be updated incrementally and automatically by a reasonably sophisticated query engine (or by code generated under the hood by a reasonably sophisticated compiler) without any extra effort on the part of the developer. But in an imperative (or functional) one, incrementally recomputing the output map is significantly more complex than computing it from scratch, and a lot more error-prone. That's because there's a lot of factors than can change the results, all of which have to be accounted for. The stocks of resources for sale can be replenished, or they can decrease and run out. Prices can change. So can the fees that players charge for acting as intermediaries in a trade. New trade agreements can be signed, and existing ones can expire or be canceled. All of these changes have to propagated to all pieces of information that depend on them, and the exact propagation paths are different in each case.</p>
+
+
+<h3>Values vs objects</h3>
+
+<p>Some of the benefits conferred by the relational model are just a consequence of the fact that the relational model is value-based, that is, it has no notion of pointers. For a good overview of why it's better to avoid pointers in a high-level language, I recommend that you watch, if you haven't already, this talk by Rich Hickey (the creator of Clojure and Datomic): <a href='https://www.youtube.com/watch?v=-6BsiVyC1kM'>The Value of Values</a>. He explains it much better than I ever could. We'll take all that for granted, and we'll be focusing here instead on several aspects that are either not discussed in that talk, or that are specific to the relational model.</p>
+
+<p>Of course, just removing pointers from your data model is going to cripple its expressiveness. As an example, try to implement in a value-only language (like, for example, Haskell) a set of data structures that are more or less equivalent to the <code class='inline-code-box'><span class='inline-code'>OnlineForum</span></code> automaton shown in the introductory <a href='example.html'>example</a>. There's several ways to do it, but in all cases the resulting data structures will be, compared to their OOP equivalents, both more difficult to navigate and less reliable, since they will contain more redundancy. So you need to replace pointers with some other type of construct that provides the same functionalities, but without the disadvantages. The most obvious candidate for that role is of course relations.</p>
 
 
 <h3>Controlling the scope of side effects</h3>
