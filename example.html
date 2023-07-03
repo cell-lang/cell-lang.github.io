@@ -48,8 +48,8 @@
   ID            <span style="color: #333399">INT</span>           <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
   USERNAME      <span style="color: #333399">VARCHAR</span>(<span style="color: #0000DD">20</span>)   <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
   SIGNUP_DATE   <span style="color: #333399">DATE</span>          <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
-  NAME          <span style="color: #333399">VARCHAR</span>(<span style="color: #0000DD">40</span>)   <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
-  SURNAME       <span style="color: #333399">VARCHAR</span>(<span style="color: #0000DD">40</span>)   <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  FIRST_NAME    <span style="color: #333399">VARCHAR</span>(<span style="color: #0000DD">40</span>)   <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
+  LAST_NAME     <span style="color: #333399">VARCHAR</span>(<span style="color: #0000DD">40</span>)   <span style="color: #008800">NOT</span> <span style="color: #003366">NULL</span>,
   DATE_OF_BIRTH <span style="color: #333399">DATE</span>,
   <span style="color: #008800">PRIMARY</span> <span style="color: #008800">KEY</span> (ID),
   <span style="color: #008800">UNIQUE</span> (USERNAME)
@@ -181,9 +181,17 @@
 </figure>
 </code></pre>
 
-<p>Let's examine the "unsweetened" version first. In the SQL version of the schema, we have a single table that stores all the attributes of a user. In Cell, every attribute is stored in a separate relation. The first relation, <code class='inline-code-box'><span class='inline-code'>user</span></code>, is a unary relation, that is, a set. It simply contains the identifiers of all registered users. The other five relations, <code class='inline-code-box'><span class='inline-code'>username</span></code>, <code class='inline-code-box'><span class='inline-code'>signup_date</span></code>, <code class='inline-code-box'><span class='inline-code'>first_name</span></code>, <code class='inline-code-box'><span class='inline-code'>last_name</span></code> and <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code>, are binary relations, each of which stores a single attribute of the user entity. That is, while in SQL all the information about a user is stored in a single record of the <code class='inline-code-box'><span class='inline-code'>USERS</span></code> table like, for example, <code class='inline-code-box-long'><span class='inline-code'>ID = 0, USERNAME = "ed96", SIGNUP_DATE = 15/02/2018, NAME = "Edward", SURNAME = "Harris", DATE_OF_BIRTH = 30/8/1996</span></code>, the same data in Cell is split among six different tuples/entries, <code class='inline-code-box'><span class='inline-code'>user_id(0)</span></code> in <code class='inline-code-box'><span class='inline-code'>user</span></code>, <code class='inline-code-box'><span class='inline-code'>user_id(0), "ed96"</span></code> in <code class='inline-code-box'><span class='inline-code'>username</span></code>, <code class='inline-code-box'><span class='inline-code'>user_id(0), 15/02/2018</span></code> in <code class='inline-code-box'><span class='inline-code'>signup_date</span></code>, <code class='inline-code-box'><span class='inline-code'>user_id(0), "Edward"</span></code> in <code class='inline-code-box'><span class='inline-code'>name</span></code> and so on. Note that while in SQL each column/argument of a relation is named, in Cell arguments are only identified by their position.</p>
+<p>Let's examine the "unsweetened" version first. In the SQL version of the schema, we have a single table that stores all the attributes of a user. In Cell, every attribute is stored in a separate relation. The first relation, <code class='inline-code-box'><span class='inline-code'>user</span></code>, is a unary relation, that is, a set. It simply contains the identifiers of all registered users. The other five relations, <code class='inline-code-box'><span class='inline-code'>username</span></code>, <code class='inline-code-box'><span class='inline-code'>signup_date</span></code>, <code class='inline-code-box'><span class='inline-code'>first_name</span></code>, <code class='inline-code-box'><span class='inline-code'>last_name</span></code> and <code class='inline-code-box'><span class='inline-code'>date_of_birth</span></code>, are binary relations, each of which stores a single attribute of the user entity. That is, while in SQL all the information about a user is stored in a single record of the <code class='inline-code-box'><span class='inline-code'>USERS</span></code> table as shown here:</p>
 
-<p>The reasons for splitting into atomic pieces the information that in an SQL database would be contained in a single record/row will be discussed elsewhere, but one very marginal benefit is that it makes accessing the attributes of a given entity syntactically more convenient. As an example, this is how you can define a method that generates the complete name of a user by concatenating their first and last name:</p>
+<p><div><img src='users-table.png' style='width:100%'></div></p>
+
+<p>the same data in Cell is split among six different relations:</p>
+
+<p><div><img src='user-relations.png' style='width:100%'></div></p>
+
+<p>Note that while in SQL each column/argument of a relation is named, in Cell arguments are only identified by their position.</p>
+
+<p>The reasons for splitting into atomic pieces the information that in an SQL database would be contained in a single record/row will be discussed elsewhere, but one minor benefit is that it makes accessing the attributes of a given entity syntactically more convenient. As an example, this is how you can define a method that generates the complete name of a user by concatenating their first and last name:</p>
 
 <figure class="highlight">
 <section>
@@ -194,7 +202,7 @@
 </figure>
 </code></pre>
 
-<p>The syntax <code class='inline-code-box'><span class='inline-code'>name(u)</span></code> looks exactly like a function or method call, and is not that different from the <code class='inline-code-box'><span class='inline-code'>u.name()</span></code> or <code class='inline-code-box'><span class='inline-code'>u.name</span></code> syntax used in conventional languages, and certainly terser than the <code class='inline-code-box-long'><span class='inline-code'>SELECT NAME FROM USERS WHERE ID = AN_ID</span></code> used in SQL.</p>
+<p>The syntax <code class='inline-code-box'><span class='inline-code'>first_name(u)</span></code> looks exactly like a function or method call, and is not that different from the <code class='inline-code-box'><span class='inline-code'>u.first_name()</span></code> or <code class='inline-code-box'><span class='inline-code'>u.first_name</span></code> syntax used in conventional languages, and certainly terser than the <code class='inline-code-box-long'><span class='inline-code'>SELECT FIRST_NAME FROM USERS WHERE ID = AN_ID</span></code> used in SQL.</p>
 
 <p>Methods in Cell are just normal functions which are given access to the state of an automaton. They are declared inside a <code class='inline-code-box'><span class='inline-code'>using</span></code> block, as shown above. Such a block can of course contain any number of methods. Functions and methods in Cell have no side effects, just like in any other pure functional language. They do not modify the state of the program, and they cannot do any I/O: their only purpose is to compute and return a value. The state of an automaton can be mutated, as we'll see later, but any code that does so is kept separate from the rest.</p>
 
@@ -744,8 +752,9 @@ onlineForum.execute(<span class='s'>&quot;delete_user(id: user_id(5))&quot;</spa
                 <li><a href='reactive-future-work.html'>Future work</a></li>
               </ul>
             </li>
-            <li>Interfacing with...
+            <li>Embedded use
               <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
                 <li><a href='interface-java.html'>Java</a></li>
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>

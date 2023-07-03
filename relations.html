@@ -38,39 +38,195 @@
 <p>In what follows, we'll be talking specifically about the particular flavor of the relational model that is used in Cell (which is very different from the one used in relational databases) and we'll assume the reader has a basic familiarity with it, so you'll need to read the introductory <a href='example.html'>example</a> first. It would also be useful, but not strictly necessary, to take a look at the chapter on <a href='relational.html'>relational automata</a>.</p>
 
 
+<h3>Modelling the application state</h3>
+
+<p>Most developers are familiar with the process of database design, where you model your persistent data using the relational model. The main idea behind functional relational programming is to apply the same kind of thinking and methodology to software development, by modelling your entire application state (not just your persistent data) using a very high-level data model based on relations.</p>
+
+<p>But what does that mean exactly? How does modelling the application state differ from what we do with conventional languages? Don't we "model" the application state in any language, when we define all the data structures that are used in our programs?</p>
+
+<p>One answer is that difference between the kind of data modelling we do in functional relational programming and what we do in conventional languages is the same difference there is between a specification and an implementation. The purpose of a specification is to unambiguosly describe the structure and behaviour of a system in an abstract, high-level way, so that it is, among other things, (relatively) easy for humans to understand and reason about, independent of how the system is implemented, and amenable to being verified and analyzed via software. An implementation on the other hand has to deal with all the low-level concerns, and is typically messy and hard to understand, not to mention buggy.</p>
+
+
+<h3>An example</h3>
+
+<p>Now, this may sound a bit too abstract, so we need an example to see what all that means in practice. Take the following Cell schema:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>schema</span> <span class='m'>WorkDB</span> {
+  <span class='c'>// company(..) is a unary relation (set) that stores the ids of all</span>
+  <span class='c'>// companies in the database, while company_name(..) is a binary</span>
+  <span class='c'>// relation that stores the name of each company in company(..)</span>
+  company(<span class='m'>CompanyId</span>)
+    company_name : <span class='m'>String</span>;
+
+  <span class='c'>// employee(..) stores the ids of all employees in the database and</span>
+  <span class='c'>// name(..) and date_of_birth(..) the corresponding attributes</span>
+  employee(<span class='m'>EmployeeId</span>):
+    name          : <span class='m'>String</span>,
+    date_of_birth : <span class='m'>Date</span>;
+
+  <span class='c'>// works_for(..) is an associative binary relation that keeps track</span>
+  <span class='c'>// of who works for whom. Note that it allows for an employee to have</span>
+  <span class='c'>// more than one job. since(..) and salary(..) are ternary relations</span>
+  <span class='c'>// that store attributes of the works_for(..) relation/relationship.</span>
+  works_for(<span class='m'>EmployeeId</span>, <span class='m'>CompanyId</span>)
+    start_date : <span class='m'>Date</span>,
+    salary     : <span class='m'>Money</span>;
+
+  <span class='c'>// Foreign key declaration</span>
+  works_for(e, c) -&gt; employee(e), company(c);
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The above code is just modelling the data. Its job is just to describe the abstract structure of the data, and it says nothing about how that data will be stored, represented or used in a computer program. It's just a specification, and, in and of itself, it's not about computers at all.</p>
+
+<p>Let's now implement that specification, that is, let's design a set of objects that can be used to store the same information:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>class</span> <span class='m'>Company</span> {
+  <span class='k'>int</span> id;
+  <span class='m'>String</span> name;
+}
+
+<span class='k'>class</span> <span class='m'>Employee</span> {
+  <span class='k'>int</span> id;
+  <span class='m'>String</span> name;
+  <span class='m'>Date</span> date_of_birth;
+  <span class='m'>Job</span>[] jobs;
+}
+
+<span class='k'>class</span> <span class='m'>Job</span> {
+  <span class='m'>Company</span> company;
+  <span class='m'>Date</span> start_date;
+  <span class='m'>Money</span> salary;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>So far, so good. Kind of, at least. But even here we can start noticing a few seemingly trivial problems that aren't present in the Cell schema.</p>
+
+<p>For starters, both company and employee ids should of course be unique, but there's nothing in there to enforce that constraint. You have to be careful when writing code not to accidentally create two objects with the same id. That's trivial and not at all likely to be a problem in practice, you may say. And in this specific case I would agree, that's probably not where bugs in the code are going to come from. But it still exposeses a weakness of the implementation, in that it doesn't describe the data with the same precision as the Cell schema.</p>
+
+<p>Another problem is that the instances of both <code class='inline-code-box'><span class='inline-code'>Company</span></code> and <code class='inline-code-box'><span class='inline-code'>Employee</span></code> have two identifiers: their object id and and the integer stored in their <code class='inline-code-box'><span class='inline-code'>id</span></code> member variable. You need the latter because object ids cannot be stored when persisting the data. Again, no big deal, you might say. And that's mostly true, although sometimes having to deal with this system of redundant identifiers can be a bit annoying. But my point here is that, even at this very, very early stage, you can see the implementation concerns creep into and pollute your data structures.</p>
+
+<p>A third imperfection is related to the <code class='inline-code-box'><span class='inline-code'>jobs</span></code> member variable. As it is, there's nothing to prevent the same company to appear more than once in the set of jobs of a particular employee, possibly with different start date and salary. That would be an inconsistency in the data, and inconsistencies lead to bugs. That could be fixed though by changing the code as follows:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>class</span> <span class='m'>Employee</span> {
+  ...
+  <span class='m'>Dict</span>&lt;<span class='m'>Company</span>, <span class='m'>JobInfo</span>&gt; jobs;
+}
+
+<span class='k'>class</span> <span class='m'>JobInfo</span> {
+  <span class='m'>Date</span> start_date;
+  <span class='m'>Money</span> salary;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>Let's now proceed with the implementation. One thing we need is the ability, given a <code class='inline-code-box'><span class='inline-code'>Company</span></code> object, to retrieve the list of its employees, which in practice means changing the code like this:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>class</span> <span class='m'>Company</span> {
+  ...
+  <span class='m'>Dict</span>&lt;<span class='m'>Employee</span>, <span class='m'>JobInfo</span>&gt; employees;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>The new <code class='inline-code-box'><span class='inline-code'>employees</span></code> member variable is completely redundant, in the sense that it doesn't contain any information that wasn't already present before. And when you introduce redundancy in your data structures you're opening a Pandora's box.</p>
+
+
 <h3>Redundancy</h3>
 
-<p>In the database community it has been conventional wisdom for nearly half a century now (basically since the invention of the relational model) that in designing your database schema you should be careful to avoid any kind of redundancy. That's what database normalization theory is all about. For some unfathomable reason, the same kind of thinking is never (or almost never) applied to software construction, even though it would be as beneficial (possibly even more so) as it is for databases. So, before we start our discussion, it's a good idea to talk a bit about redundancy, and to explain what's so harmful about it.</p>
+<p>In the database community it has been conventional wisdom for nearly half a century now (basically since the invention of the relational model) that in designing your database schema you should be careful to avoid any kind of redundancy. That's what database normalization theory is all about. For some unfathomable reason, the same kind of thinking is never (or almost never) applied to software construction, even though it would be as beneficial (possibly even more so) as it is for databases. So, before we countinue our discussion, it's a good idea to talk a bit about redundancy, and to explain what's so harmful about it.</p>
 
-<p>The simplest form of redundancy is when a given piece of information is stored in more than one place. In a relational database, it may for example appear in multiple rows of the same table if the database is not normalized. In an object model, it may be stored inside different objects, or it may appear in slightly subtler forms (see the <code class='inline-code-box'><span class='inline-code'>works_for()</span></code> example in the next paragraph).</p>
+<p>The simplest form of redundancy is when a given piece of information is stored in more than one place. In a relational database, it may for example appear in multiple rows of the same table if the database is not normalized. In an object model, it may be stored inside different objects, or it may appear in slightly subtler forms, as in the above example.</p>
 
 <p>This type of redundancy causes two main problems. The first one is that if a piece of information is stored in multiple locations, those locations have to be kept in sync: every time you update one of them, you've to update all of them, or you'll put your dataset in an inconsistent state. While consistency is no guarantee of correctness, the former is certainly a prerequisite for the latter. So getting rid of redundancy increases the reliability of your code by avoiding an entire class of bugs.</p>
 
 <p>The second main reason that makes redundancy harmful, one that is more relevant to software construction than database design, is that having to update a piece of information that is stored in multiple locations requires more work, which makes your code more complex than it should be. This is especially true for object systems, where these redundant pieces of data may be scattered all over a difficult-to-navigate object graph, and where an artificial barrier like encapsulation often stands in the way.</p>
 
-<p>This first type of redundancy is pretty easy to get rid of with the relational model. In relational databases you may still occasionally have to denormalize your schema for performance, but in Cell, due to the different flavor of the relational model and the fact that Cell is a programming language and not a database system, that simply doesn't apply.</p>
-
-<p>But there's also a slightly less obvious and much more toxic form of redundancy, that occurs when a piece of data is not the exact copy of another, but can still be computed from data that's already there. This second type of redundancy is much more difficult to avoid, for the simple reason that those calculations can be computationally expensive. On top of that, its consequences are a lot worse. As an example, let's say that we have a redundant (in the second sense) piece of data, <code class='inline-code-box'><span class='inline-code'>y</span></code>, which can be derived from the non-redundant pieces of data <code class='inline-code-box'><span class='inline-code'>x1 .. xn</span></code> using the formula <code class='inline-code-box'><span class='inline-code'>y = f(x1, .. xn)</span></code>. First of all, it's obvious that this situation is more error-prone that the one we had before, for the simple reason that <code class='inline-code-box'><span class='inline-code'>y</span></code> has to be updated every time any of the <code class='inline-code-box'><span class='inline-code'>xi</span></code> changes. The number of dependencies is multiplied by <code class='inline-code-box'><span class='inline-code'>n</span></code>, so the chances of making a mistake go up.</p>
-
-<p>The second, more important reason, is that in many situations you simply cannot afford to reevaluate the <code class='inline-code-box'><span class='inline-code'>f(x1, .. xn)</span></code> expression, because that may be computationally expensive (if it isn't, reactive programming and memoization can easily solve the problem). What you need to do, instead, is to efficiently update only the part of the derived data structures (<code class='inline-code-box'><span class='inline-code'>y</span></code>, in this case) that has changed, and that is almost invariably a lot more complex than recalculating everything from scratch. We'll see a non-trivial example of this later.</p>
-
-<p>A more in-depth discussion of these issues can be found in this paper: <a href='https://www.google.com/search?q=out+of+the+tar+pit'>Out of the Tar Pit</a>. Starting from the observation that the primary source of complexity in most programs is mutable state, the authors advocate minimizing it, moving whatever remains into relations, and then manipulating said relations using a declarative programming language. The discussion about essential and derived state is especially relevant here.</p>
+<p>In our example this means that we have no guarantee that information stored in <code class='inline-code-box'><span class='inline-code'>Employee.jobs</span></code> objects agrees with that stored by <code class='inline-code-box'><span class='inline-code'>Company.employees</span></code> (an <code class='inline-code-box'><span class='inline-code'>Employee</span></code> may "think" it's working for a certain <code class='inline-code-box'><span class='inline-code'>Company</span></code>, but the latter may not have them in their list of employees and vice versa, or they may disagree on start date and salary), and that every time we update one of them we must also make sure to update the others. Failures to do so is a bug, bug that cannot occur at all with a better data model.</p>
 
 
-<h3>Relations are can be navigated in any direction</h3>
+<h3>Back to our example</h3>
 
-<p>Say your domain model contains entities like companies and employees/contractors/freelancers, you may have a relation like the following one:</p>
+<p>Now that we've created our basic domain objects, we need also a place to store them, a sort of directory objects whose purpose is to retain and provide access to those objects. Let's start with something simple (and inadequate):</p>
 
 <figure class="highlight">
 <section>
-<pre><code>works_for(<span class='m'>PersonId</span>, <span class='m'>CompanyId</span>)
+<pre><code><span class='k'>class</span> <span class='m'>WorkDB</span> {
+  <span class='m'>List</span>&lt;<span class='m'>Company</span>&gt; companies;
+  <span class='m'>List</span>&lt;<span class='m'>Employee</span>&gt; employees;
+}
 </section>
 </figure>
 </code></pre>
 
-<p>You can easily navigate from a company to its employees/contractors/freelancers using <code class='inline-code-box'><span class='inline-code'>works_for(?, a_company)</span></code> or from a person to its employers with <code class='inline-code-box'><span class='inline-code'>works_for(a_person, ?)</span></code> or just <code class='inline-code-box'><span class='inline-code'>works_for(a_person)</span></code> if a person has only one employer.</p>
+<p>Let's examine this new data structure through the lens of data integrity and correctness. What could possibly go wrong here? One obvious issue is that there's no guarantee that <code class='inline-code-box'><span class='inline-code'>companies</span></code> and <code class='inline-code-box'><span class='inline-code'>employees</span></code> contains all the "live" objects of the corresponding type. An <code class='inline-code-box'><span class='inline-code'>Employee</span></code> may reference a <code class='inline-code-box'><span class='inline-code'>Company</span></code> that is not listed in <code class='inline-code-box'><span class='inline-code'>WorkDB.companies</span></code>, and vice versa. That may be for example be caused by a bug in the code that removes an <code class='inline-code-box'><span class='inline-code'>Employee</span></code> from its <code class='inline-code-box'><span class='inline-code'>WorkDB</span></code>, but forgets to update the corresponding <code class='inline-code-box'><span class='inline-code'>Company</span></code> objects. In the relational schema, that's enforced using a foreign key, but there's no equivalent to that in the object world.</p>
 
-<p>With pointers, you've to set up two of them, one for each direction. One of them will be redundant, in the sense that it doesn't add any information that is not already there, and that will cause all the redundancy-related problems mentioned before: more work to do when updating your data, and the possibility that a bug in the code may leave it in an inconsistent state: a situation, for example, where an employee object "thinks" it works for a certain company, but that company doesn't have him or her in its list of employees.</p>
+<p>Another thing we might need is the ability to quickly lookup <code class='inline-code-box'><span class='inline-code'>Company</span></code> and <code class='inline-code-box'><span class='inline-code'>Employee</span></code> objects by their persistent id. That may be needed for example, when reading data from persistent storage. We could change <code class='inline-code-box'><span class='inline-code'>WorkDB</span></code> as follow:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>class</span> <span class='m'>WorkDB</span> {
+  <span class='m'>Dict</span>&lt;<span class='k'>int</span>, <span class='m'>Company</span>&gt; companies;
+  <span class='m'>Dict</span>&lt;<span class='k'>int</span>, <span class='m'>Employee</span>&gt; employees;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>This is another for of redundancy: the persistent ids of a companies and employees are stored twice, inside the objects themselves and as keys in the <code class='inline-code-box'><span class='inline-code'>WorkDB.companies</span></code> and <code class='inline-code-box'><span class='inline-code'>WorkDB.employees</span></code> dictionaries, and there's nothing in the data structures themselves that guarantees that the two will match. There are ways to fix this, by using "smarter" data structures instead of plain <code class='inline-code-box'><span class='inline-code'>Dict</span></code>s, but as far as I can tell, they involve making our data structures increasingly complex.</p>
+
+<p>Now say you need to implement an <code class='inline-code-box'><span class='inline-code'>Employee.remove()</span></code> method, with the obvious semantics. <code class='inline-code-box'><span class='inline-code'>Employee</span></code> now needs a reference to <code class='inline-code-box'><span class='inline-code'>WorkDB</span></code>, because it needs to remove itself from <code class='inline-code-box'><span class='inline-code'>WorkDB.employees</span></code>:</p>
+
+<figure class="highlight">
+<section>
+<pre><code><span class='k'>class</span> <span class='m'>Employee</span> {
+  ...
+
+  <span class='m'>WorkDB</span> work_db;
+}
+</section>
+</figure>
+</code></pre>
+
+<p>This new member variable (<code class='inline-code-box'><span class='inline-code'>Employee.work_db</span></code>) is not only, again, redundant, but it also has nothing to do with real world entities and concepts we're trying to model, it's there only to solve an implementation problem. That's yet another example of a low-level concern "polluting" data structures and making more complex.</p>
+
+<p>To be continued...</p>
+
+
+<h3>Essential vs accidental state, and making invalid states impossible</h3>
+
+<p>Even in a trivial example like the one we've been considering, I hope it has become clear that when using objects it's not feasible in practice to stop low-level implementation concerns to creep into your data structure, creating the problem that we've been talking about, namely the fact that a bug in the code can put your application's data structures in an invalid state, and the fact that it takes more work to update them because when a piece of information is duplicated or, more generally, several pieces of information have to be kept in sync when you update one of them you have to update all of them.</p>
+
+<p>The other things I hope you've noticed is that these low-level object-based data structures tend to be very unstable: as requirements change you need to keep tweaking them even when the real-world information that you're dealing with stays the same. And changes in data structures often create a cascade of changes throughout the code base, simply because there's more information to keep track of and pass around.</p>
+
+<p>Contrast this with what happen with the Cell schema we've seen at the beginning of this page. That schema simply cannot be put in an invalid state, no matter how hard you try. In more complex schemas that's usually still possible, but it's much, much harder than in a object graph representation. And the fact that there's no redundancy means that updating a (well-designed) relational schema becomes easier, because there are fewer places in the data structure that need updating. In large applications, the problems with the object-based approch become of course much worse, and are the source of both complexity and bugs. And finally relational schemas tend to be be much more stable, as they don't contain low-level implementation data (or at least not as much as object systems).</p>
+
+<p>So, to answer again the question we asked at the beginning of this chapter, what we termed "modelling the application state" is guided by two basic principles:</p>
+
+<ul><li>You should squeeze out of your data structures everything that is not essential. A piece of data is considered non-essential if it can be removed from the dataset without any loss of information or, in other words, if it can somehow be reconstructed from the information we're left with after it has been deleted.</li><li>Once all non-essential state has been thrown out, you should design the remaining data structures so that it is (ideally) impossible for them to be in an inconsistent/invalid state. In practice even with a high-level data model in many complex cases we may need to settle for less than that, but usually not much less than that.</li></ul>
+
+<p>In order to do so, we need a high-level data model. With those goals in mind, let's review some of the advantages offered by a relational representation of data</p>
+
+
+<h3>Relations are can be navigated in any direction</h3>
+
+<p>Using the <code class='inline-code-box'><span class='inline-code'>works_for(..)</span></code> relation defined above, you can easily obtain, given the id of a particular company, the list of all its employees using <code class='inline-code-box'><span class='inline-code'>works_for(?, company_id)</span></code> or given the id of an employee the list of companies it works for with <code class='inline-code-box'><span class='inline-code'>works_for(employee_id, ?)</span></code> or just <code class='inline-code-box'><span class='inline-code'>works_for(employee_id)</span></code> if they have a single employer.</p>
+
+<p>With pointers, you've to set up two of them, one for each direction, because pointer are a low-level construct that can only be navigated in one direction. An we said before, one of them will be redundant, with the consequences that we've already talked about.</p>
 
 
 <h3>Relations can be searched efficiently on any combination of their arguments</h3>
@@ -265,8 +421,9 @@ joined_on(<span class='m'>UserId</span>, <span class='m'>ChatGroupId</span>, <sp
                 <li><a href='reactive-future-work.html'>Future work</a></li>
               </ul>
             </li>
-            <li>Interfacing with...
+            <li>Embedded use
               <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
                 <li><a href='interface-java.html'>Java</a></li>
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>

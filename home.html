@@ -35,7 +35,7 @@
 
 <p>Cell is a very high-level embeddable language designed to implement some fairly general classes of software systems (described below) that are difficult to implement using conventional languages. For those specific types of software Cell allows the developer to work at a much higher level of abstraction, and automatically provides a number of major functionalities whose implementation in conventional languages either requires a lot of tedious, low-level and error prone coding or is not feasible at all in practice.</p>
 
-<p>Cell is designed to complement and integrate with your primary language, not to replace it. Once a component of an application has been implement in Cell, the compiler will generate from it an easy-to-use Java or C# class that can be integrated into an existing codebase. Support for other languages will be added in the future. The generated code is designed to integrate smoothly with hand-written code and to be non-invasive, and is also <a href='benchmarks-relational.html'>very fast</a>. Unlike your primary language, whose choice is determined by a number of complex factors (not all of them technical, and not all of them under your control), Cell is just another tool in your toolbox, one that can be adopted gradually, with minimal risk, only when, and to the extent that, it provides a clear advantage over more conventional alternatives.</p>
+<p>Cell is designed to complement and integrate with your primary language, not to replace it. Once a component of an application has been implement in Cell, the compiler will generate from it an easy-to-use C++, Java or C# class that can be integrated into an existing codebase. Support for other languages will be added in the future. The generated code is designed to integrate smoothly with hand-written code and to be non-invasive, and is also <a href='benchmarks-relational.html'>very fast</a>. Unlike your primary language, whose choice is determined by a number of complex factors (not all of them technical, and not all of them under your control), Cell is just another tool in your toolbox, one that can be adopted gradually, with minimal risk, only when, and to the extent that, it provides a clear advantage over more conventional alternatives.</p>
 
 
 <h3>Persistent Systems</h3>
@@ -72,7 +72,7 @@
 
 <h3>News</h3>
 
-<p>November 12, 2021: <a href='version-0.6.html'>Version 0.6 of the Java code generator released</a>.</p>
+<p>July 4, 2023: <a href='version-0.7.html'>Cell to C++ compiler (version 0.7 for Linux) released</a>.</p>
 <p>May 22, 2020: New post: <a href='https://medium.com/swlh/replacing-sqlite-with-cell-part-2-a5eb6a21de2d'>Replacing SQLite with Cell, part 2</a>.</p>
 <p>May 22, 2020: New post: <a href='https://medium.com/swlh/replacing-sqlite-with-cell-part-1-fb5d636b5fd0'>Replacing SQLite with Cell, part 1</a>.</p>
 
@@ -138,8 +138,9 @@
                 <li><a href='reactive-future-work.html'>Future work</a></li>
               </ul>
             </li>
-            <li>Interfacing with...
+            <li>Embedded use
               <ul class="toc">
+                <li><a href='interface-cpp.html'>C++</a></li>
                 <li><a href='interface-java.html'>Java</a></li>
                 <li><a href='interface-cs.html'>C#</a></li>
               </ul>
